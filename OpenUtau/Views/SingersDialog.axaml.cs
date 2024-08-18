@@ -363,7 +363,8 @@ namespace OpenUtau.App.Views {
                 if (files.Length > 1) {
                     msgbox = MessageBox.ShowModal(this, text, text);
                 }
-                var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+                // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+                var scheduler = TaskScheduler.Default;
                 viewModel.RegenFrq(files, control.Tag as string, count => {
                     msgbox?.SetText(string.Format("{0}\n{1} / {2}", text, count, files.Length));
                 }).ContinueWith(task => {

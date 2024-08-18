@@ -48,7 +48,8 @@ namespace OpenUtau.Core {
             SearchAllPlugins();
             SearchAllLegacyPlugins();
             mainThread = Thread.CurrentThread;
-            mainScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            // mainScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            mainScheduler = TaskScheduler.Default;
             PhonemizerRunner = new PhonemizerRunner(mainScheduler);
         }
 

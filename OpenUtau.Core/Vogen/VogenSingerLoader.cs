@@ -8,6 +8,7 @@ using OpenUtau.Core.Ustx;
 using OpenUtau.Core.Util;
 using Serilog;
 using SharpCompress.Archives;
+using SharpCompress.Common;
 
 namespace OpenUtau.Core.Vogen {
     [Serializable]
@@ -25,7 +26,7 @@ namespace OpenUtau.Core.Vogen {
         public string misc;
     }
 
-    public class VogenSingerLoader {  // Changed to public
+    public class VogenSingerLoader {
         readonly string basePath;
 
         public static IEnumerable<USinger> FindAllSingers() {
@@ -44,50 +45,69 @@ namespace OpenUtau.Core.Vogen {
         public IEnumerable<USinger> SearchAll() {
             var result = new List<USinger>();
             if (!Directory.Exists(basePath)) {
+                Log.Warning($"Directory does not exist: {basePath}");
+                Console.WriteLine($"Directory does not exist: {basePath}");
                 return result;
             }
+
             IEnumerable<string> files;
             if (Preferences.Default.LoadDeepFolderSinger) {
                 files = Directory.EnumerateFiles(basePath, "*.vogeon", SearchOption.AllDirectories);
             } else {
-                // TopDirectoryOnly
                 files = Directory.EnumerateFiles(basePath, "*.vogeon");
             }
-            result.AddRange(files
-                .Select(filePath => {
-                    try {
-                        return LoadSinger(filePath);
-                    } catch (Exception e) {
-                        Log.Error(e, "Failed to load Vogen singer.");
-                        return null;
-                    }
-                })
-                .OfType<USinger>());
+
+            result.AddRange(files.Select(filePath => {
+                try {
+                    return LoadSinger(filePath);
+                } catch (Exception e) {
+                    Log.Error(e, $"Failed to load Vogen singer from: {filePath}");
+                    Console.WriteLine($"Failed to load Vogen singer from: {filePath}, Error: {e.Message}");
+                    return null;
+                }
+            }).OfType<USinger>());
+
             return result;
         }
 
-        public USinger LoadSinger(string filePath) {  // Changed to public
+        public USinger LoadSinger(string filePath) {
+            Console.WriteLine($"Attempting to load singer from: {filePath}");
+            Log.Information($"Attempting to load singer from: {filePath}");
+
             VogenMeta meta;
             byte[] model;
             byte[] avatar = null;
-            using (var archive = ArchiveFactory.Open(filePath)) {
-                var metaEntry = archive.Entries.First(e => e.Key == "meta.json");
-                if (metaEntry == null) {
-                    throw new ArgumentException("missing meta.json");
+
+            try {
+                using (var archive = ArchiveFactory.Open(filePath)) {
+                    var metaEntry = archive.Entries.FirstOrDefault(e => e.Key == "meta.json");
+                    if (metaEntry == null) {
+                        throw new ArgumentException("Missing meta.json");
+                    }
+
+                    using (var stream = metaEntry.OpenEntryStream()) {
+                        using var reader = new StreamReader(stream, Encoding.UTF8);
+                        JsonSerializer serializer = new JsonSerializer();
+                        meta = (VogenMeta)serializer.Deserialize(reader, typeof(VogenMeta));
+                    }
+
+                    model = Zip.ExtractBytes(archive, "model.onnx");
+                    if (model == null) {
+                        throw new ArgumentException("Missing model.onnx");
+                    }
+
+                    if (!string.IsNullOrEmpty(meta.avatar)) {
+                        avatar = Zip.ExtractBytes(archive, meta.avatar);
+                    }
                 }
-                using (var stream = metaEntry.OpenEntryStream()) {
-                    using var reader = new StreamReader(stream, Encoding.UTF8);
-                    JsonSerializer serializer = new JsonSerializer();
-                    meta = (VogenMeta)serializer.Deserialize(reader, typeof(VogenMeta));
-                }
-                model = Zip.ExtractBytes(archive, "model.onnx");
-                if (model == null) {
-                    throw new ArgumentException("missing model.onnx");
-                }
-                if (!string.IsNullOrEmpty(meta.avatar)) {
-                    avatar = Zip.ExtractBytes(archive, meta.avatar);
-                }
+            } catch (Exception ex) {
+                Log.Error(ex, $"Failed to load singer from: {filePath}");
+                Console.WriteLine($"Failed to load singer from: {filePath}, Error: {ex.Message}");
+                throw; // Rethrow the exception after logging it
             }
+
+            Console.WriteLine($"Singer loaded successfully from: {filePath}");
+            Log.Information($"Singer loaded successfully from: {filePath}");
             return new VogenSinger(filePath, meta, model, avatar);
         }
     }

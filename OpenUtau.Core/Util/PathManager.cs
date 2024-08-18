@@ -60,6 +60,8 @@ namespace OpenUtau.Core {
                     }
                 }
             }
+            Console.WriteLine($"SingersPath set to: {SingersPath}");
+            Log.Information($"SingersPath set to: {SingersPath}");
         }
 
         public string RootPath { get; private set; }

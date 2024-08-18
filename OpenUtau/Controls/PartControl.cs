@@ -114,7 +114,8 @@ namespace OpenUtau.App.Controls {
             SetPosition();
 
             if (part is UWavePart wavePart) {
-                var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+                // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+                var scheduler = TaskScheduler.Default;
                 wavePart.Peaks.ContinueWith((task) => {
                     if (task.IsFaulted) {
                         Log.Error(task.Exception, "Failed to build peaks");

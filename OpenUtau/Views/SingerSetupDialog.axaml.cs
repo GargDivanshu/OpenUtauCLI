@@ -16,7 +16,8 @@ namespace OpenUtau.App.Views {
             if (viewModel == null) {
                 return;
             }
-            var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            var scheduler = TaskScheduler.Default;
             var task = viewModel.Install();
             task.ContinueWith((task) => {
                 if (task.IsFaulted) {

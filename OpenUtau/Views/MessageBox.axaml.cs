@@ -201,7 +201,8 @@ namespace OpenUtau.App.Views {
             var res = MessageBoxResult.Ok;
             var tokenSource = new CancellationTokenSource();
 
-            var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            var scheduler = TaskScheduler.Default;
             var task = Task.Run(() => {
                 action.Invoke(msgbox, tokenSource.Token);
                 return res;

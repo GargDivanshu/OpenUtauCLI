@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -42,7 +42,8 @@ namespace OpenUtau.App.Views {
             if (viewModel == null) {
                 return;
             }
-            var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            var scheduler = TaskScheduler.Default;
             viewModel.Publish(outputFile).ContinueWith((task) => {
                 if (task.IsFaulted) {
                     Log.Error(task.Exception, "Failed to publish singer");

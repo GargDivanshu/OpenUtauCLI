@@ -1,11 +1,14 @@
 ﻿using System;
-using System.IO;
-using OpenUtau.Core.Util;
 using System.Globalization;
+using System.IO;
 using OpenUtau.App.ViewModels;
-using OpenUtau.Core.Vogen;
 using OpenUtau.Core;
+using OpenUtau.Core.Util;
+using OpenUtau.Core.Vogen;
 using Serilog;
+using System.Security.AccessControl;
+using System.Security.Principal;
+
 
 namespace OpenUtauCLI {
     class Program {
@@ -48,8 +51,10 @@ namespace OpenUtauCLI {
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
+            // Log initialization details
+            InitLogging();
+
             // Equivalent to InitOpenUtau from App.axaml.cs
-            // PathManager.Inst.Initialize();
             Log.Information($"Data path = {PathManager.Inst.DataPath}");
             Log.Information($"Cache path = {PathManager.Inst.CachePath}");
 
@@ -57,8 +62,33 @@ namespace OpenUtauCLI {
             SingerManager.Inst.Initialize();
 
             // Optionally skip InitTheme as it is UI-related
-            // Equivalent to InitAudio from App.axaml.cs
-            // PlaybackManager.Inst.Initialize();
+            InitAudio(); // Initialize audio if necessary
+        }
+
+        static void InitLogging() {
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.Debug()
+                .WriteTo.Logger(lc => lc
+                    .MinimumLevel.Information()
+                    .WriteTo.File(PathManager.Inst.LogFilePath, rollingInterval: RollingInterval.Day, encoding: System.Text.Encoding.UTF8))
+                .WriteTo.Logger(lc => lc
+                    .MinimumLevel.ControlledBy(DebugViewModel.Sink.Inst.LevelSwitch)
+                    .WriteTo.Sink(DebugViewModel.Sink.Inst))
+                .CreateLogger();
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) => {
+                Log.Error((Exception)args.ExceptionObject, "Unhandled exception");
+            };
+            Log.Information("Logging initialized.");
+        }
+
+        static void InitAudio() {
+            try {
+                // PlaybackManager.Inst.Initialize();
+                Log.Information("Audio initialized.");
+            } catch (Exception ex) {
+                Log.Error(ex, "Failed to initialize audio.");
+            }
         }
 
         static void HandleInit() {
@@ -67,32 +97,58 @@ namespace OpenUtauCLI {
 
         static void HandleSinger(string singerPath) {
             try {
-                // Load the singer using VogenSingerLoader or VogenSingerInstaller
-                if (singerPath.EndsWith(VogenSingerInstaller.FileExt)) {
-                    VogenSingerInstaller.Install(singerPath);
-                } else {
-                    string? basePath = Path.GetDirectoryName(singerPath);
-                    if (string.IsNullOrEmpty(basePath)) {
-                        Console.WriteLine("Error: Invalid singer path provided.");
-                        return;
-                    }
-                    var loader = new VogenSingerLoader(basePath);
-                    var singerObject = loader.LoadSinger(singerPath);
-                    // Assuming that we want to add this singer to SingerManager
-                    SingerManager.Inst.Singers.Add(singerObject.Id, singerObject);
-                    Console.WriteLine($"Singer {singerObject.Name} loaded successfully.");
+                string? basePath = Path.GetDirectoryName(singerPath);
+                if (string.IsNullOrEmpty(basePath)) {
+                    Console.WriteLine("Error: Invalid singer path provided.");
+                    return;
                 }
+
+                // Test file access explicitly
+                Console.WriteLine("Testing file access...");
+                var testFiles = Directory.GetFiles(basePath);
+                foreach (var file in testFiles) {
+                    Console.WriteLine($"Attempting to read file: {file}");
+                    try {
+                        File.ReadAllText(file);
+                        Console.WriteLine($"File read successfully: {file}");
+                    } catch (Exception ex) {
+                        Console.WriteLine($"Failed to read file: {file}, Error: {ex.Message}");
+                    }
+                }
+
+                // Detailed logging before loading singer
+                Console.WriteLine($"Attempting to load singer from: {singerPath}");
+                var loader = new VogenSingerLoader(basePath);
+                var singerObject = loader.LoadSinger(singerPath);
+                SingerManager.Inst.Singers.Add(singerObject.Id, singerObject);
+                Console.WriteLine($"Singer {singerObject.Name} loaded successfully.");
+            } catch (UnauthorizedAccessException uae) {
+                Console.WriteLine($"Access denied: {uae.Message}");
             } catch (Exception ex) {
                 Console.WriteLine($"Failed to load singer: {ex.Message}");
             }
         }
+
+
+
+        static bool HasReadPermissionOnDir(string path) {
+            try {
+                // Attempt to get the directory's files as a quick test for read access.
+                var files = Directory.GetFiles(path);
+                return true;
+            } catch (UnauthorizedAccessException) {
+                return false;
+            } catch (Exception) {
+                return false;
+            }
+        }
+
 
         static void HandleExit() {
             Console.WriteLine("Exiting OpenUtau CLI...");
             // Perform any necessary cleanup before exiting
             Environment.Exit(0); // Exit the application with a success code
         }
-
 
         static void ShowHelp() {
             Console.WriteLine("Usage:");
