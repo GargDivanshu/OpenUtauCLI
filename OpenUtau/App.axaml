@@ -1,0 +1,26 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:OpenUtau.App"
+             x:Class="OpenUtau.App.App" Name="OpenUtau">
+  <Application.DataTemplates>
+    <local:ViewLocator/>
+  </Application.DataTemplates>
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceInclude x:Key="strings-en-US" Source="/Strings/Strings.axaml"/>
+      <ResourceInclude x:Key="themes-dark" Source="/Colors/DarkTheme.axaml"/>
+      <ResourceInclude x:Key="themes-light" Source="/Colors/LightTheme.axaml"/>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="/Colors/Brushes.axaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+    <StyleInclude Source="/Styles/Styles.axaml"/>
+  </Application.Styles>
+  <NativeMenu.Menu>
+    <NativeMenu/>
+  </NativeMenu.Menu>
+</Application>
