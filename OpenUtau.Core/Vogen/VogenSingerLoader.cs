@@ -81,9 +81,9 @@ namespace OpenUtau.Core.Vogen {
             try {
                 using (var archive = ArchiveFactory.Open(filePath)) {
                     var metaEntry = archive.Entries.FirstOrDefault(e => e.Key == "meta.json");
-                    if (metaEntry == null) {
+                    /*if (metaEntry == null) {
                         throw new ArgumentException("Missing meta.json");
-                    }
+                    }*/
 
                     using (var stream = metaEntry.OpenEntryStream()) {
                         using var reader = new StreamReader(stream, Encoding.UTF8);

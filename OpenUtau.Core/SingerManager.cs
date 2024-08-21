@@ -33,17 +33,27 @@ namespace OpenUtau.Core {
                 Log.Information("Searching singers.");
                 Directory.CreateDirectory(PathManager.Inst.SingersPath);
                 var stopWatch = Stopwatch.StartNew();
+
+                // Collect singers from various loaders
                 var singers = ClassicSingerLoader.FindAllSingers()
                     .Concat(Vogen.VogenSingerLoader.FindAllSingers())
                     .Distinct();
-                Singers = singers
-                    .ToLookup(s => s.Id)
+
+                // Create dictionaries and groupings
+                Singers = singers.ToLookup(s => s.Id)
                     .ToDictionary(g => g.Key, g => g.First());
-                SingerGroups = singers
-                    .GroupBy(s => s.SingerType)
+
+                SingerGroups = singers.GroupBy(s => s.SingerType)
                     .ToDictionary(s => s.Key, s => s.LocalizedOrderBy(singer => singer.LocalizedName).ToList());
+
                 stopWatch.Stop();
                 Log.Information($"Search all singers: {stopWatch.Elapsed}");
+
+                // Log detailed information about loaded singers
+                foreach (var singer in Singers.Values) {
+                    Console.WriteLine($"Loaded singer: ID={singer.Id}, Name={singer.Name}, Type={singer.SingerType}");
+                    Log.Information($"Loaded singer: ID={singer.Id}, Name={singer.Name}, Type={singer.SingerType}");
+                }
             } catch (Exception e) {
                 if (InitializationTask.Status == TaskStatus.Running) {
                     Log.Error(e, "Failed to search singers.");
@@ -54,6 +64,7 @@ namespace OpenUtau.Core {
                 Singers = new Dictionary<string, USinger>();
             }
         }
+
 
         public USinger GetSinger(string name) {
             Log.Information($"Attach singer to track: {name}");
