@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
 using OpenUtau.App.ViewModels;
@@ -9,6 +10,7 @@ using OpenUtau.Core;
 using OpenUtau.Classic;
 using OpenUtau.Core.Util;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Api;
 using OpenUtau.Core.DiffSinger;
 using Serilog;
 
@@ -42,6 +44,14 @@ namespace OpenUtauCLI {
 
                 case "--singer":
                     HandleListSingers();
+                    break;
+
+                case "--track":
+                    if (args.Length > 1 && args[1].ToLower() == "--add") {
+                        HandleAddTrack();
+                    } else {
+                        Console.WriteLine("Error: The --track command requires a valid subcommand.");
+                    }
                     break;
 
                 case "--exit":
@@ -216,6 +226,132 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
         }
+
+        static void HandleAddTrack() {
+            try {
+                // Step 1: List all available singers
+                Console.WriteLine("Searching for all singers...");
+                SingerManager.Inst.SearchAllSingers();
+                var keys = SingerManager.Inst.SingerGroups.Keys.OrderBy(k => k);
+                var allSingers = new List<USinger>();
+
+                foreach (var key in keys) {
+
+                    var singers = SingerManager.Inst.SingerGroups[key];
+                    if (singers != null && singers.Count > 0) {
+                        allSingers.AddRange(singers);
+                    }
+                }
+
+                if (allSingers.Count == 0) {
+                    Console.WriteLine("No singers available to add to the track.");
+                    return;
+                }
+
+                // Step 2: Display singers and allow user selection
+                Console.WriteLine("Available singers:");
+                for (int i = 0; i < allSingers.Count; i++) {
+                    Console.WriteLine($"{i + 1}. {allSingers[i].LocalizedName} ({allSingers[i].SingerType})");
+                }
+
+                Console.Write("Select a singer by number: ");
+                int selection;
+                while (!int.TryParse(Console.ReadLine(), out selection) || selection < 1 || selection > allSingers.Count) {
+                    Console.Write("Invalid selection. Please enter a valid number: ");
+                }
+
+                var selectedSinger = allSingers[selection - 1];
+                Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
+
+                // Step 3: Add the selected singer to the track
+                AddSingerToTrack(selectedSinger);
+
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to add track: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            }
+        }
+
+
+        static void AddSingerToTrack(USinger singer) {
+            try {
+                var project = DocManager.Inst.Project;
+                if (project == null || project.tracks.Count == 0) {
+                    Console.WriteLine("No tracks available to add the singer.");
+                    return;
+                }
+
+                // For simplicity, we'll add the singer to the first track.
+                var track = project.tracks[0];
+
+                // Start an undo group for combined operations
+                DocManager.Inst.StartUndoGroup();
+
+                // Change the singer for the track
+                var singerCommand = new TrackChangeSingerCommand(project, track, singer);
+                DocManager.Inst.ExecuteCmd(singerCommand);
+                Console.WriteLine($"Singer {singer.LocalizedName} added to the track.");
+
+                // Change the phonemizer for the track if applicable
+                Phonemizer? newPhonemizer = null;
+
+                if (!string.IsNullOrEmpty(singer?.Id) &&
+                    Preferences.Default.SingerPhonemizers.TryGetValue(singer.Id, out var phonemizerTypeName)) {
+                    // Retrieve the Phonemizer Type using its full name
+                    var factory = DocManager.Inst.PhonemizerFactories.FirstOrDefault(f => f.type.FullName == phonemizerTypeName);
+                    newPhonemizer = factory?.Create();
+                } else if (!string.IsNullOrEmpty(singer?.DefaultPhonemizer)) {
+                    // Retrieve the Phonemizer Type using the singer's default phonemizer
+                    var factory = DocManager.Inst.PhonemizerFactories.FirstOrDefault(f => f.type.FullName == singer.DefaultPhonemizer);
+                    newPhonemizer = factory?.Create();
+                }
+
+                if (newPhonemizer == null) {
+                    // Fallback to default phonemizer
+                    var factory = DocManager.Inst.PhonemizerFactories.FirstOrDefault(f => f.type == typeof(DefaultPhonemizer));
+                    newPhonemizer = factory?.Create();
+                }
+
+                if (newPhonemizer != null) {
+                    var phonemizerCommand = new TrackChangePhonemizerCommand(project, track, newPhonemizer);
+                    DocManager.Inst.ExecuteCmd(phonemizerCommand);
+                    Console.WriteLine($"Phonemizer {newPhonemizer.GetType().Name} added to the track.");
+                } else {
+                    Console.WriteLine("No valid phonemizer found for the selected singer.");
+                }
+
+                // Apply render settings if needed
+                if (singer == null || !singer.Found) {
+                    var settings = new URenderSettings();
+                    DocManager.Inst.ExecuteCmd(new TrackChangeRenderSettingCommand(project, track, settings));
+                } else if (singer.SingerType != track.RendererSettings.Renderer?.SingerType) {
+                    var settings = new URenderSettings {
+                        renderer = OpenUtau.Core.Render.Renderers.GetDefaultRenderer(singer.SingerType),
+                    };
+                    DocManager.Inst.ExecuteCmd(new TrackChangeRenderSettingCommand(project, track, settings));
+                }
+
+                // End the undo group
+                DocManager.Inst.EndUndoGroup();
+
+                // Notify for UI updates
+                if (!string.IsNullOrEmpty(singer?.Id) && singer.Found) {
+                    Preferences.Default.RecentSingers.Remove(singer.Id);
+                    Preferences.Default.RecentSingers.Insert(0, singer.Id);
+                    if (Preferences.Default.RecentSingers.Count > 16) {
+                        Preferences.Default.RecentSingers.RemoveRange(
+                            16, Preferences.Default.RecentSingers.Count - 16);
+                    }
+                }
+                Preferences.Save();
+
+                Console.WriteLine($"Singer and phonemizer updated successfully for the track.");
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to add singer to track: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            }
+        }
+
 
 
 
