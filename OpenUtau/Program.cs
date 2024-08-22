@@ -1,24 +1,28 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Text;
+using System.IO.Compression;
 using System.Linq;
 using OpenUtau.App.ViewModels;
 using OpenUtau.Core;
+using OpenUtau.Classic;
 using OpenUtau.Core.Util;
-using OpenUtau.Core.Vogen;
+using OpenUtau.Core.Ustx;
 using OpenUtau.Core.DiffSinger;
 using Serilog;
-using OpenUtau.Classic;
 
 namespace OpenUtauCLI {
     class Program {
         static void Main(string[] args) {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             if (args.Length == 0) {
                 ShowHelp();
                 return;
             }
 
-            /*InitializeCoreComponents();*/
+            InitializeCoreComponents();
 
             string command = args[0].ToLower();
 
@@ -27,20 +31,17 @@ namespace OpenUtauCLI {
                     HandleInit();
                     break;
 
-                case "--singer":
-                    if (args.Length > 2) {
-                        HandleSinger(args[1], args[2]);
-                    } else {
-                        Console.WriteLine("Error: The --singer command requires a format and a singer path as arguments.");
-                    }
-                    break;
-
                 case "--install_singer":
                     if (args.Length > 2) {
-                        HandleInstallSinger(args[1], args[2]);
+                        HandleInstallSinger(args[1], args[2]); // Ensure both format and path are provided
                     } else {
                         Console.WriteLine("Error: The --install_singer command requires a format and a path to a singer file.");
                     }
+                    break;
+
+
+                case "--singer":
+                    HandleListSingers();
                     break;
 
                 case "--exit":
@@ -60,9 +61,10 @@ namespace OpenUtauCLI {
             InitLogging();
             Log.Information($"Data path = {PathManager.Inst.DataPath}");
             Log.Information($"Cache path = {PathManager.Inst.CachePath}");
+            Console.WriteLine($"Data path = {PathManager.Inst.DataPath}");
+            Console.WriteLine($"Cache path = {PathManager.Inst.CachePath}");
             DocManager.Inst.Initialize();
             SingerManager.Inst.Initialize();
-            InitAudio();
         }
 
         static void InitLogging() {
@@ -82,14 +84,6 @@ namespace OpenUtauCLI {
             Log.Information("Logging initialized.");
         }
 
-        static void InitAudio() {
-            try {
-                Log.Information("Audio initialized.");
-            } catch (Exception ex) {
-                Log.Error(ex, "Failed to initialize audio.");
-            }
-        }
-
         static void HandleInit() {
             Console.WriteLine("OpenUtau CLI initialized.");
             InitializeCoreComponents();
@@ -99,27 +93,34 @@ namespace OpenUtauCLI {
             try {
                 Console.WriteLine($"Attempting to install singer from: {singerFilePath}");
 
-                // Ensure that the SingersPath is created
-                Directory.CreateDirectory(PathManager.Inst.SingersPath);
+                // Determine the extraction path
+                var extractPath = Path.Combine(PathManager.Inst.SingersPath, Path.GetFileNameWithoutExtension(singerFilePath));
+                Console.WriteLine($"Extracted to: {extractPath}");
 
-                if (format == "--vogen" && singerFilePath.EndsWith(VogenSingerInstaller.FileExt)) {
-                    Console.WriteLine("Recognized Vogen singer installer file.");
-                    VogenSingerInstaller.Install(singerFilePath);
-                } else if (format == "--diffsinger" && singerFilePath.EndsWith(".zip")) {
-                    var extractPath = Path.Combine(PathManager.Inst.SingersPath, Path.GetFileNameWithoutExtension(singerFilePath));
-
-                    // Clean up the target directory if it already exists
-                    if (Directory.Exists(extractPath)) {
-                        Console.WriteLine($"Cleaning up existing directory: {extractPath}");
-                        Directory.Delete(extractPath, true); // Delete the directory and its contents
-                    }
-
-                    // Extract the singer files
-                    System.IO.Compression.ZipFile.ExtractToDirectory(singerFilePath, extractPath);
-                    HandleSinger("--diffsinger", extractPath); // Pass the extracted directory to HandleSinger
-                } else {
-                    Console.WriteLine($"Unsupported file type or format for singer installation: {format}");
+                // Clean up the target directory if it already exists
+                if (Directory.Exists(extractPath)) {
+                    Console.WriteLine($"Cleaning up existing directory: {extractPath}");
+                    Directory.Delete(extractPath, true); // Delete the directory and its contents
                 }
+
+                // Extract the singer files
+                System.IO.Compression.ZipFile.ExtractToDirectory(singerFilePath, extractPath);
+                Console.WriteLine("Extraction completed.");
+
+                // Recursively search for the dsconfig.yaml file
+                var dsConfigFiles = Directory.GetFiles(extractPath, "dsconfig.yaml", SearchOption.AllDirectories);
+
+                if (dsConfigFiles.Length == 0) {
+                    Console.WriteLine("Error: dsconfig.yaml not found after extraction.");
+                    return;
+                }
+
+                // Assuming there might be multiple dsconfig.yaml files, we'll handle the first one found
+                var dsConfigPath = dsConfigFiles[0];
+                Console.WriteLine($"Found dsconfig.yaml at: {dsConfigPath}");
+
+                // Attempt to load the singer using the found dsconfig.yaml file
+                HandleSinger("--diffsinger", dsConfigPath);
 
                 Console.WriteLine("Singer installation process completed.");
             } catch (Exception ex) {
@@ -128,66 +129,94 @@ namespace OpenUtauCLI {
             }
         }
 
-        static void HandleSinger(string format, string singerPath) {
+
+        static void HandleSinger(string format, string dsConfigPath) {
             try {
-                string basePath = Path.GetDirectoryName(singerPath) ?? singerPath;
+                Console.WriteLine($"Attempting to load singer from: {dsConfigPath}");
 
-                Console.WriteLine($"Attempting to load singer from: {singerPath}");
-
-                if (format == "--vogen") {
-                    var loader = new VogenSingerLoader(basePath);
-                    var singerObject = loader.LoadSinger(singerPath);
-                    SingerManager.Inst.Singers.Add(singerObject.Id, singerObject);
-                    Console.WriteLine($"Singer {singerObject.Name} loaded successfully.");
-                } else if (format == "--diffsinger") {
-                    // Use VoicebankLoader to load the voicebank
-                    Console.WriteLine("Recognized DiffSinger voicebank.");
-                    var loader = new VoicebankLoader(basePath);
-                    var voicebanks = loader.SearchAll();
-
-                    bool foundDiffSinger = false;
-                    foreach (var voicebank in voicebanks) {
-                        Console.WriteLine($"Loading voicebank: {voicebank.Name}");
-                        if (voicebank.SingerType == OpenUtau.Core.Ustx.USingerType.DiffSinger) {
-                            var singer = new DiffSingerSinger(voicebank);
-                            SingerManager.Inst.Singers.Add(singer.Id, singer);
-                            Console.WriteLine($"DiffSinger {singer.Id} loaded successfully.");
-                            foundDiffSinger = true;
-                        }
-                    }
-
-                    if (!foundDiffSinger) {
-                        Console.WriteLine("No DiffSinger voicebank found.");
-                    }
-                } else {
-                    Console.WriteLine("Error: Unsupported format. Use --vogen or --diffsinger.");
+                // Extract the base path from dsConfigPath
+                string? basePath = Path.GetDirectoryName(dsConfigPath);
+                if (basePath == null) {
+                    Console.WriteLine("Error: Could not determine the base path from dsConfigPath.");
+                    return;
                 }
 
-                // Find all singers and log them
-                var singers = ClassicSingerLoader.FindAllSingers();
-                if (singers.Any()) {
-                    Console.WriteLine("Available singers after loading:");
-                    foreach (var singer in singers) {
-                        Console.WriteLine("-------------------------------------------------");
-                        Console.WriteLine($"Singer Name: {singer.Name}");
-                        Console.WriteLine($"Singer ID: {singer.Id}");
-                        Console.WriteLine($"Singer Type: {singer.SingerType}");
-                        Console.WriteLine($"Singer Author: {singer.Author}");
-                        Console.WriteLine($"Singer Voice: {singer.Voice}");
-                        Console.WriteLine($"Singer Web: {singer.Web}");
-                        Console.WriteLine($"Singer Version: {singer.Version}");
-                        Console.WriteLine($"Singer Base Path: {singer.BasePath}");
-                        Console.WriteLine("-------------------------------------------------");
-                    }
+                // Create a Voicebank object
+                var voicebank = new Voicebank() {
+                    File = dsConfigPath,
+                    BasePath = basePath
+                };
+
+                // Load the Voicebank data
+                VoicebankLoader.LoadVoicebank(voicebank);
+
+                // Create the appropriate singer based on the format
+                USinger? singer = null;
+                if (format == "--diffsinger") {
+                    Console.WriteLine("Loading DiffSinger singer...");
+                    singer = new DiffSingerSinger(voicebank);
                 } else {
-                    Console.WriteLine("No singers found.");
+                    Console.WriteLine($"Error: Unsupported singer format {format}");
+                    return;
                 }
-            } catch (UnauthorizedAccessException uae) {
-                Console.WriteLine($"Access denied: {uae.Message}");
+
+                if (singer == null) {
+                    Console.WriteLine("Error: Failed to create a valid singer object.");
+                    return;
+                }
+
+                // Add the singer to the SingerManager
+                SingerManager.Inst.Singers[singer.Id] = singer;
+                Console.WriteLine($"Singer {singer.Name} loaded successfully.");
             } catch (Exception ex) {
                 Console.WriteLine($"Failed to load singer: {ex.Message}");
             }
         }
+
+
+
+
+
+
+        static void HandleListSingers() {
+            try {
+                Console.WriteLine("Searching for all singers...");
+                SingerManager.Inst.SearchAllSingers();
+
+                // Retrieve the loaded singers from the SingerManager's SingerGroups
+                var keys = SingerManager.Inst.SingerGroups.Keys.OrderBy(k => k);
+                if (keys != null) {
+                    Console.WriteLine($"Found {keys.Count()} singer group(s).");
+                    foreach (var key in keys) {
+                        Console.WriteLine($"Singer Group: {key}");
+                        var singers = SingerManager.Inst.SingerGroups[key];
+                        if (singers != null && singers.Count > 0) {
+                            Console.WriteLine($"Found {singers.Count} singer(s) in group {key}.");
+                            foreach (var singer in singers) {
+                                Console.WriteLine("-------------------------------------------------");
+                                Console.WriteLine($"Singer Name: {singer.Name}");
+                                Console.WriteLine($"Singer ID: {singer.Id}");
+                                Console.WriteLine($"Singer Type: {singer.SingerType}");
+                                Console.WriteLine($"Singer Author: {singer.Author}");
+                                Console.WriteLine($"Singer Voice: {singer.Voice}");
+                                Console.WriteLine($"Singer Web: {singer.Web}");
+                                Console.WriteLine($"Singer Version: {singer.Version}");
+                                Console.WriteLine($"Singer Base Path: {singer.BasePath}");
+                                Console.WriteLine("-------------------------------------------------");
+                            }
+                        } else {
+                            Console.WriteLine($"No singers found in group {key}.");
+                        }
+                    }
+                } else {
+                    Console.WriteLine("No singer groups found.");
+                }
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to list singers: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            }
+        }
+
 
 
 
@@ -199,8 +228,7 @@ namespace OpenUtauCLI {
         static void ShowHelp() {
             Console.WriteLine("Usage:");
             Console.WriteLine("  openutauCLI --init          Initializes the OpenUtau CLI.");
-            Console.WriteLine("  openutauCLI --singer [format] [path] Loads and sets the singer from the specified path in the specified format.");
-            Console.WriteLine("  openutauCLI --install_singer [format] [path] Installs a singer from the specified path in the specified format.");
+            Console.WriteLine("  openutauCLI --install_singer [path] Installs a singer from the specified path.");
             Console.WriteLine("  openutauCLI --exit          Exits the OpenUtau CLI.");
         }
     }
