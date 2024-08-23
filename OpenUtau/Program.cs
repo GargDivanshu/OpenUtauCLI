@@ -49,6 +49,8 @@ namespace OpenUtauCLI {
                 case "--track":
                     if (args.Length > 1 && args[1].ToLower() == "--add") {
                         HandleAddTrack();
+                    } else if (args.Length > 1 && args[1].ToLower() == "--list") {
+                        HandleListTracks(); // New method to list tracks
                     } else {
                         Console.WriteLine("Error: The --track command requires a valid subcommand.");
                     }
@@ -73,6 +75,7 @@ namespace OpenUtauCLI {
             Log.Information($"Cache path = {PathManager.Inst.CachePath}");
             Console.WriteLine($"Data path = {PathManager.Inst.DataPath}");
             Console.WriteLine($"Cache path = {PathManager.Inst.CachePath}");
+            ToolsManager.Inst.Initialize();
             DocManager.Inst.Initialize();
             SingerManager.Inst.Initialize();
         }
@@ -98,6 +101,37 @@ namespace OpenUtauCLI {
             Console.WriteLine("OpenUtau CLI initialized.");
             InitializeCoreComponents();
         }
+
+        static void HandleListTracks() {
+            try {
+                var project = DocManager.Inst.Project;
+
+                if (project == null) {
+                    Console.WriteLine("No project is currently loaded.");
+                    return;
+                }
+
+                Console.WriteLine($"Project: {project.name} (FilePath: {project.FilePath})");
+                Console.WriteLine($"Found {project.tracks.Count} track(s).");
+
+                foreach (var track in project.tracks) {
+                    Console.WriteLine("-------------------------------------------------");
+                    Console.WriteLine($"Track Name: {track.TrackName}");
+                    Console.WriteLine($"Track Number: {track.TrackNo + 1}");
+                    Console.WriteLine($"Singer: {track.Singer?.LocalizedName ?? "None"}");
+                    Console.WriteLine($"Phonemizer: {track.Phonemizer?.GetType().Name ?? "DefaultPhonemizer"}");
+                    Console.WriteLine($"Renderer: {track.RendererSettings?.Renderer?.ToString() ?? "None"}");
+                    Console.WriteLine($"Singer Path: {track.Singer?.Location ?? "None"}");
+                    Console.WriteLine("-------------------------------------------------");
+                }
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to list tracks: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            }
+        }
+
+
+
 
         static void HandleInstallSinger(string format, string singerFilePath) {
             try {
@@ -229,6 +263,15 @@ namespace OpenUtauCLI {
 
         static void HandleAddTrack() {
             try {
+                var project = DocManager.Inst.Project;
+
+                if (project == null) {
+                    Console.WriteLine("No project is currently loaded.");
+                    return;
+                }
+
+                Console.WriteLine($"Adding a new track to the project: {project.name} ({project.FilePath})");
+
                 // Step 1: List all available singers
                 Console.WriteLine("Searching for all singers...");
                 SingerManager.Inst.SearchAllSingers();
@@ -236,7 +279,6 @@ namespace OpenUtauCLI {
                 var allSingers = new List<USinger>();
 
                 foreach (var key in keys) {
-
                     var singers = SingerManager.Inst.SingerGroups[key];
                     if (singers != null && singers.Count > 0) {
                         allSingers.AddRange(singers);
@@ -263,14 +305,48 @@ namespace OpenUtauCLI {
                 var selectedSinger = allSingers[selection - 1];
                 Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
 
-                // Step 3: Add the selected singer to the track
-                AddSingerToTrack(selectedSinger);
+                // Step 3: Create and add a new track to the project
+                var newTrack = new UTrack($"Track {project.tracks.Count + 1}");
 
+                // Add the track to the project's track list
+                project.tracks.Add(newTrack);
+                Console.WriteLine($"New track {newTrack.TrackName} added. Total tracks now: {project.tracks.Count}");
+
+                // Log project state after adding the track
+                Log.Information($"After adding the track: Tracks={project.tracks.Count}");
+
+                DocManager.Inst.StartUndoGroup();
+
+                // Set the singer for the track
+                var singerCommand = new TrackChangeSingerCommand(project, newTrack, selectedSinger);
+                DocManager.Inst.ExecuteCmd(singerCommand);
+                Console.WriteLine($"Singer {selectedSinger.LocalizedName} added to the track.");
+
+                // End undo group and trigger autosave
+                DocManager.Inst.EndUndoGroup();
+                DocManager.Inst.AutoSave(); // Force an autosave immediately
+
+                // Log project state after autosave
+                Console.WriteLine($"Project state saved. Total tracks in project after autosave: {project.tracks.Count}");
+                Log.Information($"Project state saved. Total tracks: {project.tracks.Count}");
+
+                Preferences.Save();
+
+                Console.WriteLine($"Track added successfully to the project.");
             } catch (Exception ex) {
                 Console.WriteLine($"Failed to add track: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
         }
+
+
+
+
+
+
+
+
+
 
 
         static void AddSingerToTrack(USinger singer) {
@@ -297,17 +373,14 @@ namespace OpenUtauCLI {
 
                 if (!string.IsNullOrEmpty(singer?.Id) &&
                     Preferences.Default.SingerPhonemizers.TryGetValue(singer.Id, out var phonemizerTypeName)) {
-                    // Retrieve the Phonemizer Type using its full name
                     var factory = DocManager.Inst.PhonemizerFactories.FirstOrDefault(f => f.type.FullName == phonemizerTypeName);
                     newPhonemizer = factory?.Create();
                 } else if (!string.IsNullOrEmpty(singer?.DefaultPhonemizer)) {
-                    // Retrieve the Phonemizer Type using the singer's default phonemizer
                     var factory = DocManager.Inst.PhonemizerFactories.FirstOrDefault(f => f.type.FullName == singer.DefaultPhonemizer);
                     newPhonemizer = factory?.Create();
                 }
 
                 if (newPhonemizer == null) {
-                    // Fallback to default phonemizer
                     var factory = DocManager.Inst.PhonemizerFactories.FirstOrDefault(f => f.type == typeof(DefaultPhonemizer));
                     newPhonemizer = factory?.Create();
                 }
@@ -320,15 +393,22 @@ namespace OpenUtauCLI {
                     Console.WriteLine("No valid phonemizer found for the selected singer.");
                 }
 
-                // Apply render settings if needed
-                if (singer == null || !singer.Found) {
-                    var settings = new URenderSettings();
-                    DocManager.Inst.ExecuteCmd(new TrackChangeRenderSettingCommand(project, track, settings));
-                } else if (singer.SingerType != track.RendererSettings.Renderer?.SingerType) {
-                    var settings = new URenderSettings {
-                        renderer = OpenUtau.Core.Render.Renderers.GetDefaultRenderer(singer.SingerType),
-                    };
-                    DocManager.Inst.ExecuteCmd(new TrackChangeRenderSettingCommand(project, track, settings));
+                // Renderer selection based on singer type
+                if (singer?.SingerType != null) {
+                    string[] supportedRenderers = OpenUtau.Core.Render.Renderers.GetSupportedRenderers(singer.SingerType);
+                    if (supportedRenderers.Length > 0) {
+                        var rendererName = supportedRenderers[0]; // Select the first available renderer
+                        var settings = new URenderSettings {
+                            renderer = rendererName,
+                        };
+                        var rendererCommand = new TrackChangeRenderSettingCommand(project, track, settings);
+                        DocManager.Inst.ExecuteCmd(rendererCommand);
+                        Console.WriteLine($"Renderer {rendererName} added to the track.");
+                    } else {
+                        Console.WriteLine("No supported renderer found for the selected singer.");
+                    }
+                } else {
+                    Console.WriteLine("Singer type is null, cannot determine renderer.");
                 }
 
                 // End the undo group
@@ -345,12 +425,14 @@ namespace OpenUtauCLI {
                 }
                 Preferences.Save();
 
-                Console.WriteLine($"Singer and phonemizer updated successfully for the track.");
+                Console.WriteLine($"Singer, phonemizer, and renderer updated successfully for the track.");
             } catch (Exception ex) {
                 Console.WriteLine($"Failed to add singer to track: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
         }
+
+
 
 
 
