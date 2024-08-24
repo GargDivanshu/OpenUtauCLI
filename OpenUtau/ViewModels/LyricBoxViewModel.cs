@@ -55,7 +55,7 @@ namespace OpenUtau.App.ViewModels {
                 return;
             }
             // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
-            var scheduler = TaskScheduler.Default;
+            var scheduler = TaskScheduler.Current;
             Task.Run(() => singer.GetSuggestions(Text).Select(oto => new SuggestionItem() {
                 Alias = oto.Alias,
                 Source = string.IsNullOrEmpty(oto.Set) ? singer.Id : $"{singer.Id} / {oto.Set}",

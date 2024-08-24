@@ -50,7 +50,7 @@ namespace OpenUtau.Core {
             SearchAllLegacyPlugins();
             mainThread = Thread.CurrentThread;
             // mainScheduler = TaskScheduler.FromCurrentSynchronizationContext();
-            mainScheduler = TaskScheduler.Default;
+            mainScheduler = TaskScheduler.Current;
             PhonemizerRunner = new PhonemizerRunner(mainScheduler);
             Console.WriteLine("DocManager initialized.");
         }

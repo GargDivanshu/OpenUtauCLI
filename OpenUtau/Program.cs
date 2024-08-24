@@ -16,6 +16,9 @@ using Serilog;
 
 namespace OpenUtauCLI {
     class Program {
+
+        private static UProject? project;
+
         static void Main(string[] args) {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
@@ -26,44 +29,124 @@ namespace OpenUtauCLI {
 
             InitializeCoreComponents();
 
-            string command = args[0].ToLower();
+            while (true) {
+                Console.Write("> ");
+                string input = Console.ReadLine()?.Trim() ?? string.Empty;
+                if (string.IsNullOrEmpty(input)) continue;
 
-            switch (command) {
-                case "--init":
-                    HandleInit();
-                    break;
+                string[] parts = input.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                string command = parts[0].ToLower();
 
-                case "--install_singer":
-                    if (args.Length > 2) {
-                        HandleInstallSinger(args[1], args[2]); // Ensure both format and path are provided
-                    } else {
-                        Console.WriteLine("Error: The --install_singer command requires a format and a path to a singer file.");
-                    }
-                    break;
+                switch (command) {
+                    case "--init":
+                        HandleInit();
+                        break;
+
+                    case "--install_singer":
+                        if (args.Length > 2) {
+                            HandleInstallSinger(args[1], args[2]); // Ensure both format and path are provided
+                        } else {
+                            Console.WriteLine("Error: The --install_singer command requires a format and a path to a singer file.");
+                        }
+                        break;
 
 
-                case "--singer":
-                    HandleListSingers();
-                    break;
+                    case "--singer":
+                        HandleListSingers();
+                        break;
 
-                case "--track":
-                    if (args.Length > 1 && args[1].ToLower() == "--add") {
-                        HandleAddTrack();
-                    } else if (args.Length > 1 && args[1].ToLower() == "--list") {
-                        HandleListTracks(); // New method to list tracks
-                    } else {
-                        Console.WriteLine("Error: The --track command requires a valid subcommand.");
-                    }
-                    break;
+                    case "--track":
+                        if (parts.Length > 1) {
+                            switch (parts[1].ToLower()) {
+                                case "--add":
+                                    HandleAddTrack();
+                                    break;
+                                case "--list":
+                                    HandleListTracks();
+                                    break;
+                                case "--update":
+                                    HandleUpdateTrack();
+                                    break;
+                                default:
+                                    Console.WriteLine("Invalid subcommand for '--track'.");
+                                    break;
+                            }
+                        } else {
+                            Console.WriteLine("Error: The '--track' command requires a valid subcommand.");
+                        }
+                        break;
 
-                case "--exit":
-                    HandleExit();
-                    break;
+                    case "--part":
+                        if (parts.Length > 1) {
+                            switch (parts[1].ToLower()) {
+                                case "--add":
+                                    HandleAddPart();
+                                    break;
+                                case "--delete":
+                                    HandleDeletePart();
+                                    break;
+                                case "--rename":
+                                    HandleRenamePart();
+                                    break;
+                                case "--list":
+                                    HandleListParts();
+                                    break;
+                                default:
+                                    Console.WriteLine("Invalid subcommand for '--part'.");
+                                    break;
+                            }
+                        } else {
+                            Console.WriteLine("Error: The '--part' command requires a valid subcommand.");
+                        }
+                        break;
 
-                default:
-                    Console.WriteLine($"Error: Unknown command '{command}'.");
-                    ShowHelp();
-                    break;
+
+                    case "--import":
+                        if (parts.Length > 1) {
+                            switch (parts[1].ToLower()) {
+                                case "--midi":
+                                    if (parts.Length > 2 && parts[1].ToLower() == "--midi") {
+                                        string filePath = parts[2];
+                                        HandleImportMidi(filePath);
+                                    } else {
+                                        Console.WriteLine("Error: Please specify the MIDI file path.");
+                                    }
+                                    break;
+                                default:
+                                    Console.WriteLine("Invalid subcommand for '--import'.");
+                                    break;
+                            }
+                        } else {
+                            Console.WriteLine("Error: The '--import' command requires a subcommand.");
+                        }
+                        break;
+
+                    /*case "--process":
+                        if (parts.Length > 1) {
+                            switch (parts[1].ToLower()) {
+                                case "--loadRenderedPitch":
+                                    HandleLoadRenderedPitch();
+                                    break;
+                                default:
+                                    Console.WriteLine("Invalid subcommand for '--process'.");
+                                    break;
+                            }
+                        } else {
+                            Console.WriteLine("Error: The '--process' command requires a valid subcommand.");
+                        }
+                        break;*/
+
+
+
+                    case "--exit":
+                        HandleExit();
+                        break;
+
+                    default:
+                        Console.WriteLine($"Error: Unknown command '{command}'.");
+                        ShowHelp();
+                        break;
+                }
             }
         }
 
@@ -76,7 +159,10 @@ namespace OpenUtauCLI {
             Console.WriteLine($"Data path = {PathManager.Inst.DataPath}");
             Console.WriteLine($"Cache path = {PathManager.Inst.CachePath}");
             ToolsManager.Inst.Initialize();
-            DocManager.Inst.Initialize();
+            if (project == null) {
+                DocManager.Inst.Initialize(); // Only initialize if project is not already set
+                project = DocManager.Inst.Project; // Assign the project instance
+            }
             SingerManager.Inst.Initialize();
         }
 
@@ -99,13 +185,15 @@ namespace OpenUtauCLI {
 
         static void HandleInit() {
             Console.WriteLine("OpenUtau CLI initialized.");
-            InitializeCoreComponents();
+            if (project == null) {
+                InitializeCoreComponents(); // Ensures components are initialized if not already
+            } else {
+                Console.WriteLine("Project already initialized.");
+            }
         }
 
         static void HandleListTracks() {
             try {
-                var project = DocManager.Inst.Project;
-
                 if (project == null) {
                     Console.WriteLine("No project is currently loaded.");
                     return;
@@ -129,6 +217,64 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
         }
+
+
+        static void HandleUpdateTrack() {
+            if (project == null || project.tracks.Count == 0) {
+                Console.WriteLine("No project or tracks loaded. Cannot update a track.");
+                return;
+            }
+
+            // List existing tracks for user selection
+            Console.WriteLine("Select a track to update:");
+            for (int i = 0; i < project.tracks.Count; i++) {
+                Console.WriteLine($"{i + 1}. {project.tracks[i].TrackName}");
+            }
+
+            Console.Write("Choose track number: ");
+            if (!int.TryParse(Console.ReadLine(), out int trackIndex) || trackIndex < 1 || trackIndex > project.tracks.Count) {
+                Console.WriteLine("Invalid track number.");
+                return;
+            }
+
+            UTrack selectedTrack = project.tracks[trackIndex - 1];
+            Console.WriteLine($"You selected: {selectedTrack.TrackName}");
+
+            // List available singers
+            SingerManager.Inst.SearchAllSingers();
+            var allSingers = SingerManager.Inst.SingerGroups.SelectMany(g => g.Value).ToList();
+            if (allSingers.Count == 0) {
+                Console.WriteLine("No singers available to update the track.");
+                return;
+            }
+
+            Console.WriteLine("Available singers:");
+            for (int i = 0; i < allSingers.Count; i++) {
+                Console.WriteLine($"{i + 1}. {allSingers[i].LocalizedName} ({allSingers[i].SingerType})");
+            }
+
+            Console.Write("Select a singer by number: ");
+            if (!int.TryParse(Console.ReadLine(), out int singerIndex) || singerIndex < 1 || singerIndex > allSingers.Count) {
+                Console.WriteLine("Invalid singer selection.");
+                return;
+            }
+
+            USinger selectedSinger = allSingers[singerIndex - 1];
+            Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
+
+            // Update track with new singer
+            DocManager.Inst.StartUndoGroup();
+            var singerCommand = new TrackChangeSingerCommand(project, selectedTrack, selectedSinger);
+            DocManager.Inst.ExecuteCmd(singerCommand);
+            Console.WriteLine($"Updated singer of track '{selectedTrack.TrackName}' to '{selectedSinger.LocalizedName}'.");
+
+            // You can extend this to update phonemizer and renderer here if needed
+
+            DocManager.Inst.EndUndoGroup();
+            DocManager.Inst.AutoSave();
+            Console.WriteLine("Track updated and project state saved.");
+        }
+
 
 
 
@@ -263,8 +409,6 @@ namespace OpenUtauCLI {
 
         static void HandleAddTrack() {
             try {
-                var project = DocManager.Inst.Project;
-
                 if (project == null) {
                     Console.WriteLine("No project is currently loaded.");
                     return;
@@ -330,6 +474,17 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"Project state saved. Total tracks in project after autosave: {project.tracks.Count}");
                 Log.Information($"Project state saved. Total tracks: {project.tracks.Count}");
 
+                foreach (var track in project.tracks) {
+                    Console.WriteLine("-------------------------------------------------");
+                    Console.WriteLine($"Track Name: {track.TrackName}");
+                    Console.WriteLine($"Track Number: {track.TrackNo + 1}");
+                    Console.WriteLine($"Singer: {track.Singer?.LocalizedName ?? "None"}");
+                    Console.WriteLine($"Phonemizer: {track.Phonemizer?.GetType().Name ?? "DefaultPhonemizer"}");
+                    Console.WriteLine($"Renderer: {track.RendererSettings?.Renderer?.ToString() ?? "None"}");
+                    Console.WriteLine($"Singer Path: {track.Singer?.Location ?? "None"}");
+                    Console.WriteLine("-------------------------------------------------");
+                }
+
                 Preferences.Save();
 
                 Console.WriteLine($"Track added successfully to the project.");
@@ -341,15 +496,200 @@ namespace OpenUtauCLI {
 
 
 
+        static void HandleListParts() {
+            if (project == null || project.parts.Count == 0) {
+                Console.WriteLine("No project loaded or no parts available.");
+                return;
+            }
+
+            Console.WriteLine("Listing all parts:");
+            foreach (var part in project.parts) {
+                Console.WriteLine($"Part Name: {part.name}, Track: {part.trackNo + 1}, Position: {part.position}, Duration: {part.Duration}");
+            }
+        }
+
+
+
+        static void HandleAddPart() {
+            if (project == null || project.tracks.Count == 0) {
+                Console.WriteLine("No project or tracks loaded. Cannot add a part.");
+                return;
+            }
+
+            Console.WriteLine("Select a track to add the part:");
+            for (int i = 0; i < project.tracks.Count; i++) {
+                Console.WriteLine($"{i + 1}. {project.tracks[i].TrackName}");
+            }
+
+            Console.Write("Choose track number: ");
+            if (!int.TryParse(Console.ReadLine(), out int trackIndex) || trackIndex < 1 || trackIndex > project.tracks.Count) {
+                Console.WriteLine("Invalid track number.");
+                return;
+            }
+
+            // Create a new voice part in the selected track
+            UVoicePart newPart = new UVoicePart {
+                trackNo = trackIndex - 1, // Track index adjustment for zero-based index
+                name = "New Part",
+                position = 0,
+                duration = 480 // Default duration, modify as necessary
+            };
+
+            // Execute the AddPartCommand
+            AddPartCommand addPartCommand = new AddPartCommand(project, newPart);
+            addPartCommand.Execute();
+            Console.WriteLine($"Added new part to track {trackIndex}: {newPart.name}");
+        }
+
+
+        static void HandleDeletePart() {
+            if (project == null || project.parts.Count == 0) {
+                Console.WriteLine("No project or parts loaded. Cannot delete a part.");
+                return;
+            }
+
+            // List parts for user to choose
+            Console.WriteLine("Select a part to delete:");
+            for (int i = 0; i < project.parts.Count; i++) {
+                Console.WriteLine($"{i + 1}. {project.parts[i].name} in track {project.parts[i].trackNo + 1}");
+            }
+
+            Console.Write("Choose part number: ");
+            if (!int.TryParse(Console.ReadLine(), out int partIndex) || partIndex < 1 || partIndex > project.parts.Count) {
+                Console.WriteLine("Invalid part number.");
+                return;
+            }
+
+            // Execute the RemovePartCommand
+            UPart partToRemove = project.parts[partIndex - 1];
+            RemovePartCommand removePartCommand = new RemovePartCommand(project, partToRemove);
+            removePartCommand.Execute();
+            Console.WriteLine($"Removed part: {partToRemove.name}");
+        }
+
+        static void HandleRenamePart() {
+            if (project == null || project.parts.Count == 0) {
+                Console.WriteLine("No project or parts loaded. Cannot rename a part.");
+                return;
+            }
+
+            // List parts for user to choose
+            Console.WriteLine("Select a part to rename:");
+            for (int i = 0; i < project.parts.Count; i++) {
+                Console.WriteLine($"{i + 1}. {project.parts[i].name} in track {project.parts[i].trackNo + 1}");
+            }
+
+            Console.Write("Choose part number: ");
+            if (!int.TryParse(Console.ReadLine(), out int partIndex) || partIndex < 1 || partIndex > project.parts.Count) {
+                Console.WriteLine("Invalid part number.");
+                return;
+            }
+
+            Console.Write("Enter new name for the part: ");
+            string newName = Console.ReadLine() ?? string.Empty; // Provide a default empty string if null
+
+            if (string.IsNullOrWhiteSpace(newName)) {
+                Console.WriteLine("Invalid part name.");
+                return;
+            }
+
+            // Proceed with renaming the part using newName
+
+            if (string.IsNullOrWhiteSpace(newName)) {
+                Console.WriteLine("Invalid part name.");
+                return;
+            }
+
+            // Execute the RenamePartCommand
+            UPart partToRename = project.parts[partIndex - 1];
+            RenamePartCommand renamePartCommand = new RenamePartCommand(project, partToRename, newName);
+            renamePartCommand.Execute();
+            Console.WriteLine($"Renamed part to: {newName}");
+        }
+
+
+        static void HandleImportMidi(string filePath) {
+            if (project == null) {
+                Console.WriteLine("No project is currently loaded.");
+                return;
+            }
+
+            filePath = filePath.Trim('"').Replace('/', Path.DirectorySeparatorChar);
+
+            Console.WriteLine($"Received file path: {filePath}");  // Debug output
+
+            if (string.IsNullOrWhiteSpace(filePath)) {
+                Console.WriteLine("Invalid file path.");
+                return;
+            }
+
+            if (!File.Exists(filePath)) {
+                Console.WriteLine($"File does not exist at {filePath}."); // More detailed error message
+                return;
+            }
+
+            try {
+                var parts = OpenUtau.Core.Format.MidiWriter.Load(filePath, project);
+                DocManager.Inst.StartUndoGroup();
+                foreach (var part in parts) {
+                    var track = new UTrack { TrackNo = project.tracks.Count };
+                    part.trackNo = track.TrackNo;
+                    if (part.name != "New Part") {
+                        track.TrackName = part.name;
+                    }
+                    part.AfterLoad(project, track);
+                    DocManager.Inst.ExecuteCmd(new AddTrackCommand(project, track));
+                    DocManager.Inst.ExecuteCmd(new AddPartCommand(project, part));
+                }
+                DocManager.Inst.EndUndoGroup();
+                Console.WriteLine("MIDI file imported successfully.");
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to import MIDI: {ex.Message}");
+            }
+        }
+
+
+
+        /*static void HandleLoadRenderedPitch() {
+            if (project == null || project.parts.Count == 0) {
+                Console.WriteLine("No project or parts loaded.");
+                return;
+            }
+
+            // List parts for user selection
+            Console.WriteLine("Select a part to process:");
+            for (int i = 0; i < project.parts.Count; i++) {
+                Console.WriteLine($"{i + 1}. {project.parts[i].name}");
+            }
+
+            // Get user input
+            Console.Write("Choose part number: ");
+            if (!int.TryParse(Console.ReadLine(), out int partIndex) || partIndex < 1 || partIndex > project.parts.Count) {
+                Console.WriteLine("Invalid part number.");
+                return;
+            }
+
+            // Retrieve the selected part
+            UPart selectedPart = project.parts[partIndex - 1];
+            if (!(selectedPart is UVoicePart voicePart)) {
+                Console.WriteLine("Selected part is not a voice part.");
+                return;
+            }
+
+            // Assuming LoadRenderedPitch is a method that needs to be implemented or a class that needs to be instantiated and run
+            LoadRenderedPitch pitchLoader = new LoadRenderedPitch();
+            pitchLoader.Run(project, voicePart, new List<UNote>(), DocManager.Inst); // Adjust parameters as necessary
+
+            Console.WriteLine("Rendered pitch loading completed for selected part.");
+        }
+*/
 
 
 
 
 
 
-
-
-        static void AddSingerToTrack(USinger singer) {
+        /*static void AddSingerToTrack(USinger singer) {
             try {
                 var project = DocManager.Inst.Project;
                 if (project == null || project.tracks.Count == 0) {
@@ -430,7 +770,7 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"Failed to add singer to track: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
-        }
+        }*/
 
 
 

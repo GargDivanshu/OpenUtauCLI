@@ -43,7 +43,7 @@ namespace OpenUtau.App.Views {
                 return;
             }
             // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
-            var scheduler = TaskScheduler.Default;
+            var scheduler = TaskScheduler.Current;
             viewModel.Publish(outputFile).ContinueWith((task) => {
                 if (task.IsFaulted) {
                     Log.Error(task.Exception, "Failed to publish singer");

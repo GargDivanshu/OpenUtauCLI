@@ -55,7 +55,7 @@ namespace OpenUtau.App.Views {
             Log.Information("Initialized main window component.");
             DataContext = viewModel = new MainWindowViewModel();
             // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
-            var scheduler = TaskScheduler.Default;
+            var scheduler = TaskScheduler.Current;
             viewModel.GetInitSingerTask()!.ContinueWith(_ => {
                 viewModel.InitProject();
                 viewModel.AddTempoChangeCmd = ReactiveCommand.Create<int>(tick => AddTempoChange(tick));
@@ -96,7 +96,7 @@ namespace OpenUtau.App.Views {
                 dialog => dialog.Show(this),
                 () => (Application.Current?.ApplicationLifetime as IControlledApplicationLifetime)?.Shutdown(),
                 // TaskScheduler.FromCurrentSynchronizationContext()
-                TaskScheduler.Default
+                TaskScheduler.Current
                 );
             Log.Information("Created main window.");
         }
@@ -1199,7 +1199,7 @@ namespace OpenUtau.App.Views {
                     //Duration of the wave file in seconds
                     int wavDurS = (int)(wavePart.fileDurationMs / 1000.0);
                     // var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
-                    var scheduler = TaskScheduler.Default;
+                    var scheduler = TaskScheduler.Current;
                     var transcribeTask = Task.Run(()=>{
                         using(var some = new Some()){
                             return some.Transcribe(DocManager.Inst.Project, wavePart, wavPosS =>{
