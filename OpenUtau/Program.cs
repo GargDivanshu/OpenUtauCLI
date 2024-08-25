@@ -42,11 +42,29 @@ namespace OpenUtauCLI {
                         HandleInit();
                         break;
 
-                    case "--install_singer":
-                        if (args.Length > 2) {
-                            HandleInstallSinger(args[1], args[2]); // Ensure both format and path are provided
+                    case "--install":
+                        if (parts.Length > 1) {
+                            switch (parts[1].ToLower()) {
+                                case "--singer":
+                                    if (parts.Length > 3) {
+                                        HandleInstallSinger(parts[2], parts[3]); // Format and path are provided
+                                    } else {
+                                        Console.WriteLine("Error: The --install --singer command requires a format and a path to a singer file.");
+                                    }
+                                    break;
+                                case "--dependency":
+                                    if (parts.Length > 2) {
+                                        HandleInstallDependency(parts[2]); // Path is provided
+                                    } else {
+                                        Console.WriteLine("Error: The --install --dependency command requires a path to a dependency file.");
+                                    }
+                                    break;
+                                default:
+                                    Console.WriteLine("Invalid subcommand for '--install'.");
+                                    break;
+                            }
                         } else {
-                            Console.WriteLine("Error: The --install_singer command requires a format and a path to a singer file.");
+                            Console.WriteLine("Error: The '--install' command requires a subcommand.");
                         }
                         break;
 
@@ -648,6 +666,24 @@ namespace OpenUtauCLI {
             }
         }
 
+
+        static void HandleInstallDependency(string filePath) {
+            try {
+                if (!File.Exists(filePath)) {
+                    Console.WriteLine("Error: Dependency file does not exist.");
+                    return;
+                }
+
+                Console.WriteLine($"Starting installation of dependency from: {filePath}");
+
+                // Simulate the installation process
+                DependencyInstaller.Install(filePath);
+
+                Console.WriteLine("Dependency installed successfully.");
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to install dependency: {ex.Message}");
+            }
+        }
 
 
         /*static void HandleLoadRenderedPitch() {
