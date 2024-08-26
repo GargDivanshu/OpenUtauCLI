@@ -175,33 +175,47 @@ namespace OpenUtau.Core {
 
         // Exporting each tracks
         public async Task RenderToFiles(UProject project, string exportPath) {
-            await Task.Run(() => {
-                string file = "";
-                try {
-                    RenderEngine engine = new RenderEngine(project);
-                    var trackMixes = engine.RenderTracks(DocManager.Inst.MainScheduler, ref renderCancellation);
-                    for (int i = 0; i < trackMixes.Count; ++i) {
-                        if (trackMixes[i] == null || i >= project.tracks.Count || project.tracks[i].Muted) {
-                            continue;
-                        }
-                        file = PathManager.Inst.GetExportPath(exportPath, project.tracks[i]);
-                        DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, $"Exporting to {file}."));
+    await Task.Run(() => {
+        string file = "";
+        try {
+            RenderEngine engine = new RenderEngine(project);
+            Console.WriteLine("Render Engine initialized successfully.");
 
-                        CheckFileWritable(file);
-                        WaveFileWriter.CreateWaveFile16(file, new ExportAdapter(trackMixes[i]).ToMono(1, 0));
-                        DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, $"Exported to {file}."));
-                    }
-                } catch (IOException ioe) {
-                    var customEx = new MessageCustomizableException($"Failed to export {file}.", $"<translate:errors.failed.export>: {file}", ioe);
-                    DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(customEx));
-                    DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, $"Failed to export {file}."));
-                } catch (Exception e) {
-                    var customEx = new MessageCustomizableException("Failed to render.", "<translate:errors.failed.render>", e);
-                    DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(customEx));
-                    DocManager.Inst.ExecuteCmd(new ProgressBarNotification(0, $"Failed to render."));
+            var trackMixes = engine.RenderTracks(DocManager.Inst.MainScheduler, ref renderCancellation);
+            Console.WriteLine("Tracks rendered. Number of tracks: " + trackMixes.Count);
+
+            for (int i = 0; i < trackMixes.Count; ++i) {
+                if (trackMixes[i] == null) {
+                    Console.WriteLine($"Track {i} is null and will be skipped.");
+                    continue;
                 }
-            });
+                if (i >= project.tracks.Count) {
+                    Console.WriteLine($"Track index {i} is out of bounds. Total tracks: {project.tracks.Count}");
+                    continue;
+                }
+                if (project.tracks[i].Muted) {
+                    Console.WriteLine($"Track {i} is muted and will be skipped.");
+                    continue;
+                }
+
+                file = PathManager.Inst.GetExportPath(exportPath, project.tracks[i]);
+                Console.WriteLine($"Preparing to export track {i} to {file}.");
+
+                CheckFileWritable(file);
+                Console.WriteLine($"File {file} is writable.");
+
+                WaveFileWriter.CreateWaveFile16(file, new ExportAdapter(trackMixes[i]).ToMono(1, 0));
+                Console.WriteLine($"Exported track {i} successfully to {file}.");
+            }
+        } catch (IOException ioe) {
+            Console.WriteLine($"IOException encountered while exporting to {file}: {ioe.Message}");
+        } catch (Exception e) {
+            Console.WriteLine($"Exception encountered during rendering/exporting: {e.Message}");
         }
+    });
+}
+
+
 
         private void CheckFileWritable(string filePath) {
             if (!File.Exists(filePath)) {

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.IO.Compression;
 using System.Linq;
 using OpenUtau.App.ViewModels;
@@ -11,6 +12,7 @@ using OpenUtau.Classic;
 using OpenUtau.Core.Util;
 using OpenUtau.Core.Ustx;
 using OpenUtau.Api;
+using OpenUtau.Audio;
 using OpenUtau.Core.DiffSinger;
 using Serilog;
 
@@ -139,6 +141,22 @@ namespace OpenUtauCLI {
                         }
                         break;
 
+
+                    case "--export":
+                        if (parts.Length > 1 && parts[1].ToLower() == "--wav") {
+                            HandleExportWavCommand().GetAwaiter().GetResult();
+                        } else {
+                            Console.WriteLine("Error: Specify the format to export (e.g., --export --wav).");
+                        }
+                        break;
+
+
+                    case "--save":
+                        HandleSaveCommand();
+
+                        break;
+
+
                     /*case "--process":
                         if (parts.Length > 1) {
                             switch (parts[1].ToLower()) {
@@ -168,6 +186,24 @@ namespace OpenUtauCLI {
             }
         }
 
+        public static void InitAudio() {
+            Log.Information("Initializing audio.");
+            if (!OpenUtau.OS.IsWindows() || OpenUtau.Core.Util.Preferences.Default.PreferPortAudio) {
+                try {
+                    PlaybackManager.Inst.AudioOutput = new OpenUtau.Audio.MiniAudioOutput();
+                } catch (Exception e1) {
+                    Log.Error(e1, "Failed to init MiniAudio");
+                }
+            } else {
+                try {
+                    PlaybackManager.Inst.AudioOutput = new OpenUtau.Audio.NAudioOutput();
+                } catch (Exception e2) {
+                    Log.Error(e2, "Failed to init NAudio");
+                }
+            }
+            Log.Information("Initialized audio.");
+        }
+
         static void InitializeCoreComponents() {
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
@@ -177,12 +213,67 @@ namespace OpenUtauCLI {
             Console.WriteLine($"Data path = {PathManager.Inst.DataPath}");
             Console.WriteLine($"Cache path = {PathManager.Inst.CachePath}");
             ToolsManager.Inst.Initialize();
-            if (project == null) {
-                DocManager.Inst.Initialize(); // Only initialize if project is not already set
-                project = DocManager.Inst.Project; // Assign the project instance
-            }
+            DocManager.Inst.Initialize(); // Ensure DocManager is always initialized before any project loading
             SingerManager.Inst.Initialize();
+            InitAudio();
+
+            PromptForProjectLoading();
         }
+
+        static void PromptForProjectLoading() {
+            Console.WriteLine("Do you want to [1] Open an existing project or [2] Start a new project?");
+            Console.Write("Select option (1 or 2): ");
+            var option = Console.ReadLine();
+            switch (option) {
+                case "1":
+                    HandleOpenProject();
+                    break;
+                case "2":
+                    if (project == null) {
+                        DocManager.Inst.Initialize(); // Only initialize if project is not already set
+                        project = DocManager.Inst.Project; // Assign the project instance
+                    }
+                    break;
+                default:
+                    Console.WriteLine("Invalid option. Starting new project by default.");
+                    if (project == null) {
+                        DocManager.Inst.Initialize(); // Only initialize if project is not already set
+                        project = DocManager.Inst.Project; // Assign the project instance
+                    }
+                    break;
+            }
+        }
+
+
+        static void HandleOpenProject() {
+            Console.WriteLine("Enter the path to the project file (e.g., project.ustx):");
+            string path = Console.ReadLine() ?? string.Empty;
+            if (string.IsNullOrEmpty(path)) {
+                Console.WriteLine("No path provided.");
+                return;
+            }
+            if (!File.Exists(path)) {
+                Console.WriteLine("File does not exist.");
+                return;
+            }
+
+            path = path.Trim('"').Replace('/', Path.DirectorySeparatorChar);
+
+            Console.WriteLine("Starting to load project...");
+            try {
+                string[] files = { path };
+                DocManager.Inst.ExecuteCmd(new LoadingNotification(typeof(Program), true, "project"));
+                OpenUtau.Core.Format.Formats.LoadProject(files);  // This method will handle the actual loading
+                project = DocManager.Inst.Project; // Update the global project reference
+                DocManager.Inst.ExecuteCmd(new VoiceColorRemappingNotification(-1, true));
+                Console.WriteLine("Project opened successfully.");
+            } catch (Exception ex) {
+                Console.WriteLine($"An error occurred while loading the project: {ex.Message}");
+            } finally {
+                DocManager.Inst.ExecuteCmd(new LoadingNotification(typeof(Program), false, "project"));
+            }
+        }
+
 
         static void InitLogging() {
             Log.Logger = new LoggerConfiguration()
@@ -684,6 +775,147 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"Failed to install dependency: {ex.Message}");
             }
         }
+
+        /*static void HandleOpenProject() {
+            *//*if (!DocManager.Inst.ChangesSaved) {
+                Console.WriteLine("There are unsaved changes. Save them? (yes/no)");
+                if (Console.ReadLine().Trim().ToLower() == "yes") {
+                    // Assuming a function that handles saving which you would have implemented.
+                    HandleSaveProject();
+                }
+            }*//*
+
+            Console.WriteLine("Enter the path to the project file (e.g., project.ustx):");
+            string path = Console.ReadLine() ?? string.Empty;
+            if (string.IsNullOrEmpty(path)) {
+                Console.WriteLine("No path provided.");
+                return;
+            }
+            if (!File.Exists(path)) {
+                Console.WriteLine("File does not exist.");
+                return;
+            }
+
+            Console.WriteLine("Starting to load project...");
+            try {
+                string[] files = { path };
+                DocManager.Inst.ExecuteCmd(new LoadingNotification(typeof(Program), true, "project"));
+                OpenUtau.Core.Format.Formats.LoadProject(files);  // This method will handle the actual loading
+                DocManager.Inst.ExecuteCmd(new VoiceColorRemappingNotification(-1, true)); // Simulate voice color remapping as needed
+                Console.WriteLine("Project opened successfully.");
+            } catch (Exception ex) {
+                Console.WriteLine($"An error occurred while loading the project: {ex.Message}");
+            } finally {
+                DocManager.Inst.ExecuteCmd(new LoadingNotification(typeof(Program), false, "project"));
+            }
+        }*/
+
+
+
+        static void OpenProject(string[] files) {
+            if (files == null || files.Length == 0) {
+                Console.WriteLine("No files specified or files array is empty.");
+                return;
+            }
+            try {
+                // Mimic loading notification from UI
+                Console.WriteLine("Starting to load project...");
+                OpenUtau.Core.Format.Formats.LoadProject(files);
+                // Mimic remapping notification and other notifications
+                Console.WriteLine("Project loaded successfully.");
+                // Optionally, update the title or other necessary components
+            } catch (Exception ex) {
+                Console.WriteLine($"An error occurred while loading the project: {ex.Message}");
+            }
+        }
+
+
+        static void HandleSaveCommand() {
+            if (project == null) {
+                Console.WriteLine("No project is currently loaded.");
+                return;
+            }
+
+            if (!project.Saved || string.IsNullOrEmpty(project.FilePath)) {
+                Console.WriteLine("Project is not saved or does not have an existing file path.");
+
+                // Get directory path to save the project
+                Console.WriteLine("Enter the directory path where you want to save the project:");
+                string directoryPath = Console.ReadLine() ?? "";
+
+                if (string.IsNullOrEmpty(directoryPath)) {
+                    Console.WriteLine("No directory path provided. Aborting save operation.");
+                    return;
+                }
+
+                // Get project name from the user
+                Console.WriteLine("Enter the name for the project file (without extension):");
+                string projectName = Console.ReadLine() ?? "";
+
+                if (string.IsNullOrEmpty(projectName)) {
+                    Console.WriteLine("No project name provided. Aborting save operation.");
+                    return;
+                }
+
+                // Combine directory path and project name to form full file path
+                string fullPath = Path.Combine(directoryPath, projectName + ".ustx"); // Assuming .ustx as the file extension
+                project.FilePath = fullPath; // Update the project's file path
+                SaveProject();
+            } else {
+                // Save the project to its existing file path
+                SaveProject();
+            }
+        }
+
+        static void SaveProject() {
+            if (project == null) {
+                Console.WriteLine("No project is currently loaded.");
+                return;
+            }
+            try {
+                project.BeforeSave(); // Assuming the project needs to be preprocessed before saving
+                DocManager.Inst.ExecuteCmd(new SaveProjectNotification(project.FilePath)); // Simulate save command
+                project.Saved = true; // Mark the project as saved
+                Console.WriteLine($"Project saved successfully at {DateTime.Now} to {project.FilePath}");
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to save the project: {ex.Message}");
+            }
+        }
+
+
+        static async Task HandleExportWavCommand() {
+            if (project == null) {
+                Console.WriteLine("No project is currently loaded.");
+                return;
+            }
+
+            if (!project.Saved) {
+                Console.WriteLine("The project has unsaved changes. Please save the project before exporting.");
+                HandleSaveCommand();
+                if (!project.Saved) {
+                    Console.WriteLine("Project not saved. Aborting export operation.");
+                    return;
+                }
+            }
+
+            Console.WriteLine("Enter the path where you want to export the WAV file:");
+            string exportPath = Console.ReadLine() ?? "";
+
+            if (string.IsNullOrEmpty(exportPath)) {
+                Console.WriteLine("No export path provided. Aborting export operation.");
+                return;
+            }
+
+            try {
+                await PlaybackManager.Inst.RenderToFiles(project, exportPath);
+                Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
+            } catch (Exception ex) {
+                Console.WriteLine($"An error occurred during the export: {ex.Message}");
+            }
+        }
+
+
+
 
 
         /*static void HandleLoadRenderedPitch() {

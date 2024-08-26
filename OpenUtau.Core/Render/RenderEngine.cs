@@ -32,7 +32,7 @@ namespace OpenUtau.Core.Render {
         }
     }
 
-    class RenderPartRequest {
+    class RenderPartRequest { 
         public UVoicePart part;
         public long timestamp;
         public int trackNo;
@@ -133,31 +133,45 @@ namespace OpenUtau.Core.Render {
 
         // for export
         public List<WaveMix> RenderTracks(TaskScheduler uiScheduler, ref CancellationTokenSource cancellation) {
+            Console.WriteLine("RenderTracks strted");
             var newCancellation = new CancellationTokenSource();
             var oldCancellation = Interlocked.Exchange(ref cancellation, newCancellation);
             if (oldCancellation != null) {
+                Console.WriteLine("Cancelling previous rendering operation.");
                 oldCancellation.Cancel();
                 oldCancellation.Dispose();
             }
+
+            Console.WriteLine("Starting new rendering operation.");
             var trackMixes = new List<WaveMix>();
             var requests = PrepareRequests();
+            Console.WriteLine($"Prepared {requests.Length} render requests.");
+
             if (requests.Length == 0) {
+                Console.WriteLine("No render requests found; nothing to render.");
                 return trackMixes;
             }
-            Enumerable.Range(0, requests.Max(req => req.trackNo) + 1)
-                .Select(trackNo => requests.Where(req => req.trackNo == trackNo).ToArray())
-                .ToList()
-                .ForEach(trackRequests => {
-                    if (trackRequests.Length == 0) {
-                        trackMixes.Add(null);
-                    } else {
-                        RenderRequests(trackRequests, newCancellation);
-                        var mix = new WaveMix(trackRequests.Select(req => req.mix).ToArray());
-                        trackMixes.Add(mix);
-                    }
-                });
+
+            Enumerable.Range(0, requests.Max(req => req.trackNo) + 1).Select(trackNo => {
+                Console.WriteLine($"Processing track number {trackNo}.");
+                return requests.Where(req => req.trackNo == trackNo).ToArray();
+            }).ToList().ForEach(trackRequests => {
+                if (trackRequests.Length == 0) {
+                    Console.WriteLine("No requests for this track; adding null to track mixes.");
+                    trackMixes.Add(null);
+                } else {
+                    Console.WriteLine($"Rendering {trackRequests.Length} requests for track.");
+                    RenderRequests(trackRequests, newCancellation);
+                    var mix = new WaveMix(trackRequests.Select(req => req.mix).ToArray());
+                    trackMixes.Add(mix);
+                    Console.WriteLine("Added rendered mix to track mixes.");
+                }
+            });
+
+            Console.WriteLine("Rendering operation completed.");
             return trackMixes;
         }
+
 
         // for pre render
         public void PreRenderProject(ref CancellationTokenSource cancellation) {
@@ -168,6 +182,7 @@ namespace OpenUtau.Core.Render {
                 oldCancellation.Dispose();
             }
             Task.Run(() => {
+                Console.WriteLine("Pre-rendering started.");
                 try {
                     Thread.Sleep(200);
                     if (newCancellation.Token.IsCancellationRequested) {
@@ -216,16 +231,20 @@ namespace OpenUtau.Core.Render {
         }
 
         private void RenderRequests(
-            RenderPartRequest[] requests,
-            CancellationTokenSource cancellation,
-            bool playing = false) {
+    RenderPartRequest[] requests,
+    CancellationTokenSource cancellation,
+    bool playing = false) {
             if (requests.Length == 0 || cancellation.IsCancellationRequested) {
+                Console.WriteLine("No requests to process or operation cancelled.");
                 return;
             }
             var tuples = requests
                 .SelectMany(req => req.phrases
                     .Zip(req.sources, (phrase, source) => Tuple.Create(phrase, source, req)))
                 .ToArray();
+
+            Console.WriteLine($"Processing {tuples.Length} tuples.");
+
             if (playing) {
                 var orderedTuples = tuples
                     .Where(tuple => tuple.Item1.end > startTick)
@@ -234,24 +253,35 @@ namespace OpenUtau.Core.Render {
                     .ToArray();
                 tuples = orderedTuples;
             }
+
             var progress = new Progress(tuples.Sum(t => t.Item1.phones.Length));
             foreach (var tuple in tuples) {
-                var phrase = tuple.Item1;
-                var source = tuple.Item2;
-                var request = tuple.Item3;
-                var task = phrase.renderer.Render(phrase, progress, request.trackNo, cancellation, true);
+                Console.WriteLine($"Rendering phrase from track {tuple.Item3.trackNo}.");
+                if (tuple.Item1.renderer == null) {
+                    Console.WriteLine("Renderer is null.");
+                    continue;
+                }
+                var task = tuple.Item1.renderer.Render(tuple.Item1, progress, tuple.Item3.trackNo, cancellation, true);
                 task.Wait();
                 if (cancellation.IsCancellationRequested) {
+                    Console.WriteLine("Cancellation requested, breaking loop.");
                     break;
                 }
-                source.SetSamples(task.Result.samples);
-                if (request.sources.All(s => s.HasSamples)) {
-                    request.part.SetMix(request.mix);
-                    DocManager.Inst.ExecuteCmd(new PartRenderedNotification(request.part));
+                if (tuple.Item2 == null) {
+                    Console.WriteLine("Source is null, skipping setting samples.");
+                    continue;
+                }
+                tuple.Item2.SetSamples(task.Result.samples);
+                if (tuple.Item3.sources.All(s => s.HasSamples)) {
+                    tuple.Item3.part.SetMix(tuple.Item3.mix);
+                    DocManager.Inst.ExecuteCmd(new PartRenderedNotification(tuple.Item3.part));
                 }
             }
             progress.Clear();
         }
+
+
+
 
         public static void ReleaseSourceTemp() {
             Classic.VoicebankFiles.Inst.ReleaseSourceTemp();
