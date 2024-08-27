@@ -87,6 +87,9 @@ namespace OpenUtauCLI {
                                 case "--update":
                                     HandleUpdateTrack();
                                     break;
+                                case "--remove":
+                                    RemoveTrack();
+                                    break;
                                 default:
                                     Console.WriteLine("Invalid subcommand for '--track'.");
                                     break;
@@ -139,6 +142,11 @@ namespace OpenUtauCLI {
                         } else {
                             Console.WriteLine("Error: The '--import' command requires a subcommand.");
                         }
+                        break;
+
+
+                    case "--phonemizers":
+                        ListPhonemizers();
                         break;
 
 
@@ -379,12 +387,45 @@ namespace OpenUtauCLI {
 
             // You can extend this to update phonemizer and renderer here if needed
 
+            Console.WriteLine("Available phonemizers:");
+            ListPhonemizers();
+
+            Console.Write("Enter the phonemizer name to apply: ");
+            string phonemizerName = Console.ReadLine()?? "";
+
+            if (!TryChangePhonemizer(phonemizerName, selectedTrack)) {
+                Console.WriteLine("Failed to apply phonemizer. Check the name and try again.");
+            } else {
+                Console.WriteLine($"Phonemizer {phonemizerName} applied to track {selectedTrack.TrackName}.");
+            }
+
             DocManager.Inst.EndUndoGroup();
             DocManager.Inst.AutoSave();
             Console.WriteLine("Track updated and project state saved.");
         }
 
+        static void ListPhonemizers() {
+            var phonemizers = DocManager.Inst.PhonemizerFactories;
+            int index = 1;
+            foreach (var phonemizer in phonemizers) {
+                Console.WriteLine($"{index++}) {phonemizer.type.FullName} - {phonemizer.language}");
+            }
+        }
 
+
+        private static bool TryChangePhonemizer(string phonemizerName, UTrack track) {
+            try {
+                var factory = DocManager.Inst.PhonemizerFactories.FirstOrDefault(factory => factory.type.FullName == phonemizerName);
+                var phonemizer = factory?.Create();
+                if (phonemizer != null) {
+                    DocManager.Inst.ExecuteCmd(new TrackChangePhonemizerCommand(DocManager.Inst.Project, track, phonemizer));
+                    return true;
+                }
+            } catch (Exception e) {
+                Log.Error(e, $"Failed to load phonemizer {phonemizerName}");
+            }
+            return false;
+        }
 
 
 
@@ -517,91 +558,63 @@ namespace OpenUtauCLI {
         }
 
         static void HandleAddTrack() {
-            try {
-                if (project == null) {
-                    Console.WriteLine("No project is currently loaded.");
-                    return;
-                }
-
-                Console.WriteLine($"Adding a new track to the project: {project.name} ({project.FilePath})");
-
-                // Step 1: List all available singers
-                Console.WriteLine("Searching for all singers...");
-                SingerManager.Inst.SearchAllSingers();
-                var keys = SingerManager.Inst.SingerGroups.Keys.OrderBy(k => k);
-                var allSingers = new List<USinger>();
-
-                foreach (var key in keys) {
-                    var singers = SingerManager.Inst.SingerGroups[key];
-                    if (singers != null && singers.Count > 0) {
-                        allSingers.AddRange(singers);
-                    }
-                }
-
-                if (allSingers.Count == 0) {
-                    Console.WriteLine("No singers available to add to the track.");
-                    return;
-                }
-
-                // Step 2: Display singers and allow user selection
-                Console.WriteLine("Available singers:");
-                for (int i = 0; i < allSingers.Count; i++) {
-                    Console.WriteLine($"{i + 1}. {allSingers[i].LocalizedName} ({allSingers[i].SingerType})");
-                }
-
-                Console.Write("Select a singer by number: ");
-                int selection;
-                while (!int.TryParse(Console.ReadLine(), out selection) || selection < 1 || selection > allSingers.Count) {
-                    Console.Write("Invalid selection. Please enter a valid number: ");
-                }
-
-                var selectedSinger = allSingers[selection - 1];
-                Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
-
-                // Step 3: Create and add a new track to the project
-                var newTrack = new UTrack($"Track {project.tracks.Count + 1}");
-
-                // Add the track to the project's track list
-                project.tracks.Add(newTrack);
-                Console.WriteLine($"New track {newTrack.TrackName} added. Total tracks now: {project.tracks.Count}");
-
-                // Log project state after adding the track
-                Log.Information($"After adding the track: Tracks={project.tracks.Count}");
-
-                DocManager.Inst.StartUndoGroup();
-
-                // Set the singer for the track
-                var singerCommand = new TrackChangeSingerCommand(project, newTrack, selectedSinger);
-                DocManager.Inst.ExecuteCmd(singerCommand);
-                Console.WriteLine($"Singer {selectedSinger.LocalizedName} added to the track.");
-
-                // End undo group and trigger autosave
-                DocManager.Inst.EndUndoGroup();
-                DocManager.Inst.AutoSave(); // Force an autosave immediately
-
-                // Log project state after autosave
-                Console.WriteLine($"Project state saved. Total tracks in project after autosave: {project.tracks.Count}");
-                Log.Information($"Project state saved. Total tracks: {project.tracks.Count}");
-
-                foreach (var track in project.tracks) {
-                    Console.WriteLine("-------------------------------------------------");
-                    Console.WriteLine($"Track Name: {track.TrackName}");
-                    Console.WriteLine($"Track Number: {track.TrackNo + 1}");
-                    Console.WriteLine($"Singer: {track.Singer?.LocalizedName ?? "None"}");
-                    Console.WriteLine($"Phonemizer: {track.Phonemizer?.GetType().Name ?? "DefaultPhonemizer"}");
-                    Console.WriteLine($"Renderer: {track.RendererSettings?.Renderer?.ToString() ?? "None"}");
-                    Console.WriteLine($"Singer Path: {track.Singer?.Location ?? "None"}");
-                    Console.WriteLine("-------------------------------------------------");
-                }
-
-                Preferences.Save();
-
-                Console.WriteLine($"Track added successfully to the project.");
-            } catch (Exception ex) {
-                Console.WriteLine($"Failed to add track: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            if (project == null) {
+                Console.WriteLine("No project is currently loaded.");
+                return;
             }
+
+            Console.WriteLine($"Adding a new track to the project: {project.name} ({project.FilePath})");
+
+            // List available singers
+            SingerManager.Inst.SearchAllSingers();
+            var allSingers = SingerManager.Inst.SingerGroups.SelectMany(g => g.Value).ToList();
+            if (allSingers.Count == 0) {
+                Console.WriteLine("No singers available to add to the track.");
+                return;
+            }
+
+            Console.WriteLine("Available singers:");
+            for (int i = 0; i < allSingers.Count; i++) {
+                Console.WriteLine($"{i + 1}. {allSingers[i].LocalizedName} ({allSingers[i].SingerType})");
+            }
+
+            Console.Write("Select a singer by number: ");
+            if (!int.TryParse(Console.ReadLine(), out int singerIndex) || singerIndex < 1 || singerIndex > allSingers.Count) {
+                Console.WriteLine("Invalid singer selection.");
+                return;
+            }
+
+            USinger selectedSinger = allSingers[singerIndex - 1];
+            Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
+
+            // Create a new track
+            var newTrack = new UTrack($"Track {project.tracks.Count + 1}");
+            project.tracks.Add(newTrack);
+            Console.WriteLine($"New track {newTrack.TrackName} added. Assigning selected singer...");
+
+            DocManager.Inst.StartUndoGroup();
+            var singerCommand = new TrackChangeSingerCommand(project, newTrack, selectedSinger);
+            DocManager.Inst.ExecuteCmd(singerCommand);
+            Console.WriteLine($"Singer {selectedSinger.LocalizedName} added to the new track.");
+
+            // List and select phonemizers
+            Console.WriteLine("Available phonemizers:");
+            ListPhonemizers();
+
+            Console.Write("Enter the phonemizer name to apply: ");
+            string phonemizerName = Console.ReadLine() ?? "";
+
+            if (!TryChangePhonemizer(phonemizerName, newTrack)) {
+                Console.WriteLine("Failed to apply phonemizer. Check the name and try again.");
+            } else {
+                Console.WriteLine($"Phonemizer {phonemizerName} applied to new track.");
+            }
+
+            DocManager.Inst.EndUndoGroup();
+            DocManager.Inst.AutoSave();
+            Console.WriteLine("New track added and project state saved.");
         }
+
 
 
 
@@ -866,6 +879,43 @@ namespace OpenUtauCLI {
                 SaveProject();
             }
         }
+
+        static void RemoveTrack() {
+            ListTracks();
+            int trackCount = DocManager.Inst.Project.tracks.Count;
+            int trackIndex = GetUserInputForTrackRemoval(trackCount);
+            var trackToRemove = DocManager.Inst.Project.tracks[trackIndex];
+
+            DocManager.Inst.StartUndoGroup();
+            DocManager.Inst.ExecuteCmd(new RemoveTrackCommand(DocManager.Inst.Project, trackToRemove));
+            DocManager.Inst.EndUndoGroup();
+
+            Console.WriteLine($"Track '{trackToRemove.TrackName}' has been successfully removed.");
+        }
+
+        static int GetUserInputForTrackRemoval(int trackCount) {
+            while (true) {
+                Console.WriteLine("Enter the number of the track to remove:");
+                string input = Console.ReadLine() ?? "";
+                if (int.TryParse(input, out int trackNumber) && trackNumber > 0 && trackNumber <= trackCount) {
+                    return trackNumber - 1;  // Convert to zero-based index
+                }
+                Console.WriteLine("Invalid input. Please enter a valid track number.");
+            }
+        }
+
+        static void ListTracks() {
+            var tracks = DocManager.Inst.Project.tracks;
+            Console.WriteLine("Available tracks:");
+            for (int i = 0; i < tracks.Count; i++) {
+                Console.WriteLine($"{i + 1}) {tracks[i].TrackName}");  // Assuming each track has a Name property
+            }
+        }
+
+
+
+
+
 
         static void SaveProject() {
             if (project == null) {

@@ -82,7 +82,7 @@ namespace OpenUtau.Core.Render {
                 trackSources.AddRange(project.parts
                     .Where(part => part is UWavePart && part.trackNo == i)
                     .Select(part => part as UWavePart)
-                    .Where(part => part.Samples != null)
+                    .Where(part => part?.Samples != null)
                     .Select(part => {
                         double offsetMs = project.timeAxis.TickPosToMsPos(part.position);
                         double estimatedLengthMs = project.timeAxis.TickPosToMsPos(part.End) - offsetMs;
@@ -133,44 +133,43 @@ namespace OpenUtau.Core.Render {
 
         // for export
         public List<WaveMix> RenderTracks(TaskScheduler uiScheduler, ref CancellationTokenSource cancellation) {
-            Console.WriteLine("RenderTracks strted");
-            var newCancellation = new CancellationTokenSource();
-            var oldCancellation = Interlocked.Exchange(ref cancellation, newCancellation);
-            if (oldCancellation != null) {
-                Console.WriteLine("Cancelling previous rendering operation.");
-                oldCancellation.Cancel();
-                oldCancellation.Dispose();
+    var newCancellation = new CancellationTokenSource();
+    var oldCancellation = Interlocked.Exchange(ref cancellation, newCancellation);
+    if (oldCancellation != null) {
+        oldCancellation.Cancel();
+        oldCancellation.Dispose();
+    }
+    var trackMixes = new List<WaveMix>();
+    var requests = PrepareRequests(); // This function needs to gather all the necessary data for rendering.
+    Console.WriteLine($"Prepared {requests.Length} render requests.");
+
+    if (requests.Length == 0) {
+        Console.WriteLine("No render requests found; nothing to render.");
+        return trackMixes;
+    }
+
+    Enumerable.Range(0, requests.Max(req => req.trackNo) + 1)
+        .Select(trackNo => {
+            Console.WriteLine($"Processing track number {trackNo}.");
+            return requests.Where(req => req.trackNo == trackNo).ToArray();
+        })
+        .ToList()
+        .ForEach(trackRequests => {
+            if (trackRequests.Length == 0) {
+                Console.WriteLine("No requests for this track; adding null to track mixes.");
+                // trackMixes.Add(null);
+            } else {
+                RenderRequests(trackRequests, newCancellation);
+                var mix = new WaveMix(trackRequests.Select(req => req.mix).ToArray());
+                trackMixes.Add(mix);
+                Console.WriteLine("Added rendered mix to track mixes.");
             }
+        });
 
-            Console.WriteLine("Starting new rendering operation.");
-            var trackMixes = new List<WaveMix>();
-            var requests = PrepareRequests();
-            Console.WriteLine($"Prepared {requests.Length} render requests.");
+    Console.WriteLine("Rendering operation completed.");
+    return trackMixes;
+}
 
-            if (requests.Length == 0) {
-                Console.WriteLine("No render requests found; nothing to render.");
-                return trackMixes;
-            }
-
-            Enumerable.Range(0, requests.Max(req => req.trackNo) + 1).Select(trackNo => {
-                Console.WriteLine($"Processing track number {trackNo}.");
-                return requests.Where(req => req.trackNo == trackNo).ToArray();
-            }).ToList().ForEach(trackRequests => {
-                if (trackRequests.Length == 0) {
-                    Console.WriteLine("No requests for this track; adding null to track mixes.");
-                    trackMixes.Add(null);
-                } else {
-                    Console.WriteLine($"Rendering {trackRequests.Length} requests for track.");
-                    RenderRequests(trackRequests, newCancellation);
-                    var mix = new WaveMix(trackRequests.Select(req => req.mix).ToArray());
-                    trackMixes.Add(mix);
-                    Console.WriteLine("Added rendered mix to track mixes.");
-                }
-            });
-
-            Console.WriteLine("Rendering operation completed.");
-            return trackMixes;
-        }
 
 
         // for pre render
@@ -198,53 +197,61 @@ namespace OpenUtau.Core.Render {
         }
 
         private RenderPartRequest[] PrepareRequests() {
-            RenderPartRequest[] requests;
-            SingerManager.Inst.ReleaseSingersNotInUse(project);
-            lock (project) {
-                requests = project.parts
-                    .Where(part => part is UVoicePart && (trackNo == -1 || part.trackNo == trackNo))
-                    .Where(part => !Preferences.Default.SkipRenderingMutedTracks || !project.tracks[part.trackNo].Muted)
-                    .Select(part => part as UVoicePart)
-                    .Select(part => part.GetRenderRequest())
-                    .Where(request => request != null)
-                    .ToArray();
-            }
-            foreach (var request in requests) {
-                if (endTick != -1) {
-                    request.phrases = request.phrases
-                        .Where(phrase => phrase.end > startTick && (endTick == -1 || phrase.position < endTick))
-                        .ToArray();
+    RenderPartRequest[] requests;
+    SingerManager.Inst.ReleaseSingersNotInUse(project);
+    lock (project) {
+        requests = project.parts
+            .Where(part => part is UVoicePart && (trackNo == -1 || part.trackNo == trackNo))
+            .Where(part => !Preferences.Default.SkipRenderingMutedTracks || !project.tracks[part.trackNo].Muted)
+            .Select(part => part as UVoicePart)
+            .Select(part => {
+                var request = part?.GetRenderRequest();
+                if (request == null) {
+                    Console.WriteLine($"Skipping part due to null request or renderer: {part.name}");  // Ensure 'Name' is the correct property that exists on 'part'.
+                    return null;  // Explicitly return null here to filter these out later.
                 }
-                request.sources = new WaveSource[request.phrases.Length];
-                for (var i = 0; i < request.phrases.Length; i++) {
-                    var phrase = request.phrases[i];
-                    var firstPhone = phrase.phones.First();
-                    var lastPhone = phrase.phones.Last();
-                    var layout = phrase.renderer.Layout(phrase);
-                    double posMs = layout.positionMs - layout.leadingMs;
-                    double durMs = layout.estimatedLengthMs;
-                    request.sources[i] = new WaveSource(posMs, durMs, 0, 1);
-                }
-                request.mix = new WaveMix(request.sources);
-            }
-            return requests;
+                return request;
+            })
+            .Where(request => request != null)  // This filters out nulls, ensuring the output is non-nullable.
+            .ToArray();
+    }
+    foreach (var request in requests) {
+        if (endTick != -1) {
+            request.phrases = request.phrases
+                .Where(phrase => phrase.end > startTick && (endTick == -1 || phrase.position < endTick))
+                .ToArray();
         }
+        request.sources = new WaveSource[request.phrases.Length];
+        for (var i = 0; i < request.phrases.Length; i++) {
+            var phrase = request.phrases[i];
+            if (phrase.renderer == null) {
+                Console.WriteLine("Renderer is null, skipping phrase.");
+                continue;
+            }
+            var layout = phrase.renderer.Layout(phrase);
+            double posMs = layout.positionMs - layout.leadingMs;
+            double durMs = layout.estimatedLengthMs;
+            request.sources[i] = new WaveSource(posMs, durMs, 0, 1);
+        }
+        request.mix = new WaveMix(request.sources);
+    }
+    return requests;
+}
 
-        private void RenderRequests(
-    RenderPartRequest[] requests,
-    CancellationTokenSource cancellation,
-    bool playing = false) {
+
+
+        public void RenderRequests(RenderPartRequest[] requests, CancellationTokenSource cancellation, bool playing = false) {
+            Console.WriteLine("RenderRequests started");
             if (requests.Length == 0 || cancellation.IsCancellationRequested) {
                 Console.WriteLine("No requests to process or operation cancelled.");
                 return;
             }
+
+            Console.WriteLine($"{requests.Length} is the length");
             var tuples = requests
                 .SelectMany(req => req.phrases
                     .Zip(req.sources, (phrase, source) => Tuple.Create(phrase, source, req)))
                 .ToArray();
-
-            Console.WriteLine($"Processing {tuples.Length} tuples.");
-
             if (playing) {
                 var orderedTuples = tuples
                     .Where(tuple => tuple.Item1.end > startTick)
@@ -253,32 +260,52 @@ namespace OpenUtau.Core.Render {
                     .ToArray();
                 tuples = orderedTuples;
             }
-
             var progress = new Progress(tuples.Sum(t => t.Item1.phones.Length));
+            Console.WriteLine($"Starting rendering of {tuples.Length} tuples.");
             foreach (var tuple in tuples) {
-                Console.WriteLine($"Rendering phrase from track {tuple.Item3.trackNo}.");
-                if (tuple.Item1.renderer == null) {
-                    Console.WriteLine("Renderer is null.");
+                var phrase = tuple.Item1;
+                var source = tuple.Item2;
+                var request = tuple.Item3;
+
+                if (phrase == null || source == null || request == null) {
+                    Console.WriteLine("One or more essential components of a tuple are null.");
                     continue;
                 }
-                var task = tuple.Item1.renderer.Render(tuple.Item1, progress, tuple.Item3.trackNo, cancellation, true);
-                task.Wait();
-                if (cancellation.IsCancellationRequested) {
-                    Console.WriteLine("Cancellation requested, breaking loop.");
-                    break;
-                }
-                if (tuple.Item2 == null) {
-                    Console.WriteLine("Source is null, skipping setting samples.");
+
+                if (phrase.renderer == null) {
+                    Console.WriteLine("Renderer is null, skipping phrase.");
                     continue;
                 }
-                tuple.Item2.SetSamples(task.Result.samples);
-                if (tuple.Item3.sources.All(s => s.HasSamples)) {
-                    tuple.Item3.part.SetMix(tuple.Item3.mix);
-                    DocManager.Inst.ExecuteCmd(new PartRenderedNotification(tuple.Item3.part));
+
+                try {
+                    Console.WriteLine("Starting rendering phrase.");
+                    var task = phrase.renderer?.Render(phrase, progress, request.trackNo, cancellation, true);
+                    task?.Wait();
+                    Console.WriteLine("Rendering completed for phrase.");
+
+                    if (cancellation.IsCancellationRequested) {
+                        Console.WriteLine("Cancellation requested, stopping rendering.");
+                        break;
+                    }
+
+                    if (task==null || task.Result == null || task.Result.samples == null) {
+                        Console.WriteLine("Render result is null or missing samples, skipping setting samples.");
+                        continue;
+                    }
+
+                    source.SetSamples(task.Result.samples);
+                    if (request.sources.All(s => s.HasSamples)) {
+                        request.part.SetMix(request.mix);
+                        Console.WriteLine("Part set mix completed.");
+                        DocManager.Inst.ExecuteCmd(new PartRenderedNotification(request.part));
+                    }
+                } catch (Exception ex) {
+                    Console.WriteLine($"Exception encountered during rendering: {ex.Message}");
                 }
             }
-            progress.Clear();
         }
+
+
 
 
 
