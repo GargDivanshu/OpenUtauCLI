@@ -1,7 +1,15 @@
 
+# OpenUtauCLI
+
+This project is a modification of OpenUtau, where it allows the user to user OpenUtau via CLI commands
+
+The objective of this project is to automate the task of inferencing. 
+
+This project is built on top of OpenUtau by stakira
+- [OpenUtau](https://github.com/stakira/OpenUtau)
 ## CLI Commands
 
-### Points to consider
+### Running the project
 
 In Dev Mode: 
 
