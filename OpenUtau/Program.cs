@@ -161,7 +161,15 @@ namespace OpenUtauCLI {
 
                     case "--save":
                         HandleSaveCommand();
+                        break;
 
+
+                    case "--lyrics":
+                        if (parts.Length > 1) {
+                            HandleLyricsCommand(parts[1]);
+                        } else {
+                            Console.WriteLine("Error: Please specify the path to the lyrics file.");
+                        }
                         break;
 
 
@@ -180,7 +188,11 @@ namespace OpenUtauCLI {
                         }
                         break;*/
 
-
+                    case "--help":
+                        // Check if there's a specific command to provide help for
+                        string? helpCommand = parts?.Length > 1 ? parts[1] : null;
+                        ShowHelp(helpCommand);
+                        break;
 
                     case "--exit":
                         HandleExit();
@@ -965,6 +977,59 @@ namespace OpenUtauCLI {
         }
 
 
+        static void HandleLyricsCommand(string filePath) {
+            if (project == null) {
+                Console.WriteLine("No project is currently loaded.");
+                return;
+            }
+
+            if (!File.Exists(filePath)) {
+                Console.WriteLine("Lyrics file does not exist.");
+                return;
+            }
+
+            string[] lyrics = File.ReadAllLines(filePath)
+                                  .SelectMany(line => line.Split(new[] { ' ', '\t', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries))
+                                  .ToArray();
+
+            if (lyrics.Length == 0) {
+                Console.WriteLine("No lyrics found in the file.");
+                return;
+            }
+
+            List<UVoicePart> voiceParts = project.parts.OfType<UVoicePart>().ToList();
+            if (voiceParts.Count == 0) {
+                Console.WriteLine("No voice parts available in the project.");
+                return;
+            }
+
+            for (int i = 0; i < voiceParts.Count; i++) {
+                Console.WriteLine($"{i + 1}: {voiceParts[i].name} (Start: {voiceParts[i].position}, Duration: {voiceParts[i].Duration})");
+            }
+
+            Console.Write("Select a part number to add lyrics: ");
+            if (!int.TryParse(Console.ReadLine(), out int partIndex) || partIndex < 1 || partIndex > voiceParts.Count) {
+                Console.WriteLine("Invalid part number.");
+                return;
+            }
+
+            AssignLyricsToNotes(voiceParts[partIndex - 1], lyrics);
+        }
+
+        static void AssignLyricsToNotes(UVoicePart voicePart, string[] lyrics) {
+            int noteCount = voicePart.notes.Count;
+            int lyricsIndex = 0;
+
+            foreach (UNote note in voicePart.notes) {
+                note.lyric = lyricsIndex < lyrics.Length ? lyrics[lyricsIndex++] : "a";
+            }
+
+            Console.WriteLine($"Lyrics assigned to {voicePart.name}. Excess lyrics: {Math.Max(0, lyrics.Length - noteCount)}");
+        }
+
+
+
+
 
 
 
@@ -1101,11 +1166,102 @@ namespace OpenUtauCLI {
             Environment.Exit(0);
         }
 
-        static void ShowHelp() {
-            Console.WriteLine("Usage:");
-            Console.WriteLine("  openutauCLI --init          Initializes the OpenUtau CLI.");
-            Console.WriteLine("  openutauCLI --install_singer [path] Installs a singer from the specified path.");
-            Console.WriteLine("  openutauCLI --exit          Exits the OpenUtau CLI.");
+        /*static void ShowHelp() {
+            Console.WriteLine("OpenUtau Command Line Interface (CLI) Usage:");
+            Console.WriteLine("  --init          Initializes and sets up the OpenUtau CLI environment.");
+            Console.WriteLine("  --install       Installs singers or dependencies:");
+            Console.WriteLine("       --singer [format] [path]     Installs a singer from the specified path with the given format.");
+            Console.WriteLine("       --dependency [path]          Installs a dependency from the specified path.");
+            Console.WriteLine("  --singer        Lists all available singers.");
+            Console.WriteLine("  --track         Manages tracks within the project:");
+            Console.WriteLine("       --add          Adds a new track.");
+            Console.WriteLine("       --list         Lists all tracks in the current project.");
+            Console.WriteLine("       --update       Updates an existing track.");
+            Console.WriteLine("       --remove       Removes an existing track.");
+            Console.WriteLine("  --part          Manages parts within the project:");
+            Console.WriteLine("       --add          Adds a new part to a track.");
+            Console.WriteLine("       --delete       Deletes an existing part from a track.");
+            Console.WriteLine("       --rename       Renames an existing part.");
+            Console.WriteLine("       --list         Lists all parts in the current project.");
+            Console.WriteLine("  --import        Imports data into the project:");
+            Console.WriteLine("       --midi [path]  Imports MIDI data from the specified path.");
+            Console.WriteLine("  --phonemizers   Lists all available phonemizers.");
+            Console.WriteLine("  --export        Exports the current project:");
+            Console.WriteLine("       --wav          Exports the project to a WAV file at the specified path.");
+            Console.WriteLine("  --save          Saves the current project.");
+            Console.WriteLine("  --lyrics [path] Applies lyrics from a specified file to a part in the project.");
+            Console.WriteLine("  --exit          Exits the OpenUtau CLI.");
+            Console.WriteLine("For more details on each command, type the command followed by '--help'.");
+        }*/
+
+
+        static void ShowHelp(string? command = null) {
+            if (string.IsNullOrEmpty(command)) {
+                // General help overview
+                Console.WriteLine("OpenUtau Command Line Interface (CLI) Usage:");
+                Console.WriteLine("  --init          Initializes the CLI environment.");
+                Console.WriteLine("  --install       Install components like singers or dependencies.");
+                Console.WriteLine("  --singer        Manage and list singers.");
+                Console.WriteLine("  --track         Operations for managing tracks.");
+                Console.WriteLine("  --part          Operations for managing parts within tracks.");
+                Console.WriteLine("  --import        Import external data into the project.");
+                Console.WriteLine("  --export        Export project to different formats.");
+                Console.WriteLine("  --save          Save the current project.");
+                Console.WriteLine("  --lyrics        Apply lyrics to parts.");
+                Console.WriteLine("  --exit          Exit the CLI.");
+                Console.WriteLine("Use '--help [command]' for more details on a specific command, e.g., '--help --track'");
+            } else {
+                // Detailed help for a specific command
+                switch (command.ToLower()) {
+                    case "--init":
+                        Console.WriteLine("  --init: Initializes and sets up the OpenUtau CLI environment. Must be run first.");
+                        break;
+                    case "--install":
+                        Console.WriteLine("  --install: Installs components necessary for the project.");
+                        Console.WriteLine("    --singer [format] [path]: Installs a singer from a specified path.");
+                        Console.WriteLine("    --dependency [path]: Installs a dependency from a specified path.");
+                        break;
+                    case "--singer":
+                        Console.WriteLine("  --singer: Lists all installed singers and manages singer settings.");
+                        break;
+                    case "--track":
+                        Console.WriteLine("  --track: Manages tracks within the project.");
+                        Console.WriteLine("    --add: Adds a new track.");
+                        Console.WriteLine("    --list: Lists all tracks.");
+                        Console.WriteLine("    --update: Updates settings for a selected track.");
+                        Console.WriteLine("    --remove: Removes a specified track.");
+                        break;
+                    case "--part":
+                        Console.WriteLine("  --part: Manages parts within tracks.");
+                        Console.WriteLine("    --add: Adds a new part to a track.");
+                        Console.WriteLine("    --delete: Deletes a part from a track.");
+                        Console.WriteLine("    --rename: Renames a part.");
+                        Console.WriteLine("    --list: Lists all parts.");
+                        break;
+                    case "--import":
+                        Console.WriteLine("  --import: Imports data into the project.");
+                        Console.WriteLine("    --midi [path]: Imports MIDI data from a path.");
+                        break;
+                    case "--export":
+                        Console.WriteLine("  --export: Exports the project in different formats.");
+                        Console.WriteLine("    --wav [path]: Exports the project as a WAV file to a specified path.");
+                        break;
+                    case "--save":
+                        Console.WriteLine("  --save: Saves the current state of the project to disk.");
+                        break;
+                    case "--lyrics":
+                        Console.WriteLine("  --lyrics [path]: Applies lyrics from a specified file to a part in the project.");
+                        break;
+                    case "--exit":
+                        Console.WriteLine("  --exit: Exits the CLI and ensures all changes are saved or prompts if unsaved.");
+                        break;
+                    default:
+                        Console.WriteLine($"No detailed help available for '{command}'.");
+                        break;
+                }
+            }
         }
+
+
     }
 }
