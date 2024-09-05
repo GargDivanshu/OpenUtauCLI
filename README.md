@@ -77,6 +77,7 @@ Saves the current state of the project to disk.
 Applies lyrics to parts within the project.
 
 #### Subcommands:
+
 a) `--lyrics [path]` : Applies lyrics from the specified file to a part in the project.  
 
 10) `--exit`
