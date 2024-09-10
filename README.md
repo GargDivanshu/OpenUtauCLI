@@ -7,6 +7,23 @@ The objective of this project is to automate the task of inferencing.
 
 This project is built on top of OpenUtau by stakira
 - [OpenUtau](https://github.com/stakira/OpenUtau)
+
+## Docker
+
+### Building the Docker Image
+
+```bash
+docker build -t openutau .
+```
+
+### Running the Docker Container
+
+
+```bash
+docker run -it openutau
+```
+
+
 ## CLI Commands
 
 ### Running the project
