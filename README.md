@@ -1,7 +1,7 @@
 
 # OpenUtauCLI
 
-This project is a modification of OpenUtau, where it allows the user to user OpenUtau via CLI commands
+This project is a modification of OpenUtau, where it allows the user to use OpenUtau via CLI commands
 
 The objective of this project is to automate the task of inferencing. 
 
