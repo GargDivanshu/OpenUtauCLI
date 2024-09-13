@@ -8,6 +8,8 @@ The objective of this project is to automate the task of inferencing.
 This project is built on top of OpenUtau by stakira
 - [OpenUtau](https://github.com/stakira/OpenUtau)
 
+- Though this documentation is made keeping in mind the fact, no new joinee should face any issue, but if the problem comes up do lemme know
+
 
 ## Downloading the VoiceBanks
 
