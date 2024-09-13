@@ -54,7 +54,7 @@ In this meeting, we are going to discuss a few repos which we found and others w
 ## Outputs 
 
 
-
+### Below these were made manually with a GUI to get an understanding of OpenUtau and to see how good these available VoiceBanks are
 
 https://github.com/user-attachments/assets/9b0f1c5c-7974-4d46-9f1e-ff38a42d7e87
 
@@ -65,6 +65,19 @@ https://github.com/user-attachments/assets/c568cd57-2d1c-463f-b66a-7429fb208c88
 
 
 https://github.com/user-attachments/assets/4300f009-2a5c-4c8d-8129-916216e8f378
+
+
+### Below outputs were generated via CLI app and then improved upon later on manually to propery fit in the lyrics to respective midi notes
+
+
+
+https://github.com/user-attachments/assets/f75ff56b-96f6-434b-9784-c756c58b871a
+
+
+
+https://github.com/user-attachments/assets/5e015d9f-7cf9-494e-9c91-eedcb223f1d6
+
+
 
 
 
