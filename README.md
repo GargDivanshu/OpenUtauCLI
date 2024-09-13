@@ -9,6 +9,15 @@ This project is built on top of OpenUtau by stakira
 - [OpenUtau](https://github.com/stakira/OpenUtau)
 
 
+## Downloading the VoiceBanks
+
+### Download the zip files and just directly use the zip file to install a singer in OpenUtau ( remember there is no need to unzip it )
+
+- https://drive.google.com/file/d/1N9B40P4ifokBn7sEu5WSzzraKfaJGuDK/view?usp=drive_link
+- https://drive.google.com/file/d/1ZzCwlD9aaKfbcfHGh0f1DWkkHpwOw3pl/view?usp=drive_link
+- https://drive.google.com/file/d/17pwVIivDHZnn3bancbCz7qNptL-wxZCo/view?usp=drive_link
+- https://drive.google.com/file/d/1erqO1PdjJatAWqgBvfZ8VvvUGeu0rBHp/view?usp=drive_link
+
 ## Running the project
 
 ## In Dev Mode: 
