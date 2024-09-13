@@ -8,7 +8,17 @@ The objective of this project is to automate the task of inferencing.
 This project is built on top of OpenUtau by stakira
 - [OpenUtau](https://github.com/stakira/OpenUtau)
 
-## Docker
+
+## Running the project
+
+## In Dev Mode: 
+
+- move to `OpenUtau/bin/Debug/net6.0-windows`
+- Build the `OpenUtua/Program.cs`
+- `.\OpenUtau.exe --init`
+
+
+## using Docker
 
 #### Don't forget to start Docker Desktop before running docker cmds
 
@@ -25,7 +35,7 @@ docker build -t openutau .
 docker run -it openutau
 ```
 
-## Code Flow & potential issues
+## High level Code Flow & Potential issues
 
 
 - we take up reference song details like midi, now the song has lot of elements like vocal, bass, upbeat, rhythmic tracks, we are not getting proper midi for vocal to work with, this cleanup is one roadblock. It is doable, but needs to be very correct in our workflow.
@@ -52,6 +62,21 @@ b) or to it just simply give us lyric, we add it to midi, and then use some midi
 
 
 In this meeting, we are going to discuss a few repos which we found and others which you might want to refer us. 
+
+## Using the Application (Step wise manner)
+
+- Run the project either in Docker run cmd or the dev mode
+- Add the select by using `--install --singer [format] [path]`, in which format includes either of ["Diffsinger", "Vogeon"] etc type of Singers and `[path]` being the path of singer file. (one time process, doesn't need to be executed again and again)
+- NOTE: We were using DiffSinger models for this project, so always select the Diffsinger cause we were using DiffSinger models.
+- Also install the dependency using `--install --dependency [path]` where `[path]` is the local path of the dependency in your system. The dependencies are going to be oudep files which help in the overall functioning of the application.
+- use `--track --list` to list the current default empty track which appears at the beginning of the project.
+- use `--track --add` to add a new track, then update the track using `--track --update`.
+- To update select the singer you want to use, then add the name of the phonemizer you want (for English select the `OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer`), Diffsinger gets selected automatically as the renderer. 
+- Import Midi file, containing the melody of the song using `--import --midi [path]`, where `[path]` being the path od midi file. Make sure the midi file consists of only the vocal parts of the song and is isolated from the background music and other rhythmic, instrumental tracks.
+- then add lyrics to the midi by `--lyrics [path]`, where `[path]` being the `.txt` file containing the lyrics.
+- before saving the project ensure that there are no empty tracks present in the project, by listing `--track --list` and checking for now many tracks are there and also by `--part --list` to check what parts are present and in what track. If any track appears to be containing no part, then remove it by `--track --remove`.
+- save the project using `--save`
+- Export the wav file of the generated song using `--export --wav [path]` where `[path]` being the dir where you want to save the project
 
 ## Outputs 
 
@@ -84,14 +109,6 @@ https://github.com/user-attachments/assets/5e015d9f-7cf9-494e-9c91-eedcb223f1d6
 
 
 ## CLI Commands
-
-### Running the project
-
-In Dev Mode: 
-
-- move to `OpenUtau/bin/Debug/net6.0-windows`
-- Build the `OpenUtua/Program.cs`
-- `.\OpenUtau.exe --init`
 
 ### Commands Overview
 
