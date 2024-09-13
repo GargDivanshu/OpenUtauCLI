@@ -35,12 +35,16 @@ docker run -it openutau
 - So, OpenUtau takes up midi and lyrics and though we can feed the lyrics at one go, and have generated automated results previously as well, one thing to note in our software is that it has its own syntax to : 
 
 a) extend a word to multiple succeeding notes, it uses → + 
+
 b) club many words together in one midi note, it uses → "word1 word2" 
+
 c) simply add different words in succeeding midi notes → just add word1 to note1 , word2 to note2, word3 to note3, and so on. 
 
 
 We need a way for : 
+
 a) either LLM to understand the midi, and determine where these lyric adjustments are required and hence give us lyrics with proper formatted lyric in our way. 
+
 b) or to it just simply give us lyric, we add it to midi, and then use some midi manipulation algorithm (maybe, like Q Audio DSP Library) which can process this generated song. 
 
 
