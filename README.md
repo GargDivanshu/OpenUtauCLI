@@ -10,6 +10,8 @@ This project is built on top of OpenUtau by stakira
 
 ## Docker
 
+#### Don't forget to start Docker Desktop before running docker cmds
+
 ### Building the Docker Image
 
 ```bash
