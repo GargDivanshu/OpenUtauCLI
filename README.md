@@ -23,7 +23,8 @@ docker build -t openutau .
 docker run -it openutau
 ```
 
-## Code Flow
+## Code Flow & potential issues
+
 
 - we take up reference song details like midi, now the song has lot of elements like vocal, bass, upbeat, rhythmic tracks, we are not getting proper midi for vocal to work with, this cleanup is one roadblock. It is doable, but needs to be very correct in our workflow.
 - upon getting midi, the lyrics we are generating with LLM, in a way by paraphrasing the lyrics of original song and feeding original melody info like velocity, stress,
