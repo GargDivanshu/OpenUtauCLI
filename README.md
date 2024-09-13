@@ -55,23 +55,12 @@ In this meeting, we are going to discuss a few repos which we found and others w
 
 
 
-https://github.com/user-attachments/assets/9b0f1c5c-7974-4d46-9f1e-ff38a42d7e87
-
-
 
 https://github.com/user-attachments/assets/9b0f1c5c-7974-4d46-9f1e-ff38a42d7e87
 
 
 
 https://github.com/user-attachments/assets/c568cd57-2d1c-463f-b66a-7429fb208c88
-
-
-
-https://github.com/user-attachments/assets/c568cd57-2d1c-463f-b66a-7429fb208c88
-
-
-
-https://github.com/user-attachments/assets/4300f009-2a5c-4c8d-8129-916216e8f378
 
 
 
