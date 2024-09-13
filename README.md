@@ -23,6 +23,28 @@ docker build -t openutau .
 docker run -it openutau
 ```
 
+## Code Flow
+
+- we take up reference song details like midi, now the song has lot of elements like vocal, bass, upbeat, rhythmic tracks, we are not getting proper midi for vocal to work with, this cleanup is one roadblock. It is doable, but needs to be very correct in our workflow.
+- upon getting midi, the lyrics we are generating with LLM, in a way by paraphrasing the lyrics of original song and feeding original melody info like velocity, stress,
+  note duration etc, the lyrics are still not fitting up properly to the system. by this i mean, the words may not be clear at all, like what is being sung, or the “feel”
+  is off, which could be due to mismatch of our syllable and phonetic mismatch.
+
+  The core issue is that, even after feeding a lot of reference of original song, like velocity, note duration, timing, chord at which it is played, if the generated lyric is “Jingle, Jingle, It is Christmas eve” , then from singing pov “It is” is not helping us in any way, we need some mechanism to either tweak midi to fit it, or maybe some mech to tweak the lyric to remove “it is” and make the decision of “Jingle, Jingle, Christmas Eve” 
+- We till now have no mechanism or algorithm to tweak the midi notes, pitch, or other (which we are not aware of) relevant parameters to fit the lyrics. Right now, our approach is tweaking with the lyrics and not the midi on which we are adding our lyrics.
+- So, OpenUtau takes up midi and lyrics and though we can feed the lyrics at one go, and have generated automated results previously as well, one thing to note in our software is that it has its own syntax to : 
+
+a) extend a word to multiple succeeding notes, it uses → + 
+b) club many words together in one midi note, it uses → "word1 word2" 
+c) simply add different words in succeeding midi notes → just add word1 to note1 , word2 to note2, word3 to note3, and so on. 
+
+
+We need a way for : 
+a) either LLM to understand the midi, and determine where these lyric adjustments are required and hence give us lyrics with proper formatted lyric in our way. 
+b) or to it just simply give us lyric, we add it to midi, and then use some midi manipulation algorithm (maybe, like Q Audio DSP Library) which can process this generated song. 
+
+
+In this meeting, we are going to discuss a few repos which we found and others which you might want to refer us. 
 
 ## CLI Commands
 
