@@ -24,8 +24,8 @@ This project is built on top of OpenUtau by stakira
 
 ## In Dev Mode: 
 
-- move to `OpenUtau/bin/Debug/net6.0-windows`
 - Build the `OpenUtua/Program.cs`
+- move to `OpenUtau/bin/Debug/net6.0-windows`
 - `.\OpenUtau.exe --init`
 
 
