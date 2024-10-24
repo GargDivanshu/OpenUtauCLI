@@ -14,9 +14,26 @@ using OpenUtau.Core.Ustx;
 using OpenUtau.Api;
 using OpenUtau.Audio;
 using OpenUtau.Core.DiffSinger;
+using System.Text.Json;
 using Serilog;
 
 namespace OpenUtauCLI {
+    public class SQSMessage {
+        public Records[] Records { get; set; }
+    }
+
+    public class Records {
+        public string messageId { get; set; }
+        public string receiptHandle { get; set; }
+        public Body body { get; set; }
+    }
+
+    public class Body {
+        public string midi { get; set; }
+        public string lyrics { get; set; }
+        public string export { get; set; }
+    }
+
     class Program {
 
         private static UProject? project;
@@ -29,7 +46,18 @@ namespace OpenUtauCLI {
                 return;
             }
 
-            InitializeCoreComponents();
+            if (args.Length > 1 && args[0] == "--sqs") {
+                string jsonMessage = args[1];
+                HandleSQSMessage(jsonMessage);
+                return;
+            }
+
+            if (args.Length > 1 && args[0] == "--pipeline") {
+                Pipeline(args.Skip(1).ToArray());
+                return; // Exit after handling the pipeline, no need for interactive loop
+            }
+
+            //InitializeCoreComponents();
 
             while (true) {
                 Console.Write("> ");
@@ -40,6 +68,17 @@ namespace OpenUtauCLI {
                 string command = parts[0].ToLower();
 
                 switch (command) {
+
+                    case "--pipeline":
+                        if(parts.Length > 1) {
+                            Pipeline(parts.Skip(1).ToArray());
+                        } else {
+                            Console.WriteLine("Error: '--pipeline' requires a series of subcommands for importing midi (--midi), adding lyrics (--lyrics), wav file path for exporting (--output)");
+                        }
+                        
+                        break;
+
+
                     case "--init":
                         HandleInit();
                         break;
@@ -150,11 +189,11 @@ namespace OpenUtauCLI {
                         break;
 
 
-                    case "--export":
+                    case "--output":
                         if (parts.Length > 1 && parts[1].ToLower() == "--wav") {
                             HandleExportWavCommand().GetAwaiter().GetResult();
                         } else {
-                            Console.WriteLine("Error: Specify the format to export (e.g., --export --wav).");
+                            Console.WriteLine("Error: Specify the format to export (e.g., --output --wav).");
                         }
                         break;
 
@@ -206,6 +245,209 @@ namespace OpenUtauCLI {
             }
         }
 
+        static void HandleSQSMessage(string jsonMessage) {
+            try {
+                var sqsMessage = JsonSerializer.Deserialize<SQSMessage>(jsonMessage);
+
+                if (sqsMessage?.Records == null || sqsMessage.Records.Length == 0) {
+                    Console.WriteLine("Invalid SQS message.");
+                    return;
+                }
+
+                var body = sqsMessage.Records[0].body;
+                if (body == null) {
+                    Console.WriteLine("No body found in the message.");
+                    return;
+                }
+
+                // Extract the parameters from the body
+                string midiPath = body.midi;
+                string lyricsPath = body.lyrics;
+                string exportPath = body.export;
+
+                // Run the pipeline with the extracted parameters
+                Pipeline(new string[] { "--midi", midiPath, "--lyrics", lyricsPath, "--output", exportPath });
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to process SQS message: {ex.Message}");
+            }
+        }
+
+        static async void Pipeline(string[] args) {
+            string midiPath = "";
+            string lyricsPath = "";
+            string exportPath = "";
+
+            // Parse the flags and their values
+            for (int i = 0; i < args.Length; i++) {
+                switch (args[i].ToLower()) {
+                    case "--midi":
+                        if (i + 1 < args.Length) {
+                            midiPath = args[i + 1]; // Capture MIDI path
+                            i++; // Skip the next argument since it's the value
+                        } else {
+                            Console.WriteLine("Error: Missing value for --midi.");
+                            return;
+                        }
+                        break;
+
+                    case "--lyrics":
+                        if (i + 1 < args.Length) {
+                            lyricsPath = args[i + 1]; // Capture lyrics string
+                            i++;
+                        } else {
+                            Console.WriteLine("Error: Missing value for --lyrics.");
+                            return;
+                        }
+                        break;
+
+                    case "--output":
+                        if (i + 1 < args.Length) {
+                            exportPath = args[i + 1]; // Capture export path
+                            i++;
+                        } else {
+                            Console.WriteLine("Error: Missing value for --output.");
+                            return;
+                        }
+                        break;
+
+                    default:
+                        Console.WriteLine($"Error: Unknown argument {args[i]}.");
+                        return;
+                }
+            }
+
+            // Validate that all required arguments are provided
+            if (string.IsNullOrEmpty(midiPath) || string.IsNullOrEmpty(lyricsPath) || string.IsNullOrEmpty(exportPath)) {
+                Console.WriteLine("Error: Missing required arguments. Make sure to include --midi, --lyrics, and --output.");
+                return;
+            }
+
+            // Initialize the core components before proceeding with the pipeline
+            InitializeCoreComponentsViaPipeline();
+
+            // Call the respective functions
+            Console.WriteLine($"Importing MIDI from: {midiPath}");
+            HandleImportMidi(midiPath);  // Assuming this method exists for importing MIDI
+
+            ListTracks();
+            int trackCount = DocManager.Inst.Project.tracks.Count;
+            var trackToRemove = DocManager.Inst.Project.tracks[0];
+
+            DocManager.Inst.StartUndoGroup();
+            DocManager.Inst.ExecuteCmd(new RemoveTrackCommand(DocManager.Inst.Project, trackToRemove));
+            DocManager.Inst.EndUndoGroup();
+
+            Console.WriteLine($"Track '{trackToRemove.TrackName}' has been successfully removed.");
+            ListTracks();
+
+            // Applying lyrics
+            Console.WriteLine($"Applying lyrics: {lyricsPath}");
+
+            if (!File.Exists(lyricsPath)) {
+                Console.WriteLine("Lyrics file does not exist.");
+                return;
+            }
+
+            string[] lyrics = File.ReadAllLines(lyricsPath)
+                                  .SelectMany(line => line.Split(new[] { ' ', '\t', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries))
+                                  .ToArray();
+
+            if (lyrics.Length == 0) {
+                Console.WriteLine("No lyrics found in the file.");
+                return;
+            }
+
+            List<UVoicePart> voiceParts = project.parts.OfType<UVoicePart>().ToList();
+            if (voiceParts.Count == 0) {
+                Console.WriteLine("No voice parts available in the project.");
+                return;
+            }
+
+            AssignLyricsToNotes(voiceParts[0], lyrics);
+
+
+            // Add singer to our track
+            UTrack selectedTrack = project.tracks[0];
+            Console.WriteLine($"You selected: {selectedTrack.TrackName}");
+
+            // List available singers
+            SingerManager.Inst.SearchAllSingers();
+            var allSingers = SingerManager.Inst.SingerGroups.SelectMany(g => g.Value).ToList();
+            if (allSingers.Count == 0) {
+                Console.WriteLine("No singers available to update the track.");
+                return;
+            }
+
+            Console.WriteLine("Available singers:");
+            for (int i = 0; i < allSingers.Count; i++) {
+                Console.WriteLine($"{i + 1}. {allSingers[i].LocalizedName} ({allSingers[i].SingerType})");
+            }
+
+            USinger selectedSinger = allSingers[0];
+            Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
+
+            // Update track with new singer
+            DocManager.Inst.StartUndoGroup();
+            var singerCommand = new TrackChangeSingerCommand(project, selectedTrack, selectedSinger);
+            DocManager.Inst.ExecuteCmd(singerCommand);
+            Console.WriteLine($"Updated singer of track '{selectedTrack.TrackName}' to '{selectedSinger.LocalizedName}'.");
+
+            // You can extend this to update phonemizer and renderer here if needed
+
+            // Adding Phonemizer
+            Console.WriteLine("Available phonemizers:");
+            ListPhonemizers();
+
+            string phonemizerName = "OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer";
+
+            if (!TryChangePhonemizer(phonemizerName, selectedTrack)) {
+                Console.WriteLine("Failed to apply phonemizer. Check the name and try again.");
+            } else {
+                Console.WriteLine($"Phonemizer {phonemizerName} applied to track {selectedTrack.TrackName}.");
+            }
+
+            DocManager.Inst.EndUndoGroup();
+            DocManager.Inst.AutoSave();
+            Console.WriteLine("Track updated and project state saved.");
+
+
+            if (!project.Saved || string.IsNullOrEmpty(project.FilePath)) {
+                Console.WriteLine("Project is not saved or does not have an existing file path.");
+
+
+                if (string.IsNullOrEmpty(exportPath)) {
+                    Console.WriteLine("No directory path provided. Aborting save operation.");
+                    return;
+                }
+
+                // Combine directory path and project name to form full file path
+                string fullPath = Path.Combine(exportPath + ".ustx"); // Assuming .ustx as the file extension
+                project.FilePath = fullPath; // Update the project's file path
+                SaveProject();
+            } else {
+                // Save the project to its existing file path
+                SaveProject();
+            }
+
+            
+
+            string wavPath = Path.Combine(exportPath + ".wav");
+            HandleExportWavCommandViaPipeline(wavPath).GetAwaiter().GetResult();  // Assuming this method exists for exporting WAV
+            //try {
+            //    Console.WriteLine($"Starting WAV export to {wavPath}");
+            //    if (project.tracks.Count == 0) {
+            //        Console.WriteLine("No tracks in the project.");
+            //    }
+
+            //    await PlaybackManager.Inst.RenderToFiles(project, wavPath);
+            //    Console.WriteLine($"Project has been successfully exported to WAV at {wavPath}.");
+            //} catch (Exception ex) {
+            //    Console.WriteLine($"An error occurred during the export: {ex.Message}");
+            //}
+        }
+
+
+
         public static void InitAudio() {
             Log.Information("Initializing audio.");
             if (!OpenUtau.OS.IsWindows() || OpenUtau.Core.Util.Preferences.Default.PreferPortAudio) {
@@ -238,6 +480,27 @@ namespace OpenUtauCLI {
             InitAudio();
 
             PromptForProjectLoading();
+        }
+
+        static void InitializeCoreComponentsViaPipeline() {
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+            InitLogging();
+            Log.Information($"Data path = {PathManager.Inst.DataPath}");
+            Log.Information($"Cache path = {PathManager.Inst.CachePath}");
+            Console.WriteLine($"Data path = {PathManager.Inst.DataPath}");
+            Console.WriteLine($"Cache path = {PathManager.Inst.CachePath}");
+            ToolsManager.Inst.Initialize();
+            DocManager.Inst.Initialize(); // Ensure DocManager is always initialized before any project loading
+            SingerManager.Inst.Initialize();
+            InitAudio();
+
+
+            /*Starting a new project */
+            if (project == null) {
+                DocManager.Inst.Initialize(); // Only initialize if project is not already set
+                project = DocManager.Inst.Project; // Assign the project instance
+            }
         }
 
         static void PromptForProjectLoading() {
@@ -951,6 +1214,7 @@ namespace OpenUtauCLI {
                 return;
             }
 
+
             if (!project.Saved) {
                 Console.WriteLine("The project has unsaved changes. Please save the project before exporting.");
                 HandleSaveCommand();
@@ -969,11 +1233,31 @@ namespace OpenUtauCLI {
             }
 
             try {
+                Console.WriteLine($"Starting WAV export to {exportPath}");
+                if (project.tracks.Count == 0) {
+                    Console.WriteLine("No tracks in the project.");
+                }
+
                 await PlaybackManager.Inst.RenderToFiles(project, exportPath);
                 Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
             } catch (Exception ex) {
                 Console.WriteLine($"An error occurred during the export: {ex.Message}");
             }
+        }
+
+        static async Task HandleExportWavCommandViaPipeline(string exportPath) {
+            if (project == null) {
+                Console.WriteLine("No project is currently loaded.");
+                return;
+            }
+
+            Console.WriteLine($"Starting WAV export to {exportPath}");
+            if (project.tracks.Count == 0) {
+                Console.WriteLine("No tracks in the project.");
+            }
+
+            await PlaybackManager.Inst.RenderToFiles(project, exportPath);
+            Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
         }
 
 
@@ -1064,8 +1348,7 @@ namespace OpenUtauCLI {
             pitchLoader.Run(project, voicePart, new List<UNote>(), DocManager.Inst); // Adjust parameters as necessary
 
             Console.WriteLine("Rendered pitch loading completed for selected part.");
-        }
-*/
+        }*/
 
 
 
@@ -1186,7 +1469,7 @@ namespace OpenUtauCLI {
             Console.WriteLine("  --import        Imports data into the project:");
             Console.WriteLine("       --midi [path]  Imports MIDI data from the specified path.");
             Console.WriteLine("  --phonemizers   Lists all available phonemizers.");
-            Console.WriteLine("  --export        Exports the current project:");
+            Console.WriteLine("  --output        Exports the current project:");
             Console.WriteLine("       --wav          Exports the project to a WAV file at the specified path.");
             Console.WriteLine("  --save          Saves the current project.");
             Console.WriteLine("  --lyrics [path] Applies lyrics from a specified file to a part in the project.");
@@ -1205,7 +1488,7 @@ namespace OpenUtauCLI {
                 Console.WriteLine("  --track         Operations for managing tracks.");
                 Console.WriteLine("  --part          Operations for managing parts within tracks.");
                 Console.WriteLine("  --import        Import external data into the project.");
-                Console.WriteLine("  --export        Export project to different formats.");
+                Console.WriteLine("  --output        Export project to different formats.");
                 Console.WriteLine("  --save          Save the current project.");
                 Console.WriteLine("  --lyrics        Apply lyrics to parts.");
                 Console.WriteLine("  --exit          Exit the CLI.");
@@ -1242,8 +1525,8 @@ namespace OpenUtauCLI {
                         Console.WriteLine("  --import: Imports data into the project.");
                         Console.WriteLine("    --midi [path]: Imports MIDI data from a path.");
                         break;
-                    case "--export":
-                        Console.WriteLine("  --export: Exports the project in different formats.");
+                    case "--output":
+                        Console.WriteLine("  --output: Exports the project in different formats.");
                         Console.WriteLine("    --wav [path]: Exports the project as a WAV file to a specified path.");
                         break;
                     case "--save":
