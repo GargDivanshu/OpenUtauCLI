@@ -1,4 +1,4 @@
-# Use the official .NET SDK image as a base image
+# Build the application in a build environment using the .NET SDK
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-env
 
 # Set the working directory in the container
@@ -20,10 +20,14 @@ COPY . ./
 # Build the application
 RUN dotnet publish OpenUtau/OpenUtau.csproj -c Release -o /app/publish
 
-# Build the runtime image
-FROM mcr.microsoft.com/dotnet/runtime:7.0
-WORKDIR /app
-COPY --from=build-env /app/publish .
+# Build the runtime image using the Lambda .NET 7 runtime
+FROM public.ecr.aws/lambda/dotnet:7
 
-# Set the entry point for the container
-ENTRYPOINT ["dotnet", "OpenUtau.dll"]
+# Set the working directory for Lambda
+WORKDIR /var/task
+
+# Copy the built application from the build environment
+COPY --from=build-env /app/publish ./
+
+# Set the entry point for the Lambda container
+CMD ["OpenUtau::OpenUtauCLI.Program::Main"]

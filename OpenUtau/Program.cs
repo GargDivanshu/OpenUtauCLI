@@ -14,9 +14,26 @@ using OpenUtau.Core.Ustx;
 using OpenUtau.Api;
 using OpenUtau.Audio;
 using OpenUtau.Core.DiffSinger;
+using System.Text.Json;
 using Serilog;
 
 namespace OpenUtauCLI {
+    public class SQSMessage {
+        public Records[] Records { get; set; }
+    }
+
+    public class Records {
+        public string messageId { get; set; }
+        public string receiptHandle { get; set; }
+        public Body body { get; set; }
+    }
+
+    public class Body {
+        public string midi { get; set; }
+        public string lyrics { get; set; }
+        public string export { get; set; }
+    }
+
     class Program {
 
         private static UProject? project;
@@ -26,6 +43,12 @@ namespace OpenUtauCLI {
 
             if (args.Length == 0) {
                 ShowHelp();
+                return;
+            }
+
+            if (args.Length > 1 && args[0] == "--sqs") {
+                string jsonMessage = args[1];
+                HandleSQSMessage(jsonMessage);
                 return;
             }
 
@@ -50,7 +73,7 @@ namespace OpenUtauCLI {
                         if(parts.Length > 1) {
                             Pipeline(parts.Skip(1).ToArray());
                         } else {
-                            Console.WriteLine("Error: '--pipeline' requires a series of subcommands for importing midi (--midi), adding lyrics (--lyrics), wav file path for exporting (--export)");
+                            Console.WriteLine("Error: '--pipeline' requires a series of subcommands for importing midi (--midi), adding lyrics (--lyrics), wav file path for exporting (--output)");
                         }
                         
                         break;
@@ -166,11 +189,11 @@ namespace OpenUtauCLI {
                         break;
 
 
-                    case "--export":
+                    case "--output":
                         if (parts.Length > 1 && parts[1].ToLower() == "--wav") {
                             HandleExportWavCommand().GetAwaiter().GetResult();
                         } else {
-                            Console.WriteLine("Error: Specify the format to export (e.g., --export --wav).");
+                            Console.WriteLine("Error: Specify the format to export (e.g., --output --wav).");
                         }
                         break;
 
@@ -222,6 +245,33 @@ namespace OpenUtauCLI {
             }
         }
 
+        static void HandleSQSMessage(string jsonMessage) {
+            try {
+                var sqsMessage = JsonSerializer.Deserialize<SQSMessage>(jsonMessage);
+
+                if (sqsMessage?.Records == null || sqsMessage.Records.Length == 0) {
+                    Console.WriteLine("Invalid SQS message.");
+                    return;
+                }
+
+                var body = sqsMessage.Records[0].body;
+                if (body == null) {
+                    Console.WriteLine("No body found in the message.");
+                    return;
+                }
+
+                // Extract the parameters from the body
+                string midiPath = body.midi;
+                string lyricsPath = body.lyrics;
+                string exportPath = body.export;
+
+                // Run the pipeline with the extracted parameters
+                Pipeline(new string[] { "--midi", midiPath, "--lyrics", lyricsPath, "--output", exportPath });
+            } catch (Exception ex) {
+                Console.WriteLine($"Failed to process SQS message: {ex.Message}");
+            }
+        }
+
         static async void Pipeline(string[] args) {
             string midiPath = "";
             string lyricsPath = "";
@@ -250,12 +300,12 @@ namespace OpenUtauCLI {
                         }
                         break;
 
-                    case "--export":
+                    case "--output":
                         if (i + 1 < args.Length) {
                             exportPath = args[i + 1]; // Capture export path
                             i++;
                         } else {
-                            Console.WriteLine("Error: Missing value for --export.");
+                            Console.WriteLine("Error: Missing value for --output.");
                             return;
                         }
                         break;
@@ -268,7 +318,7 @@ namespace OpenUtauCLI {
 
             // Validate that all required arguments are provided
             if (string.IsNullOrEmpty(midiPath) || string.IsNullOrEmpty(lyricsPath) || string.IsNullOrEmpty(exportPath)) {
-                Console.WriteLine("Error: Missing required arguments. Make sure to include --midi, --lyrics, and --export.");
+                Console.WriteLine("Error: Missing required arguments. Make sure to include --midi, --lyrics, and --output.");
                 return;
             }
 
@@ -1419,7 +1469,7 @@ namespace OpenUtauCLI {
             Console.WriteLine("  --import        Imports data into the project:");
             Console.WriteLine("       --midi [path]  Imports MIDI data from the specified path.");
             Console.WriteLine("  --phonemizers   Lists all available phonemizers.");
-            Console.WriteLine("  --export        Exports the current project:");
+            Console.WriteLine("  --output        Exports the current project:");
             Console.WriteLine("       --wav          Exports the project to a WAV file at the specified path.");
             Console.WriteLine("  --save          Saves the current project.");
             Console.WriteLine("  --lyrics [path] Applies lyrics from a specified file to a part in the project.");
@@ -1438,7 +1488,7 @@ namespace OpenUtauCLI {
                 Console.WriteLine("  --track         Operations for managing tracks.");
                 Console.WriteLine("  --part          Operations for managing parts within tracks.");
                 Console.WriteLine("  --import        Import external data into the project.");
-                Console.WriteLine("  --export        Export project to different formats.");
+                Console.WriteLine("  --output        Export project to different formats.");
                 Console.WriteLine("  --save          Save the current project.");
                 Console.WriteLine("  --lyrics        Apply lyrics to parts.");
                 Console.WriteLine("  --exit          Exit the CLI.");
@@ -1475,8 +1525,8 @@ namespace OpenUtauCLI {
                         Console.WriteLine("  --import: Imports data into the project.");
                         Console.WriteLine("    --midi [path]: Imports MIDI data from a path.");
                         break;
-                    case "--export":
-                        Console.WriteLine("  --export: Exports the project in different formats.");
+                    case "--output":
+                        Console.WriteLine("  --output: Exports the project in different formats.");
                         Console.WriteLine("    --wav [path]: Exports the project as a WAV file to a specified path.");
                         break;
                     case "--save":
