@@ -43,6 +43,7 @@ namespace OpenUtau.Core {
     }
 
     public class PlaybackManager : SingletonBase<PlaybackManager>, ICmdSubscriber {
+        public TaskCompletionSource<bool> RenderCompletionSource { get; private set; }
         private PlaybackManager() {
             DocManager.Inst.AddSubscriber(this);
             try {
@@ -175,7 +176,8 @@ namespace OpenUtau.Core {
 
         // Exporting each tracks
         public async Task RenderToFiles(UProject project, string exportPath) {
-    await Task.Run(() => {
+            RenderCompletionSource = new TaskCompletionSource<bool>();
+            await Task.Run(() => {
         string file = "";
         try {
             RenderEngine engine = new RenderEngine(project);
@@ -206,11 +208,14 @@ namespace OpenUtau.Core {
 
                 WaveFileWriter.CreateWaveFile16(file, new ExportAdapter(trackMixes[i]).ToMono(1, 0));
                 Console.WriteLine($"Exported track {i} successfully to {file}.");
+                RenderCompletionSource.SetResult(true);
             }
         } catch (IOException ioe) {
             Console.WriteLine($"IOException encountered while exporting to {file}: {ioe.Message}");
+            RenderCompletionSource.SetResult(false);
         } catch (Exception e) {
             Console.WriteLine($"Exception encountered during rendering/exporting: {e.Message}");
+            RenderCompletionSource.SetResult(false);
         }
     });
 }

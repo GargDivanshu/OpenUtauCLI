@@ -333,7 +333,7 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"{i + 1}. {allSingers[i].LocalizedName} ({allSingers[i].SingerType})");
             }
 
-            USinger selectedSinger = allSingers[0];
+            USinger selectedSinger = allSingers[1];
             Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
 
             // Update track with new singer
@@ -382,7 +382,11 @@ namespace OpenUtauCLI {
             
 
             string wavPath = Path.Combine(exportPath + ".wav");
-            HandleExportWavCommandViaPipeline(wavPath).GetAwaiter().GetResult();  // Assuming this method exists for exporting WAV
+            //Task.Run(() => {
+            await HandleExportWavCommand();
+                //HandleExportWavCommand().GetAwaiter().GetResult();
+            //});
+            //HandleExportWavCommandViaPipeline(wavPath).GetAwaiter().GetResult();  // Assuming this method exists for exporting WAV
             //try {
             //    Console.WriteLine($"Starting WAV export to {wavPath}");
             //    if (project.tracks.Count == 0) {
@@ -1175,7 +1179,8 @@ namespace OpenUtauCLI {
             }
 
             Console.WriteLine("Enter the path where you want to export the WAV file:");
-            string exportPath = Console.ReadLine() ?? "";
+            //string exportPath = Console.ReadLine() ?? "\"C:\\Users\\divan\\Downloads\\utau_cli_26Oct__.wav";
+            string exportPath = "C:\\Users\\divan\\Downloads\\utau_cli_26Oct__.wav";
 
             if (string.IsNullOrEmpty(exportPath)) {
                 Console.WriteLine("No export path provided. Aborting export operation.");
@@ -1189,6 +1194,13 @@ namespace OpenUtauCLI {
                 }
 
                 await PlaybackManager.Inst.RenderToFiles(project, exportPath);
+                bool renderSucceeded = await PlaybackManager.Inst.RenderCompletionSource.Task;
+
+                if (renderSucceeded) {
+                    Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
+                } else {
+                    Console.WriteLine("Rendering failed. Check logs for more information.");
+                }
                 Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
             } catch (Exception ex) {
                 Console.WriteLine($"An error occurred during the export: {ex.Message}");
