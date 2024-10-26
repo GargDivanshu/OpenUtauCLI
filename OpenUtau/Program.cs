@@ -25,6 +25,7 @@ namespace OpenUtauCLI {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             if (args.Length == 0) {
+                Pipeline(args.Skip(1).ToArray());
                 ShowHelp();
                 return;
             }
