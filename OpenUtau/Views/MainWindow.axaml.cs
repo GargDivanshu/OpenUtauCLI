@@ -30,7 +30,7 @@ namespace OpenUtau.App.Views {
     public partial class MainWindow : Window, ICmdSubscriber {
         private readonly KeyModifiers cmdKey =
             OS.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
-        private readonly MainWindowViewModel viewModel;
+        public MainWindowViewModel viewModel;
 
         private bool splashDone = false;
 

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using System.IO.Compression;
 using System.Linq;
@@ -20,9 +21,11 @@ namespace OpenUtauCLI {
     class Program {
 
         private static UProject? project;
+        private static MainWindowViewModel viewModel;
 
         static void Main(string[] args) {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
 
             if (args.Length == 0) {
                 ShowHelp();
@@ -35,6 +38,7 @@ namespace OpenUtauCLI {
             }
 
             //InitializeCoreComponents();
+            
 
             while (true) {
                 Console.Write("> ");
@@ -222,6 +226,22 @@ namespace OpenUtauCLI {
             }
         }
 
+        static void InitializeCLIViewModel() {
+            viewModel = new MainWindowViewModel();
+
+            // Initialize singer and project
+            TaskScheduler scheduler = TaskScheduler.Default;
+            viewModel.GetInitSingerTask()!.ContinueWith(_ => {
+                viewModel.InitProject();
+                Console.WriteLine("Initialized CLI ViewModel with project and commands.");
+            }, CancellationToken.None, TaskContinuationOptions.None, scheduler);
+
+            
+            project = DocManager.Inst.Project;
+            // Set up autosave timer if necessary
+            //var autosaveTimer = new Timer((e) => DocManager.Inst.AutoSave(), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+        }
+
         static async void Pipeline(string[] args) {
             string midiPath = "";
             string lyricsPath = "";
@@ -307,6 +327,7 @@ namespace OpenUtauCLI {
                 return;
             }
 
+            
             List<UVoicePart> voiceParts = project.parts.OfType<UVoicePart>().ToList();
             if (voiceParts.Count == 0) {
                 Console.WriteLine("No voice parts available in the project.");
@@ -448,7 +469,8 @@ namespace OpenUtauCLI {
 
             /*Starting a new project */
             if (project == null) {
-                DocManager.Inst.Initialize(); // Only initialize if project is not already set
+                //DocManager.Inst.Initialize(); // Only initialize if project is not already set
+                NewProject();
                 project = DocManager.Inst.Project; // Assign the project instance
             }
         }
@@ -462,10 +484,12 @@ namespace OpenUtauCLI {
                     HandleOpenProject();
                     break;
                 case "2":
-                    if (project == null) {
-                        DocManager.Inst.Initialize(); // Only initialize if project is not already set
-                        project = DocManager.Inst.Project; // Assign the project instance
-                    }
+                    //if (project == null) {
+                    //    DocManager.Inst.Initialize(); // Only initialize if project is not already set
+                    //    project = DocManager.Inst.Project; // Assign the project instance
+                    //}
+                    NewProject();
+                    //DocManager.Inst.ExecuteCmd(new LoadProjectNotification(OpenUtau.Core.Format.Ustx.Create()));
                     break;
                 default:
                     Console.WriteLine("Invalid option. Starting new project by default.");
@@ -477,6 +501,38 @@ namespace OpenUtauCLI {
             }
         }
 
+
+        //public void InitProject() {
+        //    //var args = Environment.GetCommandLineArgs();
+        //    //if (args.Length == 2 && File.Exists(args[1])) {
+        //        try {
+        //            OpenUtau.Core.Format.Formats.LoadProject(new string[] { args[1] });
+        //            DocManager.Inst.ExecuteCmd(new VoiceColorRemappingNotification(-1, true));
+        //            return;
+        //        } catch (Exception e) {
+        //            var customEx = new MessageCustomizableException($"Failed to open file {args[1]}", $"<translate:errors.failed.openfile>: {args[1]}", e);
+        //            DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(customEx));
+        //        }
+        //    //}
+        //    NewProject();
+        //}
+
+        static void NewProject() {
+            //var defaultTemplate = Path.Combine(PathManager.Inst.TemplatesPath, "default.ustx");
+            //if (File.Exists(defaultTemplate)) {
+            //    try {
+            //        OpenProject(new[] { defaultTemplate });
+            //        DocManager.Inst.Project.Saved = false;
+            //        DocManager.Inst.Project.FilePath = string.Empty;
+            //        return;
+            //    } catch (Exception e) {
+            //        var customEx = new MessageCustomizableException("Failed to load default template", "<translate:errors.failed.load>: default template", e);
+            //        DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(customEx));
+            //    }
+            //}
+            DocManager.Inst.ExecuteCmd(new LoadProjectNotification(OpenUtau.Core.Format.Ustx.Create()));
+            project = DocManager.Inst.Project;
+        }
 
         static void HandleOpenProject() {
             Console.WriteLine("Enter the path to the project file (e.g., project.ustx):");
@@ -536,10 +592,11 @@ namespace OpenUtauCLI {
 
         static void HandleListTracks() {
             try {
-                if (project == null) {
-                    Console.WriteLine("No project is currently loaded.");
-                    return;
-                }
+                //if (project == null) {
+                //    Console.WriteLine("No project is currently loaded.");
+                //    return;
+                //}
+                project = DocManager.Inst.Project;
 
                 Console.WriteLine($"Project: {project.name} (FilePath: {project.FilePath})");
                 Console.WriteLine($"Found {project.tracks.Count} track(s).");
@@ -562,7 +619,8 @@ namespace OpenUtauCLI {
 
 
         static void HandleUpdateTrack() {
-            if (project == null || project.tracks.Count == 0) {
+            project = DocManager.Inst.Project;
+            if ( project.tracks.Count == 0) {
                 Console.WriteLine("No project or tracks loaded. Cannot update a track.");
                 return;
             }
