@@ -12,6 +12,7 @@ using OpenUtau.Core;
 using OpenUtau.Classic;
 using OpenUtau.Core.Util;
 using OpenUtau.Core.Ustx;
+using OpenUtau.Core.Editing;
 using OpenUtau.Api;
 using OpenUtau.Audio;
 using OpenUtau.Core.DiffSinger;
@@ -172,7 +173,7 @@ namespace OpenUtauCLI {
 
                     case "--export":
                         if (parts.Length > 1 && parts[1].ToLower() == "--wav") {
-                            HandleExportWavCommand().GetAwaiter().GetResult();
+                            HandleExportWavCommand();
                         } else {
                             Console.WriteLine("Error: Specify the format to export (e.g., --export --wav).");
                         }
@@ -193,20 +194,14 @@ namespace OpenUtauCLI {
                         break;
 
 
-                    /*case "--process":
-                        if (parts.Length > 1) {
-                            switch (parts[1].ToLower()) {
-                                case "--loadRenderedPitch":
-                                    HandleLoadRenderedPitch();
-                                    break;
-                                default:
-                                    Console.WriteLine("Invalid subcommand for '--process'.");
-                                    break;
-                            }
-                        } else {
-                            Console.WriteLine("Error: The '--process' command requires a valid subcommand.");
+                    case "--process":
+                        if (parts.Length > 1 && parts[1].ToLower() == "--pitch") {
+                            HandleLoadRenderedPitch();
                         }
-                        break;*/
+                        else { 
+                            Console.WriteLine("Invalid subcommand for '--process'.");
+                        }
+                        break;
 
                     case "--help":
                         // Check if there's a specific command to provide help for
@@ -292,6 +287,7 @@ namespace OpenUtauCLI {
                 return;
             }
 
+            
             // Initialize the core components before proceeding with the pipeline
             InitializeCoreComponentsViaPipeline();
 
@@ -403,7 +399,7 @@ namespace OpenUtauCLI {
             
 
             string wavPath = Path.Combine(exportPath + ".wav");
-            HandleExportWavCommandViaPipeline(wavPath).GetAwaiter().GetResult();  // Assuming this method exists for exporting WAV
+            HandleExportWavCommandViaPipeline(wavPath);  // Assuming this method exists for exporting WAV
             //try {
             //    Console.WriteLine($"Starting WAV export to {wavPath}");
             //    if (project.tracks.Count == 0) {
@@ -471,7 +467,7 @@ namespace OpenUtauCLI {
             if (project == null) {
                 //DocManager.Inst.Initialize(); // Only initialize if project is not already set
                 NewProject();
-                project = DocManager.Inst.Project; // Assign the project instance
+                //project = DocManager.Inst.Project; // Assign the project instance
             }
         }
 
@@ -1216,7 +1212,7 @@ namespace OpenUtauCLI {
         }
 
 
-        static async Task HandleExportWavCommand() {
+        static async void HandleExportWavCommand() {
             if (project == null) {
                 Console.WriteLine("No project is currently loaded.");
                 return;
@@ -1253,18 +1249,32 @@ namespace OpenUtauCLI {
             }
         }
 
-        static async Task HandleExportWavCommandViaPipeline(string exportPath) {
+        static async void HandleExportWavCommandViaPipeline(string exportPath) {
             if (project == null) {
                 Console.WriteLine("No project is currently loaded.");
                 return;
             }
 
-            Console.WriteLine($"Starting WAV export to {exportPath}");
-            if (project.tracks.Count == 0) {
-                Console.WriteLine("No tracks in the project.");
+            //Console.WriteLine($"Starting WAV export to {exportPath}");
+            //if (project.tracks.Count == 0) {
+            //    Console.WriteLine("No tracks in the project.");
+            //}
+
+            try {
+                Console.WriteLine($"Starting WAV export to {exportPath}");
+                if (project.tracks.Count == 0) {
+                    Console.WriteLine("No tracks in the project.");
+                }
+
+                project = DocManager.Inst.Project;
+
+                await PlaybackManager.Inst.RenderToFiles(project, exportPath);
+                Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
+            } catch (Exception ex) {
+                Console.WriteLine($"An error occurred during the export: {ex.Message}");
             }
 
-            await PlaybackManager.Inst.RenderToFiles(project, exportPath);
+            //await PlaybackManager.Inst.RenderToFiles(project, exportPath);
             Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
         }
 
@@ -1325,7 +1335,7 @@ namespace OpenUtauCLI {
 
 
 
-        /*static void HandleLoadRenderedPitch() {
+        static void HandleLoadRenderedPitch() {
             if (project == null || project.parts.Count == 0) {
                 Console.WriteLine("No project or parts loaded.");
                 return;
@@ -1345,18 +1355,22 @@ namespace OpenUtauCLI {
             }
 
             // Retrieve the selected part
-            UPart selectedPart = project.parts[partIndex - 1];
+            var selectedPart = project.parts.FirstOrDefault(p => p is UVoicePart) as UVoicePart;
             if (!(selectedPart is UVoicePart voicePart)) {
                 Console.WriteLine("Selected part is not a voice part.");
                 return;
             }
+            List<UNote> notesList = new List<UNote>(voicePart.notes);
 
+            var batchEdit = new Transpose(12, "Transpose Octave Up");  // Example of Transpose batch edit.
+            batchEdit.Run(project, selectedPart, selectedPart.notes.ToList(), DocManager.Inst);
+            Console.WriteLine("Batch edit completed.");
             // Assuming LoadRenderedPitch is a method that needs to be implemented or a class that needs to be instantiated and run
-            LoadRenderedPitch pitchLoader = new LoadRenderedPitch();
-            pitchLoader.Run(project, voicePart, new List<UNote>(), DocManager.Inst); // Adjust parameters as necessary
+            //LoadRenderedPitch pitchLoader = new LoadRenderedPitch();
+            //pitchLoader.Run(project, voicePart, notesList, DocManager.Inst); // Adjust parameters as necessary
 
             Console.WriteLine("Rendered pitch loading completed for selected part.");
-        }*/
+        }
 
 
 
