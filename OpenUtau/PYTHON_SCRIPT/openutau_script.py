@@ -1,25 +1,38 @@
 import json
 import boto3
 import requests
-import botocore.exceptions
+from botocore.exceptions import ClientError
 import subprocess
 import time
 import sys
 import os
-import rich
+import logging
+from rich import print
+import re
+import glob
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
-# PLS SCROLL DOWN FOR OPENUTAU SCRIPT : LAMBDA CODE IS STOPPED RN
-
-
-# lambda_arn = "arn:aws:lambda:ap-south-1:108782080917:function:singing-vocal"
+# AWS & LAMBDA related keys
 bucket_name = "singing-pipeline-eng-storage"
-midi_file = "static/final.mid"
-lyrics_file = "static/lyrics.txt"
+LAMBDA_STATIC_MIDI_FILE_PATH = "static/final.mid"
+LAMBDA_STATIC_LYRICS_FILE_PATH = "static/lyrics.txt"
 
 # Create AWS clients
 s3_client = boto3.client('s3', region_name='ap-south-1')
 lambda_client = boto3.client('lambda', region_name='ap-south-1')
+
+# OPENUTAUCLI related envs
+OU_INFERENCE_LOCAL_MIDI_PATH = "tmp/final.mid" # to be 
+OU_INFERENCE_LOCAL_LYRICS_PATH = "tmp/lyrics.txt"
+OU_SINGER_NUMBER = "2"
+OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH = "tmp/"
+OU_FINAL_FILENAME = ""
+OU_INFERENCE_LOCAL_EXPORT_PATH = ""
+# os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, OU_FINAL_FILENAME + ".wav")
+
 
 
 
@@ -38,35 +51,70 @@ def upload_file_to_s3(local_file, bucket, key):
         print(f"Error uploading file to S3: {e}")
         exit(1)
         
-        
+
 def download_file_from_s3(bucket, key, local_output_file):
     """Download the specified file from S3 to local storage."""
     try:
-        print("Downloading the processed WAV file from S3...")
+        logger.info(f"Downloading {key} from S3 to {local_output_file}...")
         s3_client.download_file(bucket, key, local_output_file)
-        print(f"Processed WAV file downloaded to {local_output_file}")
-    except Exception as e:
-        print(f"Error downloading the processed WAV file: {e}")
-        exit(1)
+        logger.info(f"File {key} downloaded successfully to {local_output_file}")
+    except ClientError as e:
+        logger.error(f"Error downloading file {key}: {e}")
+        raise e  # Raise exception to allow Lambda error handling
         
         
 # oprimise for s3, lambda
-def wait_for_file(bucket, key, timeout=60, interval=5):
+def wait_for_file(bucket, key, s3_client, timeout=60, interval=5):
     """Wait for the specified file to become available in S3."""
     elapsed_time = 0
     while elapsed_time < timeout:
         try:
             s3_client.head_object(Bucket=bucket, Key=key)
+            logger.info(f"File {key} is now available in bucket {bucket}.")
             return True
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == '404':
-                print(f"Waiting for file {key} in bucket {bucket} to be available...")
+                # Use logging and exponential backoff instead of time.sleep
+                logger.info(f"Waiting for file {key} in bucket {bucket} to be available...")
                 time.sleep(interval)
                 elapsed_time += interval
+                interval = min(interval * 2, timeout - elapsed_time)  # Exponential backoff
             else:
-                raise e
+                raise e  # Re-raise unexpected exceptions
+    logger.error(f"File {key} did not become available within the timeout period.")
     return False
 
+
+def clean_tmp_wav_file():
+    """
+    Finds the .wav file in the tmp directory, and renames it to ensure
+    it ends with 'vocals.wav' by removing any characters or special symbols
+    between 'vocals' and '.wav'.
+    """
+    # Determine the correct tmp directory path for both Unix and Windows
+    tmp_dir = os.path.join("tmp")  # This should adapt to "tmp" or "/tmp" as needed
+
+    # Search for any .wav files in the tmp directory
+    wav_files = glob.glob(os.path.join(tmp_dir, "*.wav"))
+    
+    if not wav_files:
+        print(f"No WAV files found in {tmp_dir}.")
+        return
+    
+    # Assume there's only one .wav file as per your logic
+    file_path = wav_files[0]
+    dir_name, original_filename = os.path.split(file_path)
+
+    # Use regex to remove any characters after 'vocals' and before '.wav'
+    new_filename = re.sub(r'(vocals).*?(\.wav)', r'\1.wav', original_filename)
+    new_file_path = os.path.join(dir_name, new_filename)
+
+    # Rename the file if a change was made
+    if new_file_path != file_path:
+        os.rename(file_path, new_file_path)
+        print(f"Renamed file from {original_filename} to {new_filename}")
+    else:
+        print(f"No renaming needed for {original_filename}")
 
 
 def notify_system_api(song_id, stage, action, file_name=None, err_msg=None, receipt_handle=None):
@@ -84,111 +132,115 @@ def notify_system_api(song_id, stage, action, file_name=None, err_msg=None, rece
                 "receiptHandle": receipt_handle
             }
         )
+        payload_data = {
+                "songID": song_id,
+                "stage": stage,
+                "action": action,
+                "fileName": file_name,
+                "errMsg": err_msg,
+                "receiptHandle": receipt_handle
+            }
         response.raise_for_status()
+        print(json.dumps(payload_data, indent="4"))
+        print(response.json())
         print(f"{action.capitalize()} status notified successfully.")
     except requests.exceptions.RequestException as e:
         print(f"Failed to notify {action} status: {e}")
-        
-MIDI_FILE_PATH = ""
-LYRICS_FILE_PATH = ""
-SINGER_NUMBER = "2"
-PROJECT_SAVE_PATH = ""
-FILENAME = ""
+ 
 
-def lambda_handler(event, context): 
-    
-    """AWS Lambda handler function."""
+def lambda_handler(event, context):
+    """AWS Lambda handler function.
+    Lyrics coming form payload are not being used here
+    Here lyrics present in s3::singing-pipeline-eng-storage/static/lyrics.txt
+    are being used for testing but when 
+    Utau compatible lyrics will be received 
+    from payload (currently eng lyrics - Non Utua compatible are being received)
+    we will change the lambda flow
+    """
+
     try:
-        
-        # LOCAL_MIDI_FILE = "/tmp/final.mid"
-        # LOCAL_LYRICS_FILE = "/tmp/lyrics.txt"
-        # LOCAL_WAV_OUTPUT_PATH = "/tmp/output.wav"
-        LOCAL_MIDI_FILE = "final.mid"
-        LOCAL_LYRICS_FILE = "lyrics.txt"
-        # LOCAL_WAV_OUTPUT_PATH = "output.wav"
-        LOCAL_WAV_OUTPUT_PATH = "AMAN_MEET__.wav"      
-          
-        
-        if wait_for_file(bucket_name, midi_file):
-            download_file_from_s3(bucket_name, midi_file, LOCAL_MIDI_FILE)
+        # Ensure MIDI file is available in S3
+        if wait_for_file(bucket_name, LAMBDA_STATIC_MIDI_FILE_PATH, s3_client):
+            download_file_from_s3(bucket_name, LAMBDA_STATIC_MIDI_FILE_PATH, OU_INFERENCE_LOCAL_MIDI_PATH)
         else:
-            print("Error: The output file did not become available within the expected time.")
-            exit(1)
-                
-                
-        # HIT SYSTEM API HERE TO ENSURE YOU LET THEM SYSTEM KNOW THE `utau_inference` stage is started
-        # implement here . . . 
-        
-        # Extract paths from the event
+            logger.error("MIDI file did not become available within the expected time.")
+            return {"statusCode": 404, "body": "MIDI file not available"}
+
+        # Process each record
         for record in event['Records']:
-            print("Record started!!")
-            # Extract message data from the SQS message
-            
-            
-            # add a second try - catch:
-            
-            
-            
-            body = json.loads(record['body'])
-            receipt_handle = record['receiptHandle']
-            song_id = body.get("songID")  # Set default songID if not present
-            lyrics = body.get("lyrics")
-            file_name = body.get("fileName", None)
-            
-            print(f"body: {body}")
-            
-            
-            
-            # lyrics -> txt storage in tmp 
-
-            # Notify system API that `utau_inference` stage is starting
-            notify_system_api(song_id, "utau_inference", "start", receipt_handle=None)
-
-            
-            # weird not downloading
-            # if wait_for_file(bucket_name, LOCAL_LYRICS_FILE):
-            #     download_file_from_s3(bucket_name, lyrics_file, LOCAL_LYRICS_FILE)
-            # else:
-            #     print("Error: The output file did not become available within the expected time.")
-            #     exit(1)
+            try:
+                # Parsing SQS message
+                body = json.loads(record['body'])
+                receipt_handle = record['receiptHandle']
+                song_id = body.get("songID")
+                OU_FINAL_FILENAME = f"song_{song_id}_vocals"
+                OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, f"{OU_FINAL_FILENAME}.wav")
                 
-            MIDI_FILE_PATH = LOCAL_MIDI_FILE
-            LYRICS_FILE_PATH = LOCAL_LYRICS_FILE
-            
-            
+                notify_system_api(song_id, "utau_inference", "start", None, None)
                 
-            
-            # run_openutau()
-            
-            # change the filename 
-            # {song_id|_inference.wav
-            upload_file_to_s3(LOCAL_WAV_OUTPUT_PATH, bucket_name, f"/utau_inference/{LOCAL_WAV_OUTPUT_PATH}")
+                # Download lyrics file for each record
+                if wait_for_file(bucket_name, LAMBDA_STATIC_LYRICS_FILE_PATH, s3_client):
+                    download_file_from_s3(bucket_name, LAMBDA_STATIC_LYRICS_FILE_PATH, OU_INFERENCE_LOCAL_LYRICS_PATH)
+                else:
+                    logger.error("Lyrics file did not become available.")
+                    continue  # Skip to next record if lyrics file is not available
 
-            # After processing, notify system API that `utau_inference` stage is ending
-            notify_system_api(song_id, "utau_inference", "end", file_name=LOCAL_WAV_OUTPUT_PATH, receipt_handle=receipt_handle)
-            
-        
-            # delete the tmp file after for loop 
-        # delete the static files 
-        
-        return {
-            "statusCode": 200,
-            "body": json.dumps("Processing completed successfully!")
-        }
+                # Run processing
+                run_openutau(OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH)
+                
+                time.sleep(2)
+                clean_tmp_wav_file()
+                time.sleep(2)
+
+                # Upload processed file to S3
+                upload_file_to_s3(OU_INFERENCE_LOCAL_EXPORT_PATH, bucket_name, f"utau_inference/{OU_FINAL_FILENAME}.wav")
+                
+                notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
+
+
+            except Exception as e:
+                logger.error(f"Error processing record for song_id {song_id}: {e}")
+                notify_system_api(song_id, "utau_inference", "err", None, e, None)
+
+            finally:
+                # Clean up lyrics file after each record
+                if os.path.exists(OU_INFERENCE_LOCAL_LYRICS_PATH):
+                    os.remove(OU_INFERENCE_LOCAL_LYRICS_PATH)
+                    logger.info(f"Deleted lyrics file: {OU_INFERENCE_LOCAL_LYRICS_PATH}")
+                ustx_file_path = os.path.join("/tmp", f"{OU_FINAL_FILENAME}.ustx")
+                wav_file_path = os.path.join("/tmp", f"{OU_FINAL_FILENAME}.wav")
+
+                # Clean up .ustx and .wav files if they exist
+                if os.path.exists(ustx_file_path):
+                    os.remove(ustx_file_path)
+                    logger.info(f"Deleted USTX file: {ustx_file_path}")
+
+                if os.path.exists(wav_file_path):
+                    os.remove(wav_file_path)
+                    logger.info(f"Deleted WAV file: {wav_file_path}")
+
+        # Clean up MIDI file after processing all records
+        if os.path.exists(OU_INFERENCE_LOCAL_MIDI_PATH):
+            os.remove(OU_INFERENCE_LOCAL_MIDI_PATH)
+            logger.info(f"Deleted MIDI file: {OU_INFERENCE_LOCAL_MIDI_PATH}")
+
+        return {"statusCode": 200, "body": "Processing completed successfully!"}
+
     except Exception as e:
-        # TypeError: Object of type set is not JSON serializable - solve 
-        notify_system_api(song_id, "utau_inference", "error", file_name=None, receipt_handle=None, err_msg="got error - string err")
-        return {
-            "statusCode": 500,
-            "body": json.dumps(f"Error: {str(e)}")
-        }
+        # This happened outside of Records array so cannot use systemAPI as it is 
+        # NOT bound to any single songID
+        logger.error(f"Critical error in lambda_handler: {str(e)}")
+        return {"statusCode": 500, "body": f"Error: {str(e)}"}
 
+                
+                
+# DUMMY PAYLOAD FOR LOCAL TESTING
 payload = {
             "Records": [
                 {
                     "messageId": "unique-message-id",
                     "receiptHandle": "MessageReceiptHandle",
-                    "body": json.dumps({"fileName": None, "songID": 105, "lyrics": "Jingle"}),
+                    "body": json.dumps({"fileName": None, "songID": 107, "lyrics": "Jingle"}),
                     "attributes": {
                         "ApproximateReceiveCount": "1",
                         "SentTimestamp": str(int(time.time() * 1000)),
@@ -204,29 +256,8 @@ payload = {
             ]
         }
 
-# response = lambda_handler(payload, None)
-# print(response)
 
-
-# # Global Paths
-# Abhishek's env variables
-# MIDI_FILE_PATH = "C:\\Users\\abhis\\Downloads\\simple_midi.mid"
-# LYRICS_FILE_PATH = "C:\\Users\\abhis\\Downloads\\simple_lyrics.txt"
-# PROJECT_SAVE_PATH = "C:\\Users\\abhis\\Downloads\\project"
-# EXPORT_WAV_PATH = "C:\\Users\\abhis\\Downloads\\project\\output.wav"
-# SINGER_NUMBER = "1"
-# FILENAME = "AMAN_MEET"
-# Divanshu's env variables
-MIDI_FILE_PATH = "C:\\Users\\divan\\Downloads\\midi_export.mid"
-LYRICS_FILE_PATH = "C:\\Users\\divan\\OneDrive\\Desktop\\AEOS\\backyard.txt"
-PROJECT_SAVE_PATH = "C:\\Users\\divan\\Downloads"
-FILENAME = "backyard_midi_export"
-EXPORT_WAV_PATH = os.path.join(PROJECT_SAVE_PATH, FILENAME + ".wav")
-SINGER_NUMBER = "1"
-
-
-    
-def run_openutau():
+def run_openutau(project_name, export_wav_path):
     p = False
     try:
         # Start OpenUtau with --init, capturing stdout and stderr
@@ -278,15 +309,15 @@ def run_openutau():
                     accumulated_output = ""  # Clear accumulated output
                 # Send MIDI import command after project selection is complete
                 elif '> ' in accumulated_output and project_selected and not midi_imported:
-                    print(f"Detected '> ' prompt; sending '--import --midi {MIDI_FILE_PATH}'")
-                    process.stdin.write(f"--import --midi {MIDI_FILE_PATH}\n")
+                    print(f"Detected '> ' prompt; sending '--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}'")
+                    process.stdin.write(f"--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}\n")
                     process.stdin.flush()
                     midi_imported = True  # Set flag to avoid re-sending MIDI import
                     accumulated_output = ""  # Clear accumulated output
                 # Send lyrics import command after MIDI import is complete
                 elif '> ' in accumulated_output and midi_imported and not lyrics_imported:
-                    print(f"Detected '> ' prompt; sending '--lyrics {LYRICS_FILE_PATH}'")
-                    process.stdin.write(f"--lyrics {LYRICS_FILE_PATH}\n")
+                    print(f"Detected '> ' prompt; sending '--lyrics {OU_INFERENCE_LOCAL_LYRICS_PATH}'")
+                    process.stdin.write(f"--lyrics {OU_INFERENCE_LOCAL_LYRICS_PATH}\n")
                     process.stdin.flush()
                     lyrics_imported = True  # Set flag to avoid re-sending lyrics import
                     accumulated_output = ""  # Clear accumulated output
@@ -326,7 +357,7 @@ def run_openutau():
                 # Respond to singer selection prompt
                 elif "Select a singer by number:" in accumulated_output:
                     print("Detected singer selection prompt; entering '1'")
-                    process.stdin.write(f"{SINGER_NUMBER}\n")
+                    process.stdin.write(f"{OU_SINGER_NUMBER}\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                 # Respond to phonemizer selection prompt
@@ -359,14 +390,14 @@ def run_openutau():
                 #     accumulated_output = ""  # Clear accumulated output
                 # Respond to directory path prompt for saving the project
                 elif "Enter the directory path where you want to save the project:" in accumulated_output and not_saved:
-                    # print(f"Detected directory path prompt; entering '{PROJECT_SAVE_PATH}'")
-                    process.stdin.write(f"{PROJECT_SAVE_PATH}\n")
+                    # print(f"Detected directory path prompt; entering '{OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH}'")
+                    process.stdin.write(f"{OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH}\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                 # Respond to file name prompt for saving the project
                 elif "Enter the name for the project file (without extension):" in accumulated_output and not_saved:
                     # print(f"Detected file name prompt; entering '{FILE_NAME}'")
-                    process.stdin.write(f"{FILENAME}\n")
+                    process.stdin.write(f"{project_name}\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                     not_saved = False
@@ -383,15 +414,15 @@ def run_openutau():
                     
                 elif "Enter the path where you want to export the WAV file:" in accumulated_output and not export_fully_completed:
                     print()
-                    print(f"[red]Detected WAV export path prompt; entering '{EXPORT_WAV_PATH}'[/red]")
-                    process.stdin.write(f"{EXPORT_WAV_PATH}\n")
+                    print(f"[red]Detected WAV export path prompt; entering '{export_wav_path}'[/red]")
+                    process.stdin.write(f"{export_wav_path}\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                     export_fully_completed = True  # Set flag to avoid re-sending export path
                      
                 # elif p and export_fully_completed:
                 #     print("[red]Detected '> ' prompt; sending '--exit'[/red]")
-                #     # process.stdin.write(EXPORT_WAV_PATH)
+                #     # process.stdin.write(OU_INFERENCE_LOCAL_EXPORT_PATH)
                 #     # process.stdin.flush()
                 #     p = False
                 
@@ -411,6 +442,36 @@ def run_openutau():
         print("Error encountered:", e)
     finally:
         if process:
-            process.terminate()  # Ensure the process is terminated
+            process.terminate()  # Ensure the process is terminated     
+           
+            
+# UNCOMMENT FOR LOCAL LAMBDA TESTING  
+# response = lambda_handler(payload, None)
+# print(response)
+
+
+
+
+# UNCOMMENT FOR OPENUTAUCLI - ONLY TESTING
+# # Global Paths
+# Abhishek's env variables
+# OU_INFERENCE_LOCAL_MIDI_PATH = "C:\\Users\\abhis\\Downloads\\simple_midi.mid"
+# OU_INFERENCE_LOCAL_LYRICS_PATH = "C:\\Users\\abhis\\Downloads\\simple_lyrics.txt"
+# save_dir = "C:\\Users\\abhis\\Downloads\\project"
+# wav_export_path = "C:\\Users\\abhis\\Downloads\\project\\output.wav"
+# OU_SINGER_NUMBER = "1"
+# project_file_name = "AMAN_MEET"
+
+# Divanshu's env variables
+# OU_INFERENCE_LOCAL_MIDI_PATH = "C:\\Users\\divan\\Downloads\\midi_export.mid"
+# OU_INFERENCE_LOCAL_LYRICS_PATH = "C:\\Users\\divan\\OneDrive\\Desktop\\AEOS\\floating_on_the_trial.txt"
+# save_dir = "C:\\Users\\divan\\Downloads"
+# project_file_name = "floating_on_the_trial"
+# wav_export_path = os.path.join(save_dir, project_file_name + ".wav")
+# OU_SINGER_NUMBER = "1"
+
+
+    
+
 # Run the function
-run_openutau()
+# run_openutau(project_file_name, wav_export_path)
