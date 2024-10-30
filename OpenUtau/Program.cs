@@ -1028,7 +1028,7 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"File does not exist at {filePath}."); // More detailed error message
                 return;
             }
-
+            project.tempos[0].bpm = 94;
             try {
                 var parts = OpenUtau.Core.Format.MidiWriter.Load(filePath, project);
                 DocManager.Inst.StartUndoGroup();

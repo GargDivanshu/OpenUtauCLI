@@ -41,7 +41,7 @@ namespace OpenUtau.Core.Ustx {
         public Version ustxVersion;
         public int resolution = 480;
 
-        [Obsolete("Since ustx v0.6")] public double bpm = 120;
+        [Obsolete("Since ustx v0.6")] public double bpm = 94;
         [Obsolete("Since ustx v0.6")] public int beatPerBar = 4;
         [Obsolete("Since ustx v0.6")] public int beatUnit = 4;
 
@@ -73,7 +73,7 @@ namespace OpenUtau.Core.Ustx {
 
         public UProject() {
             timeSignatures = new List<UTimeSignature> { new UTimeSignature(0, 4, 4) };
-            tempos = new List<UTempo> { new UTempo(0, 120) };
+            tempos = new List<UTempo> { new UTempo(0, 94) };
             tracks = new List<UTrack>() { new UTrack("Track1") };
             parts = new List<UPart>();
             timeAxis.BuildSegments(this);
