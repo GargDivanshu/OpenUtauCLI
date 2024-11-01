@@ -25,10 +25,10 @@ s3_client = boto3.client('s3', region_name='ap-south-1')
 lambda_client = boto3.client('lambda', region_name='ap-south-1')
 
 # OPENUTAUCLI related envs
-OU_INFERENCE_LOCAL_MIDI_PATH = "tmp/final.mid" # to be 
-OU_INFERENCE_LOCAL_LYRICS_PATH = "tmp/lyrics.txt"
-OU_SINGER_NUMBER = "2"
-OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH = "tmp/"
+OU_INFERENCE_LOCAL_MIDI_PATH = "/tmp/final.mid" # to be 
+OU_INFERENCE_LOCAL_LYRICS_PATH = "/tmp/lyrics.txt"
+OU_SINGER_NUMBER = "1"
+OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH = "/tmp/"
 OU_FINAL_FILENAME = ""
 OU_INFERENCE_LOCAL_EXPORT_PATH = ""
 # os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, OU_FINAL_FILENAME + ".wav")
@@ -92,7 +92,7 @@ def clean_tmp_wav_file():
     between 'vocals' and '.wav'.
     """
     # Determine the correct tmp directory path for both Unix and Windows
-    tmp_dir = os.path.join("tmp")  # This should adapt to "tmp" or "/tmp" as needed
+    tmp_dir = os.path.join("/tmp")  # This should adapt to "tmp" or "/tmp" as needed
 
     # Search for any .wav files in the tmp directory
     wav_files = glob.glob(os.path.join(tmp_dir, "*.wav"))
@@ -193,6 +193,8 @@ def lambda_handler(event, context):
                 time.sleep(2)
 
                 # Upload processed file to S3
+                # LAMBDA SPECIFIC CHANGE :
+                
                 upload_file_to_s3(OU_INFERENCE_LOCAL_EXPORT_PATH, bucket_name, f"utau_inference/{OU_FINAL_FILENAME}.wav")
                 
                 notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
@@ -260,15 +262,26 @@ payload = {
 def run_openutau(project_name, export_wav_path):
     p = False
     try:
+        print("Running OpenUtau")
         # Start OpenUtau with --init, capturing stdout and stderr
+        if os.access('/app/OpenUtau', os.X_OK):
+            print("OpenUtau is executable.")
+        else:
+            print("OpenUtau is NOT executable.")
+            
+            
         process = subprocess.Popen(
-            ["OpenUtau.exe", "--init"],
+            ["/app/OpenUtau", "--init"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
             bufsize=1
         )
+        
+        print("Subprocess started...")
+        
+        
         # Add a small delay to allow OpenUtau to initialize and output text
         time.sleep(1)
         # Continuously read output line-by-line
@@ -356,7 +369,7 @@ def run_openutau(project_name, export_wav_path):
                     accumulated_output = ""  # Clear accumulated output
                 # Respond to singer selection prompt
                 elif "Select a singer by number:" in accumulated_output:
-                    print("Detected singer selection prompt; entering '1'")
+                    print(f"Detected singer selection prompt; entering '{OU_SINGER_NUMBER}'")
                     process.stdin.write(f"{OU_SINGER_NUMBER}\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output

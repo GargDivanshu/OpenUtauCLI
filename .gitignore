@@ -340,3 +340,6 @@ appcast.*.xml
 *.tar.gz
 .vscode/
 Microsoft.AI.DirectML
+
+# exception for unzipper.exe 
+!OpenUtau/Resources/Unzipper.exe
