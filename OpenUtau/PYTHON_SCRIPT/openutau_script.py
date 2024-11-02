@@ -10,6 +10,8 @@ import logging
 from rich import print
 import re
 import glob
+from helpers import upload_file_to_s3, download_file_from_s3, wait_for_file, clean_tmp_wav_file, notify_system_api, check_files_and_directories
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -36,116 +38,7 @@ OU_INFERENCE_LOCAL_EXPORT_PATH = ""
 
 
 
-def upload_file_to_s3(local_file, bucket, key):
-    """Upload the specified file to S3."""
-    # with open(local_file, 'r', encoding='utf-8') as utf8_file, open('ascii_file.txt', 'w', encoding='ascii', errors='ignore') as ascii_file:
-    #     # Read the content from the UTF-8 file
-    #     for line in utf8_file:
-    #         # Write each line to the ASCII file
-    #         ascii_file.write(line)
-    try:
-        print(f"Uploading {local_file} to s3://{bucket}/{key}...")
-        s3_client.upload_file(local_file, bucket, key)
-        print(f"File {local_file} uploaded successfully.")
-    except Exception as e:
-        print(f"Error uploading file to S3: {e}")
-        exit(1)
-        
 
-def download_file_from_s3(bucket, key, local_output_file):
-    """Download the specified file from S3 to local storage."""
-    try:
-        logger.info(f"Downloading {key} from S3 to {local_output_file}...")
-        s3_client.download_file(bucket, key, local_output_file)
-        logger.info(f"File {key} downloaded successfully to {local_output_file}")
-    except ClientError as e:
-        logger.error(f"Error downloading file {key}: {e}")
-        raise e  # Raise exception to allow Lambda error handling
-        
-        
-# oprimise for s3, lambda
-def wait_for_file(bucket, key, s3_client, timeout=60, interval=5):
-    """Wait for the specified file to become available in S3."""
-    elapsed_time = 0
-    while elapsed_time < timeout:
-        try:
-            s3_client.head_object(Bucket=bucket, Key=key)
-            logger.info(f"File {key} is now available in bucket {bucket}.")
-            return True
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == '404':
-                # Use logging and exponential backoff instead of time.sleep
-                logger.info(f"Waiting for file {key} in bucket {bucket} to be available...")
-                time.sleep(interval)
-                elapsed_time += interval
-                interval = min(interval * 2, timeout - elapsed_time)  # Exponential backoff
-            else:
-                raise e  # Re-raise unexpected exceptions
-    logger.error(f"File {key} did not become available within the timeout period.")
-    return False
-
-
-def clean_tmp_wav_file():
-    """
-    Finds the .wav file in the tmp directory, and renames it to ensure
-    it ends with 'vocals.wav' by removing any characters or special symbols
-    between 'vocals' and '.wav'.
-    """
-    # Determine the correct tmp directory path for both Unix and Windows
-    tmp_dir = os.path.join("/tmp")  # This should adapt to "tmp" or "/tmp" as needed
-
-    # Search for any .wav files in the tmp directory
-    wav_files = glob.glob(os.path.join(tmp_dir, "*.wav"))
-    
-    if not wav_files:
-        print(f"No WAV files found in {tmp_dir}.")
-        return
-    
-    # Assume there's only one .wav file as per your logic
-    file_path = wav_files[0]
-    dir_name, original_filename = os.path.split(file_path)
-
-    # Use regex to remove any characters after 'vocals' and before '.wav'
-    new_filename = re.sub(r'(vocals).*?(\.wav)', r'\1.wav', original_filename)
-    new_file_path = os.path.join(dir_name, new_filename)
-
-    # Rename the file if a change was made
-    if new_file_path != file_path:
-        os.rename(file_path, new_file_path)
-        print(f"Renamed file from {original_filename} to {new_filename}")
-    else:
-        print(f"No renaming needed for {original_filename}")
-
-
-def notify_system_api(song_id, stage, action, file_name=None, err_msg=None, receipt_handle=None):
-    """Notify the system API of the process status."""
-    try:
-        response = requests.post(
-            # add to config 
-            'https://85iufrg71j.execute-api.ap-south-1.amazonaws.com/v1/webhook/update-status',
-            json={
-                "songID": song_id,
-                "stage": stage,
-                "action": action,
-                "fileName": file_name,
-                "errMsg": err_msg,
-                "receiptHandle": receipt_handle
-            }
-        )
-        payload_data = {
-                "songID": song_id,
-                "stage": stage,
-                "action": action,
-                "fileName": file_name,
-                "errMsg": err_msg,
-                "receiptHandle": receipt_handle
-            }
-        response.raise_for_status()
-        print(json.dumps(payload_data, indent="4"))
-        print(response.json())
-        print(f"{action.capitalize()} status notified successfully.")
-    except requests.exceptions.RequestException as e:
-        print(f"Failed to notify {action} status: {e}")
  
 
 def lambda_handler(event, context):
@@ -165,6 +58,8 @@ def lambda_handler(event, context):
         else:
             logger.error("MIDI file did not become available within the expected time.")
             return {"statusCode": 404, "body": "MIDI file not available"}
+        
+        check_files_and_directories("/app")
 
         # Process each record
         for record in event['Records']:
@@ -264,11 +159,12 @@ def run_openutau(project_name, export_wav_path):
     try:
         print("Running OpenUtau")
         # Start OpenUtau with --init, capturing stdout and stderr
-        if os.access('/app/OpenUtau', os.X_OK):
-            print("OpenUtau is executable.")
-        else:
-            print("OpenUtau is NOT executable.")
-            
+        # as said by abhishek this below is wrong way of finding if a file is executable or not
+        # if os.access('/app/OpenUtau', os.X_OK):
+        #     print("OpenUtau is executable.")
+        # else:
+        #     print("OpenUtau is NOT executable.")
+        #     return     
             
         process = subprocess.Popen(
             ["/app/OpenUtau", "--init"],
@@ -279,11 +175,14 @@ def run_openutau(project_name, export_wav_path):
             bufsize=1
         )
         
+        print("Subprocess started:", process.pid)
+        logging.info("Subprocess started:", process.pid)
+        
         print("Subprocess started...")
         
         
         # Add a small delay to allow OpenUtau to initialize and output text
-        time.sleep(1)
+        time.sleep(15)
         # Continuously read output line-by-line
         accumulated_output = ""
         init_sent = False          # Flag to track if '--init' has been sent
@@ -298,17 +197,28 @@ def run_openutau(project_name, export_wav_path):
         export_fully_completed = False
         pitch_processing = False
         while True:
-            output = process.stdout.read(1)  # Read one character at a time
+            output = process.stdout.readline  # Read one character at a time
+
+            
+
                     
+            if not output:
+                print ("Output not ready")
+                logging.info("OUtput not ready")
+                return
                     
             if output:
+                print("Accumulating output")
+                logging.info("Accumulating output")
                 # Accumulate output until a newline
                 accumulated_output += output
-                sys.stdout.write(output)  # Print in real-time to avoid buffering
+                print(output.strip())
+                sys.stdout.write(output.strip())  # Print in real-time to avoid buffering
                 sys.stdout.flush()
                 # Send '--init' only once when '> ' prompt is detected
                 if '> ' in accumulated_output and not init_sent:
                     print("Detected '> ' prompt; sending '--init'")
+                    logging.info("Detected '> ' prompt; sending '--init'")
                     process.stdin.write("--init\n")
                     process.stdin.flush()
                     init_sent = True  # Set flag to avoid re-sending
@@ -316,6 +226,7 @@ def run_openutau(project_name, export_wav_path):
                 # Respond to project selection prompt after initialization
                 elif "Do you want to [1] Open an existing project or [2] Start a new project?" in accumulated_output:
                     print("Detected project selection prompt; sending '2'")
+                    logging.info("Detected project selection prompt; sending '2'")
                     process.stdin.write("2\n")
                     process.stdin.flush()
                     project_selected = True  # Set flag after project selection
@@ -323,6 +234,7 @@ def run_openutau(project_name, export_wav_path):
                 # Send MIDI import command after project selection is complete
                 elif '> ' in accumulated_output and project_selected and not midi_imported:
                     print(f"Detected '> ' prompt; sending '--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}'")
+                    logging.info(f"Detected '> ' prompt; sending '--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}")
                     process.stdin.write(f"--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}\n")
                     process.stdin.flush()
                     midi_imported = True  # Set flag to avoid re-sending MIDI import
@@ -330,6 +242,7 @@ def run_openutau(project_name, export_wav_path):
                 # Send lyrics import command after MIDI import is complete
                 elif '> ' in accumulated_output and midi_imported and not lyrics_imported:
                     print(f"Detected '> ' prompt; sending '--lyrics {OU_INFERENCE_LOCAL_LYRICS_PATH}'")
+                    logging.info(f"Detected '> ' prompt; sending '--lyrics {OU_INFERENCE_LOCAL_LYRICS_PATH}'")
                     process.stdin.write(f"--lyrics {OU_INFERENCE_LOCAL_LYRICS_PATH}\n")
                     process.stdin.flush()
                     lyrics_imported = True  # Set flag to avoid re-sending lyrics import
@@ -337,12 +250,14 @@ def run_openutau(project_name, export_wav_path):
                 # Respond to part number selection prompt for adding lyrics
                 elif "Select a part number to add lyrics:" in accumulated_output:
                     print("Detected part number prompt; entering '1'")
+                    logging.info("Detected part number prompt; entering '1'")
                     process.stdin.write("1\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                 # Send track removal command after lyrics import
                 elif '> ' in accumulated_output and lyrics_imported and not track_removed:
                     print("Detected '> ' prompt; sending '--track --remove'")
+                    logging.info("Detected '> ' prompt; sending '--track --remove'")
                     process.stdin.write("--track --remove\n")
                     process.stdin.flush()
                     track_removed = True  # Set flag to avoid re-sending track removal
@@ -350,6 +265,7 @@ def run_openutau(project_name, export_wav_path):
                 # Respond to track number selection prompt
                 elif "Enter the number of the track to remove:" in accumulated_output and not track_number_entered:
                     print("Detected track number prompt; entering '1'")
+                    logging.info("Detected track number prompt; entering '1'")
                     process.stdin.write("1\n")
                     process.stdin.flush()
                     track_number_entered = True  # Set flag after entering track number
@@ -357,6 +273,7 @@ def run_openutau(project_name, export_wav_path):
                 # Send track update command after track removal
                 elif '> ' in accumulated_output and track_number_entered and not track_updated:
                     print("Detected '> ' prompt; sending '--track --update'")
+                    logging.info("Detected '> ' prompt; sending '--track --update'")
                     process.stdin.write("--track --update\n")
                     process.stdin.flush()
                     track_updated = True  # Set flag to avoid re-sending track update
@@ -364,23 +281,27 @@ def run_openutau(project_name, export_wav_path):
                 # Respond to track update selection prompt
                 elif "Select a track to update:" in accumulated_output:
                     print("Detected track update selection prompt; entering '1'")
+                    logging.info("Detected track update selection prompt; entering '1'")
                     process.stdin.write("1\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                 # Respond to singer selection prompt
                 elif "Select a singer by number:" in accumulated_output:
                     print(f"Detected singer selection prompt; entering '{OU_SINGER_NUMBER}'")
+                    logging.info(f"Detected singer selection prompt; entering '{OU_SINGER_NUMBER}'")
                     process.stdin.write(f"{OU_SINGER_NUMBER}\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                 # Respond to phonemizer selection prompt
                 elif "Enter the phonemizer name to apply:" in accumulated_output:
                     print("Detected phonemizer selection prompt; entering 'OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer'")
+                    logging.info("Detected phonemizer selection prompt; entering 'OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer'")
                     process.stdin.write("OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                 elif "> " in accumulated_output and not pitch_processing:
                     print("Detected '> ' prompt; Sending '--process --pitch'")
+                    logging.info("Detected '> ' prompt; Sending '--process --pitch'")
                     time.sleep(2)
                     process.stdin.write("--process --pitch\n")
                     process.stdin.flush()
@@ -390,6 +311,7 @@ def run_openutau(project_name, export_wav_path):
 
                 elif "Select a part to process:" in accumulated_output and not pitch_processing:
                     print("Detected Part selection prompt; entering '1'")
+                    logging.info("Detected Part selection prompt; entering '1'")
                     process.stdin.write("1\n")
                     process.stdin.flush()
                     pitch_processing = True
@@ -441,11 +363,18 @@ def run_openutau(project_name, export_wav_path):
                 
                 elif p and export_fully_completed and '> ' in accumulated_output:
                     print("[red]Detected '> ' prompt; sending '--exit'[/red]")
+                    logging.info("[red]Detected '> ' prompt; sending '--exit'[/red]")
                     time.sleep(2)
                     p = False
                     
                 elif "Project has been successfully exported to WAV" in accumulated_output:
-                    return                    
+                    return   
+            # Break the loop if export is fully completed
+                if export_fully_completed:
+                    break
+
+    # Flush the process output if buffering issues persist
+                process.stdout.flush()                 
                     
             # Check if process has ended
             if process.poll() is not None:

@@ -9,6 +9,7 @@ COPY . /app
 
 # Ensure executables have the correct permissions
 RUN chmod +x /app/OpenUtau
+RUN chmod -R 777 app/
 
 # Install any Python dependencies required by your application
 RUN pip install --no-cache-dir -r requirements.txt
