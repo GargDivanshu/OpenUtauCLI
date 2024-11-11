@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  production-service:
+    image: 108782080917.dkr.ecr.ap-southeast-2.amazonaws.com/cadbury-carol-song-utau-prod-24:latest  # Hardcoded production image
+    build:
+      context: .  # Use the root directory as the build context
+      dockerfile: Dockerfile  # Use the Dockerfile in the root directory
+      args:
+        ENVIRONMENT: production  # Example build argument for production
+    restart: always
+    tty: true
+    env_file:
+      - .env.production
+    deploy:
+      replicas: 3  # Hardcoded scaling for production
+
+  staging-service:
+    image: 108782080917.dkr.ecr.ap-south-1.amazonaws.com/openutau_cli:latest  # Hardcoded staging image
+    build:
+      context: .  # Use the root directory as the build context
+      dockerfile: Dockerfile  # Use the Dockerfile in the root directory
+      args:
+        ENVIRONMENT: staging  # Example build argument for staging
+    restart: always
+    tty: true
+    env_file:
+      - .env.staging
+    deploy:
+      replicas: 1  # Hardcoded scaling for staging
