@@ -118,7 +118,7 @@ class LyricsJSONAndTextGenerator:
         }
 
 class VideoLyricsJSONGenerator:
-    def __init__(self, bpm=94, time_signature=4, start_offset=5.106):
+    def __init__(self, bpm=94, time_signature=4, start_offset=10.851):
         self.bpm = bpm
         self.time_signature = time_signature
         self.start_offset = start_offset
