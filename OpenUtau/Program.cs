@@ -1358,8 +1358,8 @@ namespace OpenUtauCLI {
                 return;
             }
             List<UNote> notesList = new List<UNote>(voicePart.notes);
-            var batchEdit = new Transpose(2, "Transpose Octave Up");
-            batchEdit.Run(project, selectedPart, selectedPart.notes.ToList(), DocManager.Inst);
+            // var batchEdit = new Transpose(2, "Transpose Octave Up");
+            // batchEdit.Run(project, selectedPart, selectedPart.notes.ToList(), DocManager.Inst);
             LoadRenderedPitch pitchLoader = new LoadRenderedPitch();
             pitchLoader.Run(project, selectedPart, selectedPart.notes.ToList(), DocManager.Inst); 
             Console.WriteLine("Batch edit completed.");
