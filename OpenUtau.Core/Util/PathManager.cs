@@ -15,7 +15,11 @@ namespace OpenUtau.Core {
     public class PathManager : SingletonBase<PathManager> {
         public PathManager() {
             RootPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            if (OS.IsMacOS()) {
+            if (Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME") != null) {
+            // Lambda-specific configuration
+            DataPath = Path.Combine("/tmp", "OpenUtau");
+            CachePath = Path.Combine(DataPath, "Cache");
+            } else if (OS.IsMacOS()) {
                 string userHome = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
                 DataPath = Path.Combine(userHome, "Library", "OpenUtau");
                 CachePath = Path.Combine(userHome, "Library", "Caches", "OpenUtau");

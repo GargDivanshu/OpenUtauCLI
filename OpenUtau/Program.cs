@@ -1340,20 +1340,17 @@ namespace OpenUtauCLI {
                 Console.WriteLine("No project or parts loaded.");
                 return;
             }
-
             // List parts for user selection
             Console.WriteLine("Select a part to process:");
             for (int i = 0; i < project.parts.Count; i++) {
                 Console.WriteLine($"{i + 1}. {project.parts[i].name}");
             }
-
             // Get user input
             Console.Write("Choose part number: ");
             if (!int.TryParse(Console.ReadLine(), out int partIndex) || partIndex < 1 || partIndex > project.parts.Count) {
                 Console.WriteLine("Invalid part number.");
                 return;
             }
-
             // Retrieve the selected part
             var selectedPart = project.parts.FirstOrDefault(p => p is UVoicePart) as UVoicePart;
             if (!(selectedPart is UVoicePart voicePart)) {
@@ -1361,17 +1358,14 @@ namespace OpenUtauCLI {
                 return;
             }
             List<UNote> notesList = new List<UNote>(voicePart.notes);
-
-            var batchEdit = new Transpose(12, "Transpose Octave Up");  // Example of Transpose batch edit.
+            var batchEdit = new Transpose(2, "Transpose Octave Up");
             batchEdit.Run(project, selectedPart, selectedPart.notes.ToList(), DocManager.Inst);
+            LoadRenderedPitch pitchLoader = new LoadRenderedPitch();
+            pitchLoader.Run(project, selectedPart, selectedPart.notes.ToList(), DocManager.Inst); 
             Console.WriteLine("Batch edit completed.");
             // Assuming LoadRenderedPitch is a method that needs to be implemented or a class that needs to be instantiated and run
-            //LoadRenderedPitch pitchLoader = new LoadRenderedPitch();
-            //pitchLoader.Run(project, voicePart, notesList, DocManager.Inst); // Adjust parameters as necessary
-
             Console.WriteLine("Rendered pitch loading completed for selected part.");
         }
-
 
 
 

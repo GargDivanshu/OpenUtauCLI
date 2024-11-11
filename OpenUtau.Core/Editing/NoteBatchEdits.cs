@@ -313,13 +313,17 @@ namespace OpenUtau.Core.Editing {
             UProject project, UVoicePart part, List<UNote> selectedNotes, DocManager docManager,
             Action<int, int> setProgressCallback, CancellationToken cancellationToken) {
             var renderer = project.tracks[part.trackNo].RendererSettings.Renderer;
+            Console.WriteLine($"Using renderer: {renderer.GetType().Name}");
+
             if (renderer == null || !renderer.SupportsRenderPitch) {
                 docManager.ExecuteCmd(new ErrorMessageNotification("Not supported"));
                 return;
             }
             var notes = selectedNotes.Count > 0 ? selectedNotes : part.notes.ToList();
+            Console.WriteLine($"Number of notes selected: {notes.Count}");
             var positions = notes.Select(n => n.position + part.position).ToHashSet();
             var phrases = part.renderPhrases.Where(phrase => phrase.notes.Any(n => positions.Contains(phrase.position + n.position))).ToArray();
+            Console.WriteLine($"Number of phrases to process: {phrases.Length}");
             float minPitD = -1200;
             if (project.expressions.TryGetValue(Format.Ustx.PITD, out var descriptor)) {
                 minPitD = descriptor.min;
@@ -327,14 +331,15 @@ namespace OpenUtau.Core.Editing {
 
             int finished = 0;
             setProgressCallback(0, phrases.Length);
-            var commands = new List<SetCurveCommand>();
+            // var commands = new List<SetCurveCommand>();
             foreach (var phrase in phrases) {
                 var result = renderer.LoadRenderedPitch(phrase);
+                Console.WriteLine($"Processing phrase at position: {phrase.position}");
                 if (result == null) {
                     continue;
                 }
-                int? lastX = null;
-                int? lastY = null;
+                // int? lastX = null;
+                // int? lastY = null;
                 // TODO: Optimize interpolation and command.
                 if (cancellationToken.IsCancellationRequested) break;
                 for (int i = 0; i < result.tones.Length; i++) {
@@ -345,25 +350,27 @@ namespace OpenUtau.Core.Editing {
                     int pitchIndex = Math.Clamp((x - (phrase.position - part.position - phrase.leading)) / 5, 0, phrase.pitches.Length - 1);
                     float basePitch = phrase.pitchesBeforeDeviation[pitchIndex];
                     int y = (int)(result.tones[i] * 100 - basePitch);
-                    lastX ??= x;
-                    lastY ??= y;
-                    if (y > minPitD) {
-                        commands.Add(new SetCurveCommand(
-                            project, part, Format.Ustx.PITD, x, y, lastX.Value, lastY.Value));
-                    }
-                    lastX = x;
-                    lastY = y;
+                    // lastX ??= x;
+                    // lastY ??= y;
+                    // if (y > minPitD) {
+                    //     commands.Add(new SetCurveCommand(
+                    //         project, part, Format.Ustx.PITD, x, y, lastX.Value, lastY.Value));
+                    // }
+                    // lastX = x;
+                    // lastY = y;
+                    Console.WriteLine($"Successfully rendered pitch for phrase at position: {phrase.position}");
                 }
                 finished += 1;
                 setProgressCallback(finished, phrases.Length);
             }
 
-            DocManager.Inst.PostOnUIThread(() => {
-                docManager.StartUndoGroup(true);
-                commands.ForEach(docManager.ExecuteCmd);
-                docManager.EndUndoGroup();
-            });
+            // DocManager.Inst.PostOnUIThread(() => {
+            //     docManager.StartUndoGroup(true);
+            //     commands.ForEach(docManager.ExecuteCmd);
+            //     docManager.EndUndoGroup();
+            // });
         }
+
     }
 
     public class BakePitch: BatchEdit {

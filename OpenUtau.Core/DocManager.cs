@@ -280,6 +280,8 @@ namespace OpenUtau.Core {
             }
         }
 
+
+
         public void StartUndoGroup(bool deferValidate = false) {
             if (undoGroup != null) {
                 Console.WriteLine("undoGroup already started. Ending previous group...");
