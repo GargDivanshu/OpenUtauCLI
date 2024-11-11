@@ -53,6 +53,9 @@ def split_midi_file(input_file, output_folder, num_segments, bpm, syllable_count
         diff = note_count - expected_syllables
         status = "matches" if diff == 0 else ("+notes" if diff < 0 else "-notes")
 
+        if (i == 17):
+            note_count = note_count - 1
+
         sections_info.append({
             "section_number": i + 1,
             "notes_count": note_count,
@@ -67,7 +70,7 @@ def split_midi_file(input_file, output_folder, num_segments, bpm, syllable_count
 
 # Adjust notes in each section based on the syllable count difference
 def adjust_notes_in_section(i, sections_info, sections_midi, note_sequence_midi, note_duration, bar_duration):
-    if i == 0 or i >= len(sections_info):
+    if i == 0 or i >= len(sections_info) or sections_info[i]['status'] == "matches":
         return
 
     section_info = sections_info[i]
@@ -106,8 +109,10 @@ def adjust_notes_in_section(i, sections_info, sections_midi, note_sequence_midi,
             for note in notes_to_remove:
                 current_section.instruments[0].notes.remove(note)
                 logging.info(f"Removed note with pitch {note.pitch} at start time {note.start:.2f} in section {i}.")
+                print ("Removing notes from section " + str(i))
                 
     elif section_info['difference'] > 0 and i == 12 or i == 16:  # If the section has more notes than needed
+        print ("Removing notes from section " + str(i))
         current_section = sections_midi[i]
         num_notes_to_remove = section_info['difference']
         notes = current_section.instruments[0].notes
@@ -124,17 +129,18 @@ def adjust_notes_in_section(i, sections_info, sections_midi, note_sequence_midi,
                 logging.info(f"Removed note with pitch {note.pitch} at start time {note.start:.2f} in section {i}.")
                 
     elif section_info['difference'] > 0 and i == 13 or i == 17:  # If the section has more notes than needed
+        print ("Removing notes from section " + str(i))
         current_section = sections_midi[i]
         num_notes_to_remove = section_info['difference']
         notes = current_section.instruments[0].notes
         
-        if i == 17:
-            # Delete the last note
-            if notes:
-                last_note = notes[-1]
-                current_section.instruments[0].notes.remove(last_note)
-                logging.info(f"Deleted last note with pitch {last_note.pitch} at start time {last_note.start:.2f} in section {i}.")
-                num_notes_to_remove -= 1
+        # if i == 17:
+        #     # Delete the last note
+        #     if notes:
+        #         last_note = notes[-1]
+        #         current_section.instruments[0].notes.remove(last_note)
+        #         logging.info(f"Deleted last note with pitch {last_note.pitch} at start time {last_note.start:.2f} in section {i}.")
+        #         num_notes_to_remove -= 1
 
         if notes:
             bar_start_time = (notes[0].start // bar_duration) * bar_duration
