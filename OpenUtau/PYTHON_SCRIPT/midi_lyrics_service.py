@@ -134,13 +134,13 @@ def adjust_notes_in_section(i, sections_info, sections_midi, note_sequence_midi,
         num_notes_to_remove = section_info['difference']
         notes = current_section.instruments[0].notes
         
-        # if i == 17:
-        #     # Delete the last note
-        #     if notes:
-        #         last_note = notes[-1]
-        #         current_section.instruments[0].notes.remove(last_note)
-        #         logging.info(f"Deleted last note with pitch {last_note.pitch} at start time {last_note.start:.2f} in section {i}.")
-        #         num_notes_to_remove -= 1
+        if i == 17:
+             # Delete the last note
+            if notes:
+                 last_note = notes[-1]
+                 current_section.instruments[0].notes.remove(last_note)
+                 logging.info(f"Deleted last note with pitch {last_note.pitch} at start time {last_note.start:.2f} in section {i}.")
+                 num_notes_to_remove -= 1
 
         if notes:
             bar_start_time = (notes[0].start // bar_duration) * bar_duration
