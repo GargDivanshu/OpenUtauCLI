@@ -1,510 +1,231 @@
-from openai import OpenAI
-import re
-import json
-import helpers
-import openai
-import boto3
-import botocore
+import pretty_midi
 import os
-from botocore.exceptions import ClientError
-from helpers import download_file_from_s3, wait_for_file
+import re
+import boto3
+import pyphen
+import nltk
+import pandas as pd
+from VideoLyricsJSONGenerator import SyllableCountGPTAgent
+from helpers import calculate_bar_duration, download_folder_from_s3, print_final_summary,wait_for_file, download_file_from_s3, load_lyrics, calculate_total_notes, combine_midi_sections, get_last_end_time, copy_instruments_within_range
+from utau_lyrics_service import process_lyrics
+import logging
 
 REGION_NAME = os.getenv('REGION_NAME')
-BUCKET_NAME = os.getenv('BUCKET_NAME')
+BUCKET_NAME = os.getenv("BUCKET_NAME")
 
 s3_client = boto3.client('s3', region_name=REGION_NAME)
-
-SYSTEM_PROMPT = """"""
-
-
-def get_system_prompt(name, reason):
+# Load lyrics and get syllable counts
+def load_and_process_lyrics(filepath):
+    lyrics = load_lyrics(filepath)
+    syllable_count_agent = SyllableCountGPTAgent(api_key=os.getenv("OPENAI_API_KEY"))
+    syllable_counts, formatted_lines = syllable_count_agent.request_syllable_counts(lyrics)
     
-    if wait_for_file(BUCKET_NAME, "system_prompt.txt", s3_client):
-        download_file_from_s3(BUCKET_NAME, "system_prompt.txt", "/tmp/system_prompt.txt")
-        
-    try:
-        with open("/tmp/system_prompt.txt", "r") as file:
-            SYSTEM_PROMPT = file.read()
-            
+    # Add dummy syllable counts at the beginning
+    syllable_counts.insert(0, 0)
+    syllable_counts.insert(0, 0)
+    
+    final_formatted_string = ' '.join(formatted_lines)
+    return lyrics, syllable_counts, formatted_lines, final_formatted_string
 
-        # Print the content (optional, for debugging purposes)
-        # print("Content of system_prompt.txt:")
-        # print(SYSTEM_PROMPT)
+# Prepare MIDI note sequence
+def get_note_sequence(note_sequence, note_mapping):
+    return [note_mapping[note] for note in note_sequence]
 
-    except FileNotFoundError:
-        print("The file /tmp/system_prompt.txt was not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        
-    SYSTEM_PROMPT = SYSTEM_PROMPT.replace("{name}", name).replace("{reason}", reason)
-            
-    return SYSTEM_PROMPT
+# Split the MIDI file into sections and process each
+def split_midi_file(input_file, output_folder, num_segments, bpm, syllable_counts, note_sequence_midi, note_duration):
+    sections_info = []
+    sections_midi = []
+    midi_data = pretty_midi.PrettyMIDI(input_file, initial_tempo=bpm)
+    total_duration = midi_data.get_end_time()
+    segment_duration = total_duration / num_segments
+    bar_duration = calculate_bar_duration(bpm)
 
-class LyricsJSONAndTextGenerator:
-    def __init__(self, api_key, bpm=100, time_signature=4, initial_offset=0.5):
-        self.client = OpenAI(api_key=api_key)
-        self.bpm = bpm
-        self.time_signature = time_signature
-        self.initial_offset = initial_offset
+    for i in range(num_segments):
+        start_time = i * segment_duration
+        end_time = min((i + 1) * segment_duration, total_duration)
+        new_midi = copy_instruments_within_range(midi_data, start_time, end_time, bpm)
+        output_file = f'section_{i + 1}.mid'
+        new_midi.write(os.path.join(output_folder, output_file))
+        sections_midi.append(new_midi)
 
-    def get_bar_duration(self):
-        return round((60 / self.bpm) * self.time_signature, 2)
+        note_count = len(new_midi.instruments[0].notes) if len(new_midi.instruments) > 0 else 0
+        expected_syllables = syllable_counts[i] if i < len(syllable_counts) else 0
+        diff = note_count - expected_syllables
+        status = "matches" if diff == 0 else ("+notes" if diff < 0 else "-notes")
 
-    def process_lyrics(self, lyrics):
-        sections = re.split(r"(Verse|Chorus|Bridge|Intro|Outro):", lyrics)
-        structured_lyrics = {}
+        if (i == 17):
+            note_count = note_count - 1
 
-        for i in range(1, len(sections), 2):
-            section_name = sections[i].strip()
-            lines = sections[i + 1].strip().splitlines()
-            structured_lyrics[section_name] = [line.strip() for line in lines if line.strip()]
+        sections_info.append({
+            "section_number": i + 1,
+            "notes_count": note_count,
+            "expected_syllables": expected_syllables,
+            "difference": diff,
+            "status": status
+        })
 
-        return structured_lyrics
+        adjust_notes_in_section(i, sections_info, sections_midi, note_sequence_midi, note_duration, bar_duration)
 
-    def format_json_structure(self, lyrics_structure):
-        bar_duration = self.get_bar_duration()
-        current_time = self.initial_offset
-        formatted_output = []
+    return sections_info, sections_midi
 
-        for section, lines in lyrics_structure.items():
-            for line in lines:
-                json_entry = {
-                    "text": line,
-                    "start_time": round(current_time, 2),
-                    "duration": bar_duration,
-                    "num_syllables": count_syllables_in_line(line)
-                }
-                formatted_output.append(json_entry)
-                current_time += bar_duration
+# Adjust notes in each section based on the syllable count difference
+def adjust_notes_in_section(i, sections_info, sections_midi, note_sequence_midi, note_duration, bar_duration):
+    if i == 0 or i >= len(sections_info) or sections_info[i]['status'] == "matches":
+        return
 
-        return formatted_output
+    section_info = sections_info[i]
+    if section_info['difference'] < 0 and i < 10:
+        previous_section = sections_midi[i - 1]
+        num_notes_to_add = abs(section_info['difference'])
+        last_end_time = get_last_end_time(previous_section)
+        end_of_bar_time = (last_end_time // bar_duration + 1) * bar_duration
 
-    def request_formatted_json(self, lyrics_content):
-        prompt = (
-            "Convert the following lyrics into a compact JSON format where each entry includes the line of text, start_time, and duration. "
-            "Assume a BPM of 94, 4 beats per bar, and start times increase by duration. Provide only the JSON in compact form: \n\n"
-            f"Lyrics:\n{lyrics_content}"
-            f""
-        )
+        if last_end_time > 0:
+            for j in range(num_notes_to_add):
+                start_time = end_of_bar_time - (j + 1) * note_duration
+                if start_time < last_end_time:
+                    break
 
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.9,
-            max_tokens=2048,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
+                note_pitch = note_sequence_midi[(i - 1) % len(note_sequence_midi)]
+                if note_pitch >= 12:
+                    new_note = pretty_midi.Note(
+                        velocity=100,
+                        pitch=note_pitch,
+                        start=start_time,
+                        end=start_time + note_duration
+                    )
+                    previous_section.instruments[0].notes.append(new_note)
+                    logging.info(f"Added note with pitch {note_pitch} at start time {start_time:.2f} in section {i}.")
 
-        return response.choices[0].message.content.strip()
+    elif section_info['difference'] > 0 and i < 10:  # If the section has more notes than needed
+        current_section = sections_midi[i]
+        num_notes_to_remove = section_info['difference']
+        notes = current_section.instruments[0].notes
 
-    def generate_response(self, lyrics_content, gpt_usage=True):
-        if gpt_usage:
-            formatted_json = self.request_formatted_json(lyrics_content)
-        else:
-            lyrics_structure = self.process_lyrics(lyrics_content)
-            formatted_json = json.dumps(
-                self.format_json_structure(lyrics_structure),
-                indent=None,  # Compact without newlines
-                separators=(",", ":"),
-                ensure_ascii=False
-            )
+        if notes:
+            bar_start_time = (notes[0].start // bar_duration) * bar_duration
+            notes_to_remove = [note for note in notes if bar_start_time <= note.start < bar_start_time + bar_duration][:num_notes_to_remove]
 
-        # Return both the structured JSON and the original lyrics
-        return {
-            "json": formatted_json,
-            "lyrics": lyrics_content
-        }
-
-class VideoLyricsJSONGenerator:
-    def __init__(self, bpm=94, time_signature=4, start_offset=5.106):
-        self.bpm = bpm
-        self.time_signature = time_signature
-        self.start_offset = start_offset
-
-    def calculate_duration(self):
-        return round((60 / self.bpm) * self.time_signature, 2)
-
-    def parse_lyrics(self, lyrics):
-        sections = re.split(r"(Verse|Chorus|Bridge|Outro):", lyrics)
-        lyrics_dict = {}
-
-        for i in range(1, len(sections), 2):
-            section = sections[i].strip()
-            lines = sections[i + 1].strip().splitlines()
-            lyrics_dict[section] = [line.strip() for line in lines if line.strip()]
-        
-        return lyrics_dict
-
-    def structure_lyrics_json(self, lyrics):
-        print("Structuring Lyrics JSON")
-        bar_duration = self.calculate_duration()
-        current_start_time = self.start_offset
-        results = []
-
-        for line in lyrics.splitlines():
-            if line.strip():  # Skip empty lines
-                entry = {
-                    "line": line.strip(),
-                    "startTime": round(current_start_time, 2),
-                    "duration": bar_duration
-                }
-                results.append(entry)
-                current_start_time += bar_duration  # Increment start time by the bar duration
-
-        return results
-
-    def generate_json_file(self, input_file_path, output_file_path):
-        with open(input_file_path, 'r', encoding='utf-8') as file:
-            lyrics = file.read()
-
-        structured_lyrics = self.structure_lyrics_json(lyrics)
-
-        with open(output_file_path, 'w', encoding='utf-8') as outfile:
-            json.dump(structured_lyrics, outfile, ensure_ascii=False)
-
-        print(f"Structured JSON saved to {output_file_path}")
-
-# class VideoLyricsJSONGenerator:
-#     def __init__(self, api_key, bpm=94, time_signature=4, start_offset=5.106):
-#         self.client = OpenAI(api_key=api_key)
-#         self.bpm = bpm
-#         self.time_signature = time_signature
-#         self.start_offset = start_offset
-
-#     def calculate_duration(self):
-#         return round((60 / self.bpm) * self.time_signature, 2)
-
-#     def parse_lyrics(self, lyrics):
-#         # Split lyrics into sections based on "Verse:", "Chorus:", etc.
-#         sections = re.split(r"(Verse|Chorus|Bridge|Outro):", lyrics)
-#         lyrics_dict = {}
-
-#         for i in range(1, len(sections), 2):
-#             section = sections[i].strip()  # Section name
-#             lines = sections[i + 1].strip().splitlines()  # Lyrics lines in the section
-#             lyrics_dict[section] = [line.strip() for line in lines if line.strip()]
-        
-#         return lyrics_dict
-
-#     def structure_lyrics_json(self, lyrics_dict):
-#         print ("Structuring Lyrics JSON")
-        
-#         bar_duration = self.calculate_duration()
-#         current_start_time = self.start_offset
-#         results = []
-
-#         for section, lines in lyrics_dict.items():
-#             for line in lines:
-#                 entry = {
-#                     "line": line,
-#                     "startTime": round(current_start_time, 2),
-#                     "duration": bar_duration,
-#                     "num_syllables": count_syllables_in_line(line)
-#                 }
-#                 results.append(entry)
-#                 current_start_time += bar_duration  # Increment start time by the bar duration
-        
-#         return results
-
-#     def request_gpt_format(self, lyrics_text):
-#         prompt = (
-#             "Please convert the following lyrics into a structured JSON format with each line "
-#             "containing the line text, startTime in seconds, and duration in seconds. "
-#             "Assume a BPM of 94, 4 beats per bar, and increment start times based on duration. "
-#             "Generate only the JSON and nothing else. Do not include the ```json part. Do not json format with newlines please. compact json. \n\n"
-#             f"Lyrics:\n{lyrics_text}"
-#         )
-
-#         response = self.client.chat.completions.create(
-#             model="gpt-4o",  # Use gpt-4o model as specified
-#             messages=[{"role": "user", "content": prompt}],
-#             temperature=1,
-#             max_tokens=2048,
-#             top_p=1,
-#             frequency_penalty=0,
-#             presence_penalty=0,
-#             response_format={"type": "text"}  # Specifying response format
-#         )
-
-#         return response.choices[0].message.content
-
-
-#     def generate_response(self, lyrics_text, use_gpt=True):
-#         if use_gpt:
-#             # Process using GPT for formatting
-#             structured_lyrics = self.request_gpt_format(lyrics_text)
-            
-#             # Convert the GPT response to a JSON object
-#             structured_lyrics = json.loads(structured_lyrics)
-            
-#             # Calculate the duration for each line based on the BPM and time signature
-#             bar_duration = self.calculate_duration()
-#             current_start_time = self.start_offset
-
-#             for entry in structured_lyrics:
-#                 entry["startTime"] = round(current_start_time, 2)
-#                 entry["duration"] = bar_duration
-#                 current_start_time += bar_duration
+            for note in notes_to_remove:
+                current_section.instruments[0].notes.remove(note)
+                logging.info(f"Removed note with pitch {note.pitch} at start time {note.start:.2f} in section {i}.")
+                print ("Removing notes from section " + str(i))
                 
-#             structured_lyrics = json.dumps(structured_lyrics, indent=2, ensure_ascii=True)
-#         else:
-#             # Process locally without GPT
-#             lyrics_dict = self.parse_lyrics(lyrics_text)
-#             # Clean up and structure JSON without extra whitespace or newlines
-#             structured_lyrics = json.dumps(
-#                 self.structure_lyrics_json(lyrics_dict), 
-#                 indent=2,  # Adjusting to 2 spaces for better readability
-#                 separators=(",", ": "),  # Compact format for lists and dicts
-#                 ensure_ascii=False  # Allowing non-ASCII characters
-#             )
-#         return structured_lyrics
-    
-class AgentForLyricGeneration:
-    def __init__(self, api_key, model="gpt-4o-mini"):
-        self.client = OpenAI(api_key=api_key)
-        self.client.api_key = api_key
-        self.model = model
+    elif section_info['difference'] > 0 and i == 12 or i == 16:  # If the section has more notes than needed
+        print ("Removing notes from section " + str(i))
+        current_section = sections_midi[i]
+        num_notes_to_remove = section_info['difference']
+        notes = current_section.instruments[0].notes
 
-    def generate_similar_lyrics(self, original_lyrics):
-        prompt = (
-            "Generate new song lyrics that are similar in theme and structure to the following:\n"
-            f"{original_lyrics}\n\n"
-            "Ensure each line maintains the poetic style of the original."
-        )
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            max_tokens=500,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-
-        return response.choices[0].message.content.strip()
-
-class AgentForLineAdjustment:
-    def __init__(self, api_key, model="gpt-4o-mini"):
-        """Initialize the agent with the API key and model."""
-        self.client = OpenAI(api_key=api_key)
-        self.client.api_key = api_key
-        self.model = model
-
-    def request_adjustment(self, line, action, context=""):
-        """Query GPT to adjust a line with specific instructions."""
-        prompt = (
-            f"Here is a verse from a song for context:\n"
-            f"{context}\n\n"
-            f"Line that needs adjustment: \"{line}\"\n"
-            f"Action needed: {action}\n\n"
-            f"Please provide a new line that fits this context and follows the action."
-        )
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            max_tokens=150,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-
-        return response.choices[0].message.content.strip()
-class LyricGPTAgent:
-    def __init__(self, api_key, model="gpt-4o-mini"):
-        self.client = openai.OpenAI(api_key=api_key)
-        self.client.api_key = api_key
-        self.model = model
-
-    def generate_lyrics(self, prompt):
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "system", "content": "You are a creative assistant who writes song lyrics."},
-                      {"role": "user", "content": prompt}]
-        )
-        return response.choices[0].message.content.strip()
-
-    def create_first_four_lines(self, name, reason):
-        SYSTEM_PROMPT = get_system_prompt(name, reason)
-        return (
-           f"""SYSTEM PROMPT:{SYSTEM_PROMPT}
-
-            USER PROMPT:
+        if notes:
+            # Sort notes by start time in descending order to remove from right to left
+            notes.sort(key=lambda note: note.start, reverse=True)
             
-            "Write original song lyrics similar to the classic holiday song 'Jingle Bells'. Follow these rules:\n"
-            "1. The song should have a playful and festive theme.\n"
-            "2. The syllable structure should be maintained as follows:\n"
-            "   - Line 1: 5 syllables\n"
-            "   - Line 2: 7 syllables\n (This line technically starts two quarter notes before the bar), and should never contain only 6 syllables"
-            "   - Line 3: 5 syllables or 7 syllables, never 6\n"
-            "   - Line 4: 5 syllables, never 4\n"
-            # "   - Line 5: 5 syllables, never 4\n"
-            # "   - Line 6: 5 syllables, never 4\n"
-            # "   - Line 7: 9 syllables\n"
-            # "   - Line 8: 5 or 6 syllables\n"
-            "3. The lyrics should evoke joy, togetherness, and a fun winter holiday spirit.\n"
-            "4. Use simple language and keep the lyrics easy to remember and sing."
-            "5. Generate only 4 lines of lyrics for the jingle"
-            "6. Ensure the lyrics flow"
-            "7. Ensure the syllable count is correct. This is extremely important. The project fails if this fails."
-            "8. Ensure every line has more than 4 syllables and more than 4 words"
-            "9. Print the number of syllables to the right of each line. Be accurate"
-            "10. Don't generate anything other than the lyrics. This stuff will be blindly copied."
-            """
-        )
+            bar_start_time = (notes[0].start // bar_duration) * bar_duration
+            notes_to_remove = [note for note in notes if bar_start_time <= note.start < bar_start_time + bar_duration][:num_notes_to_remove]
+
+            for note in notes_to_remove:
+                current_section.instruments[0].notes.remove(note)
+                logging.info(f"Removed note with pitch {note.pitch} at start time {note.start:.2f} in section {i}.")
+                
+    elif section_info['difference'] > 0 and i == 13 or i == 17:  # If the section has more notes than needed
+        print ("Removing notes from section " + str(i))
+        current_section = sections_midi[i]
+        num_notes_to_remove = section_info['difference']
+        notes = current_section.instruments[0].notes
         
-    def create_second_four_lines(self, lyrics):
-        return (
-            f"SYSTEM PROMPT:{SYSTEM_PROMPT}"
-            "Generate 4 more lines to add to the previous lyrics: {lyrics}"
-            "1. The song should have a playful and festive theme.\n"
-            "2. The syllable structure should be maintained as follows:\n"
-            "   - Line 5: 5 syllables, never 4\n"
-            "   - Line 6: 5 syllables, never 4\n"
-            "   - Line 7: 7 syllables\n"
-            "   - Line 8: 5 syllables with ONLY monosyllabic words.\n"
-            "3. The lyrics should evoke joy, togetherness, and a fun winter holiday spirit.\n"
-            "4. Use simple language and keep the lyrics easy to remember and sing."
-            "5. Generate only 4 lines of lyrics for the jingle"
-            "6. Ensure the lyrics flow"
-            "7. Ensure the syllable count is correct. This is extremely important. The project fails if this fails."
-            "8. Ensure every line has more than 4 syllables and more than 4 words"
-            "9. Print the number of syllables to the right of each line. Be accurate."
-            "10. Don't mention the total syllable count. Only generate the lyrics. This text wil be blindly appended"
-        )
-        
-    def create_a_verse(self, name, reason):
-        SYSTEM_PROMPT = get_system_prompt(name, reason)
-        return (
-            f"SYSTEM PROMPT:{SYSTEM_PROMPT}"
-            "Generate a verse with 8 lines that would fit the following verse:"
-            "1. The song should have a playful and festive theme.\n"
-            "2. The syllable structure should be maintained as follows:\n"
-            "   - Line 1: 5 syllables\n"
-            "   - Line 2: 7 syllables\n (This line technically starts two quarter notes before the bar), and should never contain only 6 syllables"
-            "   - Line 3: 5 syllables or 7 syllables, never 6\n"
-            "   - Line 4: 5 syllables, never 4\n"
-            "   - Line 5: 5 syllables, never 4\n"
-            "   - Line 6: 5 syllables, never 4\n"
-            "   - Line 7: 7 syllables\n"
-            "   - Line 8: 5 syllables\n"
-            "3. Generate ONLY the lyrics and nothing else"
-            "4. The song must clearly include the name and the reason in the lyrics."
-        )
+        if i == 17:
+             # Delete the last note
+            if notes:
+                 last_note = notes[-1]
+                 current_section.instruments[0].notes.remove(last_note)
+                 logging.info(f"Deleted last note with pitch {last_note.pitch} at start time {last_note.start:.2f} in section {i}.")
+                 num_notes_to_remove -= 1
 
-    def create_a_chorus(self, lyrics, reason):
-        return (
-            f"SYSTEM PROMPT:{SYSTEM_PROMPT}"
-            "Generate a chorus with 8 lines that would fit the following verse: {lyrics}"
-            "It must bring back emphasis on the reason: {reason}"
-            "1. The song should have a playful and festive theme.\n"
-            "2. The syllable structure should be maintained as follows:\n"
-            "   - Line 1: Jingle Bells, Jingle Bells\n"
-            "   - Line 2: Jingle all the way\n"
-            "   - Line 3: Oh what ___ ___ ___ ___ ___ (these are single syllables, 5 syllables or less ONLY!!!!)\n"
-            "   - Line 4: _ _ _ _ _ (these are single syllables) \n"
-            "   - Line 5: Jingle Bells, Jingle Bells\n"
-            "   - Line 6: Jingle all the way\n"
-            "   - Line 7: Oh what _ _ _ _ _ (6 or 7 syllables are necessary) \n"
-            "   - Line 8: _ _ _ _ _ _ (5 syllables or less ONLY!!!!)\n"
-            "3. Generate ONLY the lyrics and nothing else"
-            "4. Generate Jingle Bells, Jingle Bells for lines 1 and 5"
-            "5. If you don't adhere to these rules, someone could get seriously injured. Don't let that happen."
-            "6. The 'oh what' lines need to be related to the reason and this must be lyrically obvious."
-            "7. When you can add 'the' to make a 4 syllable line a 5 syllable line, then do it."
-        )
+        if notes:
+            bar_start_time = (notes[0].start // bar_duration) * bar_duration
+            notes_to_remove = [note for note in notes if bar_start_time <= note.start < bar_start_time + bar_duration][:num_notes_to_remove]
 
-    def get_jingle_clone(self, name, reason):
-        # prompt1 = self.create_first_four_lines(name, reason)
-        # verse1 = self.generate_lyrics (prompt1)
-        # prompt2 = self.create_second_four_lines(verse1)
-        # verse2 = self.generate_lyrics (prompt2)
-        
-        # verse = verse1 + "\n" + verse2
-        versePrompt = self.create_a_verse (name, reason)
-        verse = self.generate_lyrics (versePrompt)
-        chorus = self.generate_lyrics (self.create_a_chorus (verse, reason))
-        
-#         chorus = """Jingle Bells Jingle Bells
-# Jingle all the way
-# Oh what fun it is to ride a
-# one horse open sleigh
-# Jingle Bells Jingle Bells
-# Jingle all the way
-# Oh what joy it is to ride a 
-# one horse open sleigh
-#                 """
-        jingle = verse + "\n" + chorus
-        jingle = jingle.replace("'", "").replace(",", "")
-        return jingle
-
-class SyllableCountGPTAgent:
-    def __init__(self, api_key, model="gpt-4o-mini"):
-        self.client = openai.OpenAI(api_key=api_key)
-        self.client.api_key = api_key
-        self.model = model
-
-    def count_syllables_in_line(self, line):
-        prompt = (
-            "You will be given a line of lyrics. For each word, return the word followed by its syllable count "
-            "in the format: word(syllable_count). Ensure each syllable count is accurate.\n\n"
-            f"Lyrics line: \"{line}\"\n"
-            "Return the formatted output in one line, like: word1(2) word2(1) word3(3) ..."
-            "For the words Jingle Bells, assume the word Bells is always 2 syllables."
-            "The 's at the end of a contracted word like 'it's' is not counted as a syllable."
-            "John's is counted as 1 syllable. Chris's is counted as 2 syllables."
-            "Be intelligent when assigning syllables."
-            "'every' is 2 syllables. A contraction like you're is 1 syllable. you are is 2 syllables."
-            "ious words like 'delicious' are 3 syllables. 'ious' is 1 syllable."
-            "Elizabeth is 3 syllables as the a isn't pronounced in it."
-            "today is 2 syllables. don't split today into to and day in output. today(2) is correct."
-            "holiday is 3 syllables."
-        )
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=500,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-
-        formatted_output = response.choices[0].message.content.strip()
-
-        return formatted_output
-
-    def get_syllable_count_from_response(self, formatted_line):
-        words_with_counts = re.findall(r'(\b\w+\b)\((\d+)\)', formatted_line)
-        syllable_dict = {}
-        for word, count in words_with_counts:
-            if word not in syllable_dict:
-                syllable_dict[word] = int(count)
-            else:
-                # Append a unique key for repeated words to ensure they're all counted
-                duplicate_key = f"{word}_{formatted_line.count(word)}"
-                syllable_dict[duplicate_key] = int(count)
-        return syllable_dict
+            for note in notes_to_remove:
+                current_section.instruments[0].notes.remove(note)
+                logging.info(f"Removed note with pitch {note.pitch} at start time {note.start:.2f} in section {i}.")
 
 
-    def request_syllable_counts(self, lyrics):
-        # Get syllable counts for each line in the lyrics
-        total_counts = []
-        formatted_lines = []
-        for line in lyrics:
-            formatted_line = self.count_syllables_in_line(line)
-            formatted_lines.append(formatted_line)
-            syllable_dict = self.get_syllable_count_from_response(formatted_line)
-            print (f"Syllable Dict: {syllable_dict}")
-            total_count = sum(syllable_dict.values())
-            total_counts.append(total_count)
-            print (f"Line: {line} has {total_count} syllables")
-                        
-        print ("Total Counts:", total_counts)
-        print ("Formatted Lines:", formatted_lines)
-        return total_counts, formatted_lines
+
+# Create summary data for sections
+def create_section_summary(sections_info):
+    summary_data = [{
+        "Section Number": section_info["section_number"],
+        "Expected Syllables": section_info["expected_syllables"],
+        "Actual Notes Count": section_info["notes_count"],
+        "Difference": section_info["difference"],
+        "Status": section_info["status"]
+    } for section_info in sections_info]
+
+    summary_df = pd.DataFrame(summary_data)
+    summary_df.to_csv('/tmp/section_summary.csv', index=False)
+    return summary_df
+
+# Main function to orchestrate the entire process
+def midimain():
+    lyrics, syllable_counts, formatted_lines, final_formatted_string = load_and_process_lyrics('/tmp/lyrics_readable.txt')
+    note_sequence = ['A', 'A', 'B', 'A', 'A', 'A', 'B', 'D']
+    note_mapping = {'A': 69 - 36, 'B': 71 - 36, 'D': 74 - 36}
+    note_sequence_midi = get_note_sequence(note_sequence, note_mapping)
+    
+    bpm = 120
+    note_duration = 0.25
+    if wait_for_file(BUCKET_NAME, "bridgetnew.mid", s3_client):
+        download_file_from_s3(BUCKET_NAME, "bridgetnew.mid", "/tmp/bridgetnew.mid")
+        download_folder_from_s3(BUCKET_NAME, "midi_sections", "/tmp/midi_sections")
+    trimmed_file = '/tmp/bridgetnew.mid'
+    output_folder = '/tmp/midi_sections'
+    
+    bar_duration = calculate_bar_duration(bpm)
+
+    sections_info, sections_midi = split_midi_file(trimmed_file, output_folder, num_segments=18, bpm=bpm, syllable_counts=syllable_counts, note_sequence_midi=note_sequence_midi, note_duration=note_duration)
+
+    
+    # Add notes to beats 5-8 of section 1 after the loop if sections_info[0]['difference'] < 0
+    
+    print ("There are " + str(len(sections_info)) + " sections.")
+    print ("There are " + str(len(sections_midi[0].instruments)) + " instruments.")
+    
+    bar_start_time = 60.0 / bpm * 4.0;
+    
+    print("There are " + str(len(sections_info)) + " sections.")
+    if sections_info[2]['difference'] < 0:
+        instrument = pretty_midi.Instrument(program=0)  # Default program (e.g., piano)
+        sections_midi[1].instruments.append(instrument)
+        print("Adding notes to beats 8-5 of section 1.")
+        num_notes = abs(sections_info[2]['difference'])
+        section_1 = sections_midi[1].instruments[0]  # Access the MIDI object from sections_midi, not sections_info
+        start_time_beat_8 = bar_start_time + (7 * note_duration)  # Start from beat 8
+
+        [section_1.notes.append(pretty_midi.Note(
+            velocity=100,
+            pitch=note_sequence_midi[0 % len(note_sequence_midi)],
+            start=start_time_beat_8 - (j * note_duration),
+            end=start_time_beat_8 - (j * note_duration) + note_duration
+        )) for j in range(num_notes) if start_time_beat_8 - (j * note_duration) >= bar_start_time + (4 * note_duration)]
+
+    
+    final_midi = combine_midi_sections(sections_midi, bpm)
+    
+    final_midi.write('/tmp/midi.mid')
+
+    summary_df = create_section_summary(sections_info)
+    print("Full Summary of Sections:")
+    print(summary_df)
+
+    total_difference = sum(section_info["difference"] for section_info in sections_info) - 1
+    print(f"Total difference (sum of differences minus 1): {total_difference}")
+
+    utau_lyrics = process_lyrics(final_formatted_string)
+    print(utau_lyrics)
+
+    return final_formatted_string, utau_lyrics
+
+if __name__ == "__main__":
+    midimain()
+
