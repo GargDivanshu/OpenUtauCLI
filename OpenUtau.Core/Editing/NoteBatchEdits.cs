@@ -331,15 +331,15 @@ namespace OpenUtau.Core.Editing {
 
             int finished = 0;
             setProgressCallback(0, phrases.Length);
-            // var commands = new List<SetCurveCommand>();
+            var commands = new List<SetCurveCommand>();
             foreach (var phrase in phrases) {
                 var result = renderer.LoadRenderedPitch(phrase);
                 Console.WriteLine($"Processing phrase at position: {phrase.position}");
                 if (result == null) {
                     continue;
                 }
-                // int? lastX = null;
-                // int? lastY = null;
+                int? lastX = null;
+                int? lastY = null;
                 // TODO: Optimize interpolation and command.
                 if (cancellationToken.IsCancellationRequested) break;
                 for (int i = 0; i < result.tones.Length; i++) {
@@ -350,14 +350,14 @@ namespace OpenUtau.Core.Editing {
                     int pitchIndex = Math.Clamp((x - (phrase.position - part.position - phrase.leading)) / 5, 0, phrase.pitches.Length - 1);
                     float basePitch = phrase.pitchesBeforeDeviation[pitchIndex];
                     int y = (int)(result.tones[i] * 100 - basePitch);
-                    // lastX ??= x;
-                    // lastY ??= y;
-                    // if (y > minPitD) {
-                    //     commands.Add(new SetCurveCommand(
-                    //         project, part, Format.Ustx.PITD, x, y, lastX.Value, lastY.Value));
-                    // }
-                    // lastX = x;
-                    // lastY = y;
+                    lastX ??= x;
+                    lastY ??= y;
+                    if (y > minPitD) {
+                        commands.Add(new SetCurveCommand(
+                            project, part, Format.Ustx.PITD, x, y, lastX.Value, lastY.Value));
+                    }
+                    lastX = x;
+                    lastY = y;
                     Console.WriteLine($"Successfully rendered pitch for phrase at position: {phrase.position}");
                 }
                 finished += 1;
@@ -365,9 +365,9 @@ namespace OpenUtau.Core.Editing {
             }
 
             // DocManager.Inst.PostOnUIThread(() => {
-            //     docManager.StartUndoGroup(true);
-            //     commands.ForEach(docManager.ExecuteCmd);
-            //     docManager.EndUndoGroup();
+                docManager.StartUndoGroup(true);
+                commands.ForEach(docManager.ExecuteCmd);
+                docManager.EndUndoGroup();
             // });
         }
 
