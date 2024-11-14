@@ -108,12 +108,6 @@ def process_and_upload_to_s3(song_id):
     for local_path, s3_path in paths.values():
         upload_file_to_s3(local_path, bucket_name, s3_path)
 
-    notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, None)
-
-
-
-
-
 
 # Create AWS clients
 sqs_client = boto3.client("sqs", region_name=REGION_NAME)
@@ -141,13 +135,14 @@ def process_message(body):
         OU_INFERENCE_LOCAL_USTX_PATH = os.path.join("/tmp", f"{OU_FINAL_FILENAME}.ustx")
         # OU_LYRICS_JSON_PATH = os.path.join("/tmp", "lyrics.json")
         OU_LYRICS_JSON_PATH = "/tmp/lyrics.json"
-    
-        notify_system_api(song_id, "utau_inference", "start", None, None)
         
         start = time.monotonic()
         lyrics_process(name, reason) #this generates and saves lyrics.txt (containing the UTAU lyrics) and lyrics.json (containing the syllable count and formatted lyrics)
         end = time.monotonic()
-        
+        duration = (end_time - start_time)  
+        logger.info("lyrics_process stats")
+        logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
+        logger.info("============================================================")
         print(f"Lyrics processing took {end - start:.2f} seconds")
         
         time.sleep(1)
@@ -155,12 +150,19 @@ def process_message(body):
         upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
         notify_lyrics_json_upload(song_id, f"{song_id}_lyrics.json") 
         
+
+        start_time = time.monotonic()
         lyrics_with_syllable, utau_lyrics = midimain() #this assumes lyrics are already present in /tmp/lyrics_readable.txt
         print(lyrics_with_syllable, " lyrics_with_syllable")
         print(utau_lyrics, " utau_lyrics")
         output_file = "/tmp/lyrics.txt"
         with open(output_file, "w", encoding="utf-8") as file:
             file.write(utau_lyrics)
+        end_time = time.monotonic()
+        duration = (end_time - start_time)  
+        logger.info("midimain() stats")
+        logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
+        logger.info("============================================================")
 
         print(f"UTAU lyrics written to {output_file}")
     
