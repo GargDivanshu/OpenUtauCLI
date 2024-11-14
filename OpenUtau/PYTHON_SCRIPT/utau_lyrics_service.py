@@ -10,6 +10,7 @@ def process_lyrics(lyrics_text):
     
     # Remove any commas
     lyrics_text = lyrics_text.replace(',', '')
+    lyrics_text = lyrics_text.lower()
     
     return lyrics_text
 
