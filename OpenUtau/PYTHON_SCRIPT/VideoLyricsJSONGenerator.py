@@ -466,7 +466,7 @@ class SyllableCountGPTAgent:
             "ious words like 'delicious' are 3 syllables. 'ious' is 1 syllable."
             "Elizabeth is 3 syllables as the a isn't pronounced in it."
             "today is 2 syllables. don't split today into to and day in output. today(2) is correct."
-            "holiday is 3 syllables.",
+            "holiday is 3 syllables."
             "You are likely to break syllable counts with names and so you should try to be intelligent in correcting those disparities"
         )
 
