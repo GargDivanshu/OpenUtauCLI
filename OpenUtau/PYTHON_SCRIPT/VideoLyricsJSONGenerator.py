@@ -404,13 +404,17 @@ class LyricGPTAgent:
             "1. The song should have a playful and festive theme.\n"
             "2. The syllable structure should be maintained as follows:\n"
             "   - Line 1: Jingle Bells, Jingle Bells\n"
-            "   - Line 2: Jingle all the way\n"
-            "   - Line 3: Oh what ___ ___ ___ ___ ___ (these are single syllables, 5 syllables or less ONLY!!!!)\n"
-            "   - Line 4: _ _ _ _ _ (these are single syllables) \n"
+            "   - Line 2: Jingle all the way Oh\n"
+            # "   - Line 3: Oh what ___ ___ ___ ___ ___ (these are single syllables, 5 syllables or less ONLY!!!!)\n"
+            "   - Line 3: what fun it is to ride (these are single syllables, 5 syllables or less ONLY!!!!)\n"
+            # "   - Line 4: _ _ _ _ _ (these are single syllables) \n"
+            "   - Line 4: a one horse open sleigh (these are single syllables) \n"
             "   - Line 5: Jingle Bells, Jingle Bells\n"
             "   - Line 6: Jingle all the way\n"
-            "   - Line 7: Oh what _ _ _ _ _ (6 or 7 syllables are necessary) \n"
-            "   - Line 8: _ _ _ _ _ _ (5 syllables or less ONLY!!!!)\n"
+            # "   - Line 7: Oh what _ _ _ _ _ (6 or 7 syllables are necessary) \n"
+            # "   - Line 8: _ _ _ _ _ _ (5 syllables or less ONLY!!!!)\n"
+            "   - Line 7: Oh what fun it is to ride (these are single syllables, 5 syllables or less ONLY!!!!)\n"
+            "   - Line 8: a one horse open sleigh (these are single syllables) \n"
             "3. Generate ONLY the lyrics and nothing else"
             "4. Generate Jingle Bells, Jingle Bells for lines 1 and 5"
             "5. If you don't adhere to these rules, someone could get seriously injured. Don't let that happen."
@@ -462,7 +466,8 @@ class SyllableCountGPTAgent:
             "ious words like 'delicious' are 3 syllables. 'ious' is 1 syllable."
             "Elizabeth is 3 syllables as the a isn't pronounced in it."
             "today is 2 syllables. don't split today into to and day in output. today(2) is correct."
-            "holiday is 3 syllables."
+            "holiday is 3 syllables.",
+            "You are likely to break syllable counts with names and so you should try to be intelligent in correcting those disparities"
         )
 
         response = self.client.chat.completions.create(
