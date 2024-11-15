@@ -396,7 +396,7 @@ class LyricGPTAgent:
             "4. The song must clearly include the name and the reason in the lyrics."
         )
 
-    def create_a_chorus(self, lyrics, reason):
+    def create_a_chorus(self, lyrics, reason, name):
         return (
             f"SYSTEM PROMPT:{SYSTEM_PROMPT}"
             "Generate a chorus with 8 lines that would fit the following verse: {lyrics}"
@@ -411,8 +411,10 @@ class LyricGPTAgent:
             # "   - Line 4: a one horse open sleigh (these are single syllables) \n"
             "   - Line 5: Jingle Bells, Jingle Bells\n"
             "   - Line 6: Jingle all the way\n"
-            "   - Line 7: Oh what _ _ _ _ _ (6 or 7 syllables are necessary) \n"
-            "   - Line 8: _ _ _ _ _ _ (5 syllables or less ONLY!!!!)\n"
+            # "   - Line 7: Oh what _ _ _ _ _ (6 or 7 syllables are necessary) \n"
+            # "   - Line 8: _ _ _ _ _ _ (5 syllables or less ONLY!!!!)\n"
+            "   - Line 7: here's to you {name},"
+            "   - Line 8: have a happy holiday"
             # "   - Line 7: Oh what fun it is to ride (these are single syllables, 5 syllables or less ONLY!!!!)\n"
             # "   - Line 8: a one horse open sleigh (these are single syllables) \n"
             "3. Generate ONLY the lyrics and nothing else"
@@ -431,7 +433,7 @@ class LyricGPTAgent:
         # verse = verse1 + "\n" + verse2
         versePrompt = self.create_a_verse (name, reason)
         verse = self.generate_lyrics (versePrompt)
-        chorus = self.generate_lyrics (self.create_a_chorus (verse, reason))
+        chorus = self.generate_lyrics (self.create_a_chorus (verse, reason, name))
         
 #         chorus = """Jingle Bells Jingle Bells
 # Jingle all the way
