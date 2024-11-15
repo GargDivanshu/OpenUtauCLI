@@ -404,7 +404,7 @@ class LyricGPTAgent:
             "1. The song should have a playful and festive theme.\n"
             "2. The syllable structure should be maintained as follows:\n"
             "   - Line 1: Jingle Bells, Jingle Bells\n"
-            "   - Line 2: Jingle all the way Oh\n"
+            "   - Line 2: Jingle all the way \n"
             # "   - Line 3: Oh what ___ ___ ___ ___ ___ (these are single syllables, 5 syllables or less ONLY!!!!)\n"
             "   - Line 3: what fun it is to ride (these are single syllables, 5 syllables or less ONLY!!!!)\n"
             # "   - Line 4: _ _ _ _ _ (these are single syllables) \n"
