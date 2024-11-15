@@ -37,7 +37,7 @@ os.makedirs("/tmp/OpenUtau/Logs", exist_ok=True)
 load_dotenv()
 
 # Configure logging
-log_file = "/tmp/openutau_process.log"
+log_file = "/tmp/Logs/openutau_process.log"
 logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
@@ -73,7 +73,7 @@ class PathManager:
         self.local_lyrics_json_path = OU_LYRICS_JSON_PATH
         self.local_log_path = f"/tmp/Logs/song_{self.song_id}_utaulogs.log"
         self.local_section_summary_path = "/tmp/section_summary.csv"
-        self.local_system_log_path = f"/tmp/openutau_process.log"
+        self.local_system_log_path = f"/tmp/Logs/openutau_process.log"
 
         # Define S3 paths
         self.s3_export_path = f"utau_inference/{self.export_filename}.wav"
@@ -204,15 +204,15 @@ def process_message(body):
             OU_INFERENCE_LOCAL_MIDI_PATH,
             OU_INFERENCE_LOCAL_EXPORT_PATH,
             OU_INFERENCE_LOCAL_USTX_PATH,
-            f"/tmp/song_{song_id}_utaulogs.log",
+            f"/tmp/Logs/song_{song_id}_utaulogs.log",
             OU_LYRICS_JSON_PATH,
             f"/tmp/section_summary.csv",
             f"/tmp/lyrics_readable.txt"
         ]
-        with open(f"/tmp/openutau_process.log", 'w') as file:
+        with open(f"/tmp/Logs/openutau_process.log", 'w') as file:
             pass  # Do nothing, just opening in 'w' mode clears the file
 
-        print(f"All contents of the file /tmp/openutau_process.log have been deleted.")
+        print(f"All contents of the file Logs/openutau_process.log have been deleted.")
         
         for file_path in files_to_delete:
             if os.path.exists(file_path):
@@ -323,7 +323,7 @@ def run_openutau(project_name, export_wav_path, song_id):
     
     start_time = time.time()
     p = False
-    song_log_file = f'/tmp/song_{song_id}_utaulogs.log'
+    song_log_file = f'/tmp/Logs/song_{song_id}_utaulogs.log'
     os.makedirs(os.path.dirname(song_log_file), exist_ok=True)
     song_logger = logging.getLogger(f'song_logger_{song_id}')
     song_handler = logging.FileHandler(song_log_file)
