@@ -414,7 +414,7 @@ class LyricGPTAgent:
             # "   - Line 7: Oh what _ _ _ _ _ (6 or 7 syllables are necessary) \n"
             # "   - Line 8: _ _ _ _ _ _ (5 syllables or less ONLY!!!!)\n"
             f"   - Line 7: here's to you {name},\n"
-            "   - Line 8: have a happy holiday\n"
+            "   - Line 8: a happy holiday (5 syllables or less ONLY!!!!)\n"
             # "   - Line 7: Oh what fun it is to ride (these are single syllables, 5 syllables or less ONLY!!!!)\n"
             # "   - Line 8: a one horse open sleigh (these are single syllables) \n"
             "3. Generate ONLY the lyrics and nothing else"
