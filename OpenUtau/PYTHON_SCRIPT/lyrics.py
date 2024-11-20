@@ -144,12 +144,45 @@ def main_lyrics(name, reason):
     # Save lyrics to a text file
     if "wonderful" in reason.lower():
         lyrics = f"""
-        
+        Bouncing through the day,
+with a smile so big and bright,
+{name} is the best,
+spreading great delight.
+A heart that's pure and true,
+you're the very best,
+There is nothing you can't do,
+now let's all sing the rest.
+Jingle bells, jingle bells
+Jingle all the way,
+Oh what fun it is to ride "in a"
+one horse open sleigh.
+Jingle bells, jingle bells
+Jingle all the way,
+here's to {name}, a
+happy holiday!
         """
     elif "supportive" in reason.lower(): 
+        lyrics = f"""
+{name} brings the love, 
+you are always there, 
+Your kindness knows no bounds, 
+so too does your care.  
+When its feeling tough, 
+youre who we need the most,
+Thanks for the support, 
+now lets all share a toast. 
+Jingle bells, jingle bells
+Jingle all the way, 
+Oh what fun it is to ride "in a" 
+one horse open sleigh.
+Jingle bells, jingle bells
+Jingle all the way, 
+heres to {name}, a 
+happy holiday!
+        """
+    elif "caring" in reason.lower():
         lyrics = """
         """
-    elif ""
     with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
         file.write(lyrics)
         
