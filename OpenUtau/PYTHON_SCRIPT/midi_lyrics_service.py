@@ -163,23 +163,23 @@ def create_section_summary(sections_info):
     } for section_info in sections_info]
 
     summary_df = pd.DataFrame(summary_data)
-    summary_df.to_csv('tmp/section_summary.csv', index=False)
+    summary_df.to_csv('/tmp/section_summary.csv', index=False)
     return summary_df
 
 # Main function to orchestrate the entire process
 def midimain():
-    lyrics, syllable_counts, formatted_lines, final_formatted_string = load_and_process_lyrics('tmp/lyrics_readable.txt')
+    lyrics, syllable_counts, formatted_lines, final_formatted_string = load_and_process_lyrics('/tmp/lyrics_readable.txt')
     note_sequence = ['A', 'A', 'B', 'A', 'A', 'A', 'B', 'D']
     note_mapping = {'A': 69 - 36, 'B': 71 - 36, 'D': 74 - 36}
     note_sequence_midi = get_note_sequence(note_sequence, note_mapping)
     
     bpm = 120
     note_duration = 0.25
-    # if wait_for_file(BUCKET_NAME, "bridgetnew.mid", s3_client):
-    #     download_file_from_s3(BUCKET_NAME, "bridgetnew.mid", "/tmp/bridgetnew.mid")
-    #     download_folder_from_s3(BUCKET_NAME, "midi_sections", "/tmp/midi_sections")
-    trimmed_file = 'tmp/bridgetnew.mid'
-    output_folder = 'tmp/midi_sections'
+    if wait_for_file(BUCKET_NAME, "bridgetnew.mid", s3_client):
+        download_file_from_s3(BUCKET_NAME, "bridgetnew.mid", "/tmp/bridgetnew.mid")
+        download_folder_from_s3(BUCKET_NAME, "midi_sections", "/tmp/midi_sections")
+    trimmed_file = '/tmp/bridgetnew.mid'
+    output_folder = '/tmp/midi_sections'
     
     bar_duration = calculate_bar_duration(bpm)
 
@@ -212,7 +212,7 @@ def midimain():
     
     final_midi = combine_midi_sections(sections_midi, bpm)
     
-    final_midi.write('tmp/midi.mid')
+    final_midi.write('/tmp/midi.mid')
 
     summary_df = create_section_summary(sections_info)
     print("Full Summary of Sections:")

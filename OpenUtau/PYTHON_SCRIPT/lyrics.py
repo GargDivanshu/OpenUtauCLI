@@ -240,7 +240,7 @@ def main_lyrics(name, reason):
         """
     
     lyrics = "\n".join(line.strip() for line in lyrics.strip().splitlines() if line.strip())
-    with open("tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
+    with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
         file.write(lyrics)
         
     # end = time.monotonic()
@@ -255,14 +255,14 @@ def main_lyrics(name, reason):
     json_agent = VideoLyricsJSONGenerator()
 
     # Read the lyrics from a file or provide them as input
-    with open("tmp/lyrics_readable.txt", "r", encoding="utf-8") as file:
+    with open("/tmp/lyrics_readable.txt", "r", encoding="utf-8") as file:
         lyrics = file.read()
 
     # Generate structured JSON without using GPT
     structured_lyrics = json_agent.structure_lyrics_json(lyrics)
 
     # Define the path for the output file
-    lyrics_file_path = "tmp/lyrics.json"
+    lyrics_file_path = "/tmp/lyrics.json"
 
     # Write the structured JSON to a file
     with open(lyrics_file_path, "w", encoding="utf-8") as outfile:

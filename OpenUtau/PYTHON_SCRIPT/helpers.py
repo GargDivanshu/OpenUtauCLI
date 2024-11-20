@@ -14,7 +14,7 @@ from nltk.corpus import cmudict
 from dotenv import load_dotenv
 
 load_dotenv()
-log_file = "tmp/Logs/openutau_process.log"
+log_file = "/tmp/Logs/openutau_process.log"
 SYSTEM_API_URL = os.getenv("SYSTEM_API_URL")
 
 # IS_LAMBDA_ENV 
