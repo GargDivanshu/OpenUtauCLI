@@ -126,21 +126,30 @@ def add_num_syllables_to_json(json_data, field_name):
 
 def main_lyrics(name, reason):
     """Main function to generate, analyze, and save lyrics."""
+    lyrics = ""
     # Initialize LyricGPTAgent
     print ("Initializing LyricGPTAgent")
-    agent = LyricGPTAgent(api_key)
+    # agent = LyricGPTAgent(api_key)
 
     # Step 1: Generate lyrics
-    start = time.monotonic()
-    lyrics = agent.get_jingle_clone(name, reason)
-    lyrics = re.sub(r'\d+', '', lyrics)
-    lyrics = re.sub(r'\[.*?\]', '', lyrics)
-    lyrics = re.sub(r'\(.*?\)', '', lyrics)
-    lyrics = lyrics.replace("{name}", name).replace("{reason}", reason)
-    lyrics = lyrics.strip()
+    # start = time.monotonic()
+    # lyrics = agent.get_jingle_clone(name, reason)
+    # lyrics = re.sub(r'\d+', '', lyrics)
+    # lyrics = re.sub(r'\[.*?\]', '', lyrics)
+    # lyrics = re.sub(r'\(.*?\)', '', lyrics)
+    # lyrics = lyrics.replace("{name}", name).replace("{reason}", reason)
+    # lyrics = lyrics.strip()
 
 
     # Save lyrics to a text file
+    if "wonderful" in reason.lower():
+        lyrics = f"""
+        
+        """
+    elif "supportive" in reason.lower(): 
+        lyrics = """
+        """
+    elif ""
     with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
         file.write(lyrics)
         
