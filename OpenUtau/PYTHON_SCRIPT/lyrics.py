@@ -154,11 +154,11 @@ def main_lyrics(name, reason):
         now lets all sing the rest.
         Jingle bells, jingle bells
         Jingle all the way,
-        Oh what fun it is to ride "in a"
+        Oh what fun its to ride "in a"
         one horse open sleigh.
         Jingle bells, jingle bells
         Jingle all the way,
-        heres to {name}, a
+        hey {name}, have a
         happy holiday!
         """
     elif "supportive" in reason.lower(): 
@@ -173,11 +173,11 @@ def main_lyrics(name, reason):
         now lets all share a toast. 
         Jingle bells, jingle bells
         Jingle all the way, 
-        Oh what fun it is to ride "in a" 
+        Oh what fun its to ride "in a" 
         one horse open sleigh.
         Jingle bells, jingle bells
         Jingle all the way, 
-        heres to {name}, a 
+        hey {name}, have a 
         happy holiday!
         """
     elif "caring" in reason.lower():
@@ -192,11 +192,11 @@ def main_lyrics(name, reason):
         now lets sing this one right.
         Jingle bells, jingle bells
         Jingle all the way, 
-        Oh what fun it is to ride "in a" 
+        Oh what fun its to ride "in a" 
         one horse open sleigh.
         Jingle bells, jingle bells
         Jingle all the way, 
-        here’s to {name}, a 
+        hey {name}, have a 
         happy holiday!
         """
     elif "teacher" in reason.lower():
@@ -211,11 +211,11 @@ def main_lyrics(name, reason):
         so heres a small surprise. 
         Jingle bells, jingle bells
         Jingle all the way, 
-        Oh what fun it is to ride "in a" 
+        Oh what fun its to ride "in a" 
         one horse open sleigh.
         Jingle bells, jingle bells
         Jingle all the way, 
-        here’s to {name} a
+        hey {name} have a
         happy holiday!
         """
         
@@ -231,11 +231,11 @@ def main_lyrics(name, reason):
         now sing it loud and proud.   
         Jingle bells, jingle bells
         Jingle all the way, 
-        Oh what fun it is to ride "in a" 
+        Oh what fun its to ride "in a" 
         one horse open sleigh.
         Jingle bells, jingle bells
         Jingle all the way, 
-        here’s to {name} a 
+        hey {name}, have a 
         happy holiday!
         """
     

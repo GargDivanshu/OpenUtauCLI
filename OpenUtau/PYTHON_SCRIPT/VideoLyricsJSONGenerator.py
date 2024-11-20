@@ -144,6 +144,13 @@ class VideoLyricsJSONGenerator:
         results = []
         lyrics = lyrics.replace('"in a"', 'in a')
         lyrics = lyrics.replace('"with a"', 'with a')
+        lyrics = lyrics.replace('thats', "that's")
+        lyrics = lyrics.replace('cant', "can't")
+        lyrics = lyrics.replace('lets', "let's")
+        lyrics = lyrics.replace('happy holiday', "Happy Holiday")
+        lyrics = lyrics.replace('Theres', "There's")
+        lyrics = lyrics.replace('heres', "here's")
+        lyrics = lyrics.replace('its', "it's")
 
         for line in lyrics.splitlines():
             if line.strip():  # Skip empty lines
