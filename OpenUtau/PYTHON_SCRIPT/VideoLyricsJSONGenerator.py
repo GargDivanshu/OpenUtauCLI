@@ -20,10 +20,10 @@ SYSTEM_PROMPT = """"""
 def get_system_prompt(name, reason):
     
     if wait_for_file(BUCKET_NAME, "system_prompt.txt", s3_client):
-        download_file_from_s3(BUCKET_NAME, "system_prompt.txt", "/tmp/system_prompt.txt")
+        download_file_from_s3(BUCKET_NAME, "system_prompt.txt", "tmp/system_prompt.txt")
         
     try:
-        with open("/tmp/system_prompt.txt", "r") as file:
+        with open("tmp/system_prompt.txt", "r") as file:
             SYSTEM_PROMPT = file.read()
             
 
@@ -32,7 +32,7 @@ def get_system_prompt(name, reason):
         # print(SYSTEM_PROMPT)
 
     except FileNotFoundError:
-        print("The file /tmp/system_prompt.txt was not found.")
+        print("The file tmp/system_prompt.txt was not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
         
@@ -142,6 +142,8 @@ class VideoLyricsJSONGenerator:
         bar_duration = self.calculate_duration()
         current_start_time = self.start_offset
         results = []
+        lyrics = lyrics.replace('"in a"', 'in a')
+        lyrics = lyrics.replace('"with a"', 'with a')
 
         for line in lyrics.splitlines():
             if line.strip():  # Skip empty lines

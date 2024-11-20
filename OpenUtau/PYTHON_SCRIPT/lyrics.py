@@ -145,50 +145,107 @@ def main_lyrics(name, reason):
     if "wonderful" in reason.lower():
         lyrics = f"""
         Bouncing through the day,
-with a smile so big and bright,
-{name} is the best,
-spreading great delight.
-A heart that's pure and true,
-you're the very best,
-There is nothing you can't do,
-now let's all sing the rest.
-Jingle bells, jingle bells
-Jingle all the way,
-Oh what fun it is to ride "in a"
-one horse open sleigh.
-Jingle bells, jingle bells
-Jingle all the way,
-here's to {name}, a
-happy holiday!
+        with a smile so big and bright,
+        {name} is the best,
+        spreading great delight.
+        A heart thats pure and true,
+        you are the very best,
+        There is nothing you cant do,
+        now lets all sing the rest.
+        Jingle bells, jingle bells
+        Jingle all the way,
+        Oh what fun it is to ride "in a"
+        one horse open sleigh.
+        Jingle bells, jingle bells
+        Jingle all the way,
+        heres to {name}, a
+        happy holiday!
         """
     elif "supportive" in reason.lower(): 
         lyrics = f"""
-{name} brings the love, 
-you are always there, 
-Your kindness knows no bounds, 
-so too does your care.  
-When its feeling tough, 
-youre who we need the most,
-Thanks for the support, 
-now lets all share a toast. 
-Jingle bells, jingle bells
-Jingle all the way, 
-Oh what fun it is to ride "in a" 
-one horse open sleigh.
-Jingle bells, jingle bells
-Jingle all the way, 
-heres to {name}, a 
-happy holiday!
+        {name} brings the love, 
+        you are always there, 
+        Your kindness knows no bounds, 
+        so too does your care.  
+        When its feeling tough, 
+        youre who we need the most,
+        Thanks for the support, 
+        now lets all share a toast. 
+        Jingle bells, jingle bells
+        Jingle all the way, 
+        Oh what fun it is to ride "in a" 
+        one horse open sleigh.
+        Jingle bells, jingle bells
+        Jingle all the way, 
+        heres to {name}, a 
+        happy holiday!
         """
     elif "caring" in reason.lower():
-        lyrics = """
+        lyrics = f"""
+        {name} always near, 
+        "with a" heart so full of care.
+        You help us when we are down, 
+        you truly are so rare. 
+        You are the very best and 
+        make everything alright. 
+        Thanks for all your care, 
+        now lets sing this one right.
+        Jingle bells, jingle bells
+        Jingle all the way, 
+        Oh what fun it is to ride "in a" 
+        one horse open sleigh.
+        Jingle bells, jingle bells
+        Jingle all the way, 
+        here’s to {name}, a 
+        happy holiday!
         """
-    with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
+    elif "teacher" in reason.lower():
+        lyrics = f"""
+        {name} you are the best, 
+        you inspire all the way,
+        You make learning fun, 
+        and teach us every day. 
+        You help build us up, 
+        with a mind so sharp and wise, 
+        Theres no teacher like you, 
+        so heres a small surprise. 
+        Jingle bells, jingle bells
+        Jingle all the way, 
+        Oh what fun it is to ride "in a" 
+        one horse open sleigh.
+        Jingle bells, jingle bells
+        Jingle all the way, 
+        here’s to {name} a
+        happy holiday!
+        """
+        
+    elif "brightening" in reason.lower():
+        lyrics = f"""
+        {name} you are a star, 
+        you chase the clouds away,
+        Moments spent with you, 
+        brighten up my day.
+        Your kindness is a gift, 
+        you stand out from the crowd. 
+        So heres a card for you, 
+        now sing it loud and proud.   
+        Jingle bells, jingle bells
+        Jingle all the way, 
+        Oh what fun it is to ride "in a" 
+        one horse open sleigh.
+        Jingle bells, jingle bells
+        Jingle all the way, 
+        here’s to {name} a 
+        happy holiday!
+        """
+    
+    lyrics = "\n".join(line.strip() for line in lyrics.strip().splitlines() if line.strip())
+    with open("tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
         file.write(lyrics)
         
-    end = time.monotonic()
+    # end = time.monotonic()
     
-    print("Time taken to generate lyrics and write them to lyrics_readable:", timedelta(seconds=end-start))
+    # print("Time taken to generate lyrics and write them to lyrics_readable:", timedelta(seconds=end-start))
 
 
     start = time.monotonic()
@@ -198,14 +255,14 @@ happy holiday!
     json_agent = VideoLyricsJSONGenerator()
 
     # Read the lyrics from a file or provide them as input
-    with open("/tmp/lyrics_readable.txt", "r", encoding="utf-8") as file:
+    with open("tmp/lyrics_readable.txt", "r", encoding="utf-8") as file:
         lyrics = file.read()
 
     # Generate structured JSON without using GPT
     structured_lyrics = json_agent.structure_lyrics_json(lyrics)
 
     # Define the path for the output file
-    lyrics_file_path = "/tmp/lyrics.json"
+    lyrics_file_path = "tmp/lyrics.json"
 
     # Write the structured JSON to a file
     with open(lyrics_file_path, "w", encoding="utf-8") as outfile:
@@ -247,4 +304,4 @@ def lyrics_process(name, reason):
     main_lyrics(name, reason) #saves lyrics to /tmp/lyrics_readable.txt and json to /tmp/lyrics.json
     
 if __name__ == "__main__":
-    lyrics_process("Mcconaughey", "birthday")
+    lyrics_process("Tim", "brightening up my day")

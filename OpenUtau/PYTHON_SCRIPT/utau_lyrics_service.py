@@ -3,6 +3,7 @@ import re
 def process_lyrics(lyrics_text):
     """Process lyrics text by replacing syllable counts with '+' signs and removing unwanted characters."""
     # Replace syllable counts (e.g., (2)) with '+' signs
+    
     lyrics_text = re.sub(r'\((\d)\)', lambda x: ' +' * (int(x.group(1)) - 1), lyrics_text)
     
     # Remove all punctuation except '+' and whitespace
@@ -11,6 +12,8 @@ def process_lyrics(lyrics_text):
     # Remove any commas
     lyrics_text = lyrics_text.replace(',', '')
     lyrics_text = lyrics_text.lower()
+    lyrics_text = lyrics_text.replace('in a', '"in a"')
+    # lyrics_text = lyrics_text.replace('with a', '"with a"')
     
     return lyrics_text
 
