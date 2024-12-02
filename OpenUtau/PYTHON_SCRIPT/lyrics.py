@@ -150,7 +150,7 @@ def main_lyrics(name, reason):
         spreading great delight.
         A heart thats pure and true,
         you are the very best,
-        There is nothing you cant do,
+        There is nothing you karnt do,
         now lets all sing the rest.
         Jingle bells, jingle bells
         Jingle all the way,
@@ -165,11 +165,11 @@ def main_lyrics(name, reason):
         lyrics = f"""
         {name} brings the love, 
         you are always there, 
-        Your kindness knows no bounds, 
+        Your kindness knows no baundz, 
         so too does your care.  
         When its feeling tough, 
         youre who we need the most,
-        Thanks for the support, 
+        Thanks for the suhpote, 
         now lets all share a toast. 
         Jingle bells, jingle bells
         Jingle all the way, 
@@ -215,7 +215,7 @@ def main_lyrics(name, reason):
         one horse open sleigh.
         Jingle bells, jingle bells
         Jingle all the way, 
-        hey {name} have a
+        hey {name}, have a
         happy holiday!
         """
         

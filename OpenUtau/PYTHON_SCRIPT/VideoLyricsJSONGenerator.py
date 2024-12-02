@@ -147,10 +147,17 @@ class VideoLyricsJSONGenerator:
         lyrics = lyrics.replace('thats', "that's")
         lyrics = lyrics.replace('cant', "can't")
         lyrics = lyrics.replace('lets', "let's")
-        lyrics = lyrics.replace('happy holiday', "Happy Holiday")
+        lyrics = lyrics.replace('happy holiday', "have a Happy Holiday")
         lyrics = lyrics.replace('Theres', "There's")
         lyrics = lyrics.replace('heres', "here's")
-        lyrics = lyrics.replace('its', "it's")
+        lyrics = lyrics.replace('its to ride', "it is to ride")
+        lyrics = lyrics.replace(', have a', ', ')
+        lyrics = lyrics.replace("karnt", "can't")
+        lyrics = lyrics.replace("baaunds", "bounds")
+        lyrics = lyrics.replace("baundz", "bounds")
+        lyrics = lyrics.replace("youre", "you're")
+        lyrics = lyrics.replace("suhpote", "support")
+        lyrics = lyrics.replace("its", "it's")
 
         for line in lyrics.splitlines():
             if line.strip():  # Skip empty lines
