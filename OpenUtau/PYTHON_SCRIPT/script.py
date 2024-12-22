@@ -136,14 +136,14 @@ def process_message(body):
         # OU_LYRICS_JSON_PATH = os.path.join("/tmp", "lyrics.json")
         OU_LYRICS_JSON_PATH = "/tmp/lyrics.json"
         
-        start = time.monotonic()
+        start_time = time.monotonic()
         lyrics_process(name, reason) #this generates and saves lyrics.txt (containing the UTAU lyrics) and lyrics.json (containing the syllable count and formatted lyrics)
-        end = time.monotonic()
+        end_time = time.monotonic()
         duration = (end_time - start_time)  
         logger.info("lyrics_process stats")
         logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
         logger.info("============================================================")
-        print(f"Lyrics processing took {end - start:.2f} seconds")
+        print(f"Lyrics processing took {end_time - start_time:.2f} seconds")
         
         time.sleep(1)
         lyrics_api_filename = f"lyrics/{song_id}_lyrics.json"
@@ -452,21 +452,22 @@ def run_openutau(project_name, export_wav_path, song_id):
                     process.stdin.write("OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
-                # elif "> " in accumulated_output and not pitch_processing:
-                #     print("Detected '> ' prompt; Sending '--process --pitch'")
-                #     time.sleep(2)
-                #     # process.stdin.write("--process --pitch\n")
-                #     # process.stdin.flush()
-                #     time.sleep(2)
-                #     accumulated_output = ""
-                #     # breakpoint()
+                elif "> " in accumulated_output and not pitch_processing:
+                    print("Detected '> ' prompt; Sending '--process --pitch'")
+                    time.sleep(2)
+                    process.stdin.write("--process --pitch\n")
+                    process.stdin.flush()
+                    time.sleep(2)
+                    accumulated_output = ""
 
-                # elif "Select a part to process:" in accumulated_output and not pitch_processing:
-                #     print("Detected Part selection prompt; entering '1'")
-                #     process.stdin.write("1\n")
-                #     process.stdin.flush()
-                #     pitch_processing = True
-                #     accumulated_output = ""
+                elif "Select a part to process:" in accumulated_output and not pitch_processing:
+                    print("Detected Part selection prompt; entering '1'")
+                    process.stdin.write("1\n")
+                    time.sleep(5)
+                    process.stdin.flush()
+                    time.sleep(2)
+                    pitch_processing = True
+                    accumulated_output = ""
                 # # SAVING
                 # # Send save command after export is complete
                 # elif '> ' in accumulated_output and not_saved:
