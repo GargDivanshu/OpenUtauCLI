@@ -124,23 +124,41 @@ def add_num_syllables_to_json(json_data, field_name):
             element[field_name] = num_syllables
     return json_data
 
-def main_lyrics(name, reason):
+def main_lyrics(name, reason, hardcode=False):
     """Main function to generate, analyze, and save lyrics."""
     lyrics = ""
     # Initialize LyricGPTAgent
     print ("Initializing LyricGPTAgent")
-    # agent = LyricGPTAgent(api_key)
+    agent = LyricGPTAgent(api_key)
 
     # Step 1: Generate lyrics
-    # start = time.monotonic()
-    # lyrics = agent.get_jingle_clone(name, reason)
-    # lyrics = re.sub(r'\d+', '', lyrics)
-    # lyrics = re.sub(r'\[.*?\]', '', lyrics)
-    # lyrics = re.sub(r'\(.*?\)', '', lyrics)
-    # lyrics = lyrics.replace("{name}", name).replace("{reason}", reason)
-    # lyrics = lyrics.strip()
+    start = time.monotonic()
+    lyrics = agent.get_jingle_clone(name, reason)
+    lyrics = re.sub(r'\d+', '', lyrics)
+    lyrics = re.sub(r'\[.*?\]', '', lyrics)
+    lyrics = re.sub(r'\(.*?\)', '', lyrics)
+    lyrics = lyrics.replace("{name}", name).replace("{reason}", reason)
+    lyrics = lyrics.strip()
 
-
+    if hardcode == True:
+        lyrics = f"""
+        Bouncing through the day,
+        with a smile so big and bright,
+        {name} is the best,
+        spreading great delight.
+        A heart thats pure and true,
+        you are the very baest,
+        There is nothing you karnt do,
+        now lets all sing the rest.
+        Jingle bells, jingle bells
+        Jingle all the way,
+        Oh what fun its to ride "in a"
+        one horse open sleigh.
+        Jingle bells, jingle bells
+        Jingle all the way,
+        hey {name}, have a
+        happy holiday!
+        """
     # Save lyrics to a text file
     if "wonderful" in reason.lower():
         lyrics = f"""
@@ -149,7 +167,7 @@ def main_lyrics(name, reason):
         {name} is the best,
         spreading great delight.
         A heart thats pure and true,
-        you are the very best,
+        you are the very baest,
         There is nothing you karnt do,
         now lets all sing the rest.
         Jingle bells, jingle bells
@@ -165,11 +183,11 @@ def main_lyrics(name, reason):
         lyrics = f"""
         {name} brings the love, 
         you are always there, 
-        Your kindness knows no baundz, 
+        Your kindness knows no end, 
         so too does your care.  
         When its feeling tough, 
-        youre who we need the most,
-        Thanks for the suhpote, 
+        you are who we need the most,
+        Thanks for the sapport, 
         now lets all share a toast. 
         Jingle bells, jingle bells
         Jingle all the way, 
@@ -183,8 +201,8 @@ def main_lyrics(name, reason):
     elif "caring" in reason.lower():
         lyrics = f"""
         {name} always near, 
-        "with a" heart so full of care.
-        You help us when we are down, 
+        "with a" heart so full of care
+        You help us when were down,
         you truly are so rare. 
         You are the very best and 
         make everything alright. 
@@ -204,14 +222,14 @@ def main_lyrics(name, reason):
         {name} you are the best, 
         you inspire all the way,
         You make learning fun, 
-        and teach us every day. 
+        and teach us everyday
         You help build us up, 
         with a mind so sharp and wise, 
         Theres no teacher like you, 
-        so heres a small surprise. 
+        so hears a small surprise. 
         Jingle bells, jingle bells
         Jingle all the way, 
-        Oh what fun its to ride "in a" 
+        Oh what fun its to ride "in a"
         one horse open sleigh.
         Jingle bells, jingle bells
         Jingle all the way, 
@@ -227,7 +245,7 @@ def main_lyrics(name, reason):
         brighten up my day.
         Your kindness is a gift, 
         you stand out from the crowd. 
-        So heres a card for you, 
+        So hears a card for you, 
         now sing it loud and proud.   
         Jingle bells, jingle bells
         Jingle all the way, 
@@ -243,9 +261,9 @@ def main_lyrics(name, reason):
     with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
         file.write(lyrics)
         
-    # end = time.monotonic()
+    end = time.monotonic()
     
-    # print("Time taken to generate lyrics and write them to lyrics_readable:", timedelta(seconds=end-start))
+    print("Time taken to generate lyrics and write them to lyrics_readable:", timedelta(seconds=end-start))
 
 
     start = time.monotonic()
@@ -300,8 +318,8 @@ def main_lyrics(name, reason):
     # print("Time taken to analyze syllables:", timedelta(seconds=end-start))
 
 # Run the main_lyrics function with specified name and reason
-def lyrics_process(name, reason):
-    main_lyrics(name, reason) #saves lyrics to /tmp/lyrics_readable.txt and json to /tmp/lyrics.json
+def lyrics_process(name, reason,hardcode=False):
+    main_lyrics(name, reason, hardcode) #saves lyrics to /tmp/lyrics_readable.txt and json to /tmp/lyrics.json
     
 if __name__ == "__main__":
     lyrics_process("Tim", "brightening up my day")

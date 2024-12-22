@@ -15,7 +15,7 @@ def process_lyrics(lyrics_text):
     lyrics_text = lyrics_text.replace('in a', '"in a"')
     lyrics_text = lyrics_text.replace("its to ride", "itis to ride")
     # lyrics_text = lyrics_text.replace('with a', '"with a"')
-    
+    lyrics_text = lyrics_text.replace('were down', "we're down")
     return lyrics_text
 
 

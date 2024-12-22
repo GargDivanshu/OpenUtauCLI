@@ -157,7 +157,12 @@ class VideoLyricsJSONGenerator:
         lyrics = lyrics.replace("baundz", "bounds")
         lyrics = lyrics.replace("youre", "you're")
         lyrics = lyrics.replace("suhpote", "support")
+        lyrics = lyrics.replace("sapport", "support")
         lyrics = lyrics.replace("its", "it's")
+        lyrics = lyrics.replace("yure", "you're")
+        lyrics = lyrics.replace("baest", "best")
+        lyrics = lyrics.replace("hears", "here's")
+        lyrics = lyrics.replace("were down", "we are down")
 
         for line in lyrics.splitlines():
             if line.strip():  # Skip empty lines
