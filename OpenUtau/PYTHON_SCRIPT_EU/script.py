@@ -13,12 +13,14 @@ import glob
 from helpers import upload_file_to_s3,download_folder_from_s3, download_file_from_s3, wait_for_file, clean_tmp_wav_file, notify_system_api, check_files_and_directories
 from tqdm import tqdm
 import platform
-from lyrics import lyrics_process, notify_lyrics_json_upload
+from OpenUtau.PYTHON_SCRIPT_EU.lyrics_de import lyrics_process, notify_lyrics_json_upload
 from midi_lyrics_service import midimain
 from dotenv import load_dotenv
 from dummy_payload import get_dummy_payload
 from datetime import datetime
+from lyrics import analyze_lyrics_de
 import time
+from melody_generation import main_melody_generation
     
     
 import os
@@ -130,14 +132,29 @@ def process_message(body):
         song_id = body.get("songID")
         name = body.get("name")
         reason = body.get("reason")
+        region = body.get("region")
+        trackId = body.get("trackID")
+        lyrics = body.get("lyrics")
+        tag = body.get("tag")
         OU_FINAL_FILENAME = f"song_{song_id}_vocals"
         OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join("/tmp", f"{OU_FINAL_FILENAME}.wav")
         OU_INFERENCE_LOCAL_USTX_PATH = os.path.join("/tmp", f"{OU_FINAL_FILENAME}.ustx")
         # OU_LYRICS_JSON_PATH = os.path.join("/tmp", "lyrics.json")
         OU_LYRICS_JSON_PATH = "/tmp/lyrics.json"
         
-        start = time.monotonic()
-        lyrics_process(name, reason) #this generates and saves lyrics.txt (containing the UTAU lyrics) and lyrics.json (containing the syllable count and formatted lyrics)
+        formatted_lyrics = ""
+        syllable_breakdown = ''
+        total_syllables = 0
+        if region == "germany":
+            start = time.monotonic()
+            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_de(lyrics)
+            with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
+                file.write(lyrics)
+                
+                
+        output_file = "/tmp/lyrics.txt"
+        with open(output_file, "w", encoding="utf-8") as file:
+            file.write(formatted_lyrics)
         end = time.monotonic()
         duration = (end_time - start_time)  
         logger.info("lyrics_process stats")
@@ -145,26 +162,32 @@ def process_message(body):
         logger.info("============================================================")
         print(f"Lyrics processing took {end - start:.2f} seconds")
         
-        time.sleep(1)
-        lyrics_api_filename = f"lyrics/{song_id}_lyrics.json"
-        upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
-        notify_lyrics_json_upload(song_id, f"{song_id}_lyrics.json") 
+        # time.sleep(1)
+        # lyrics_api_filename = f"lyrics/{song_id}_lyrics.json"
+        # upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
+        # notify_lyrics_json_upload(song_id, f"{song_id}_lyrics.json") 
         
-
         start_time = time.monotonic()
-        lyrics_with_syllable, utau_lyrics = midimain() #this assumes lyrics are already present in /tmp/lyrics_readable.txt
-        print(lyrics_with_syllable, " lyrics_with_syllable")
-        print(utau_lyrics, " utau_lyrics")
-        output_file = "/tmp/lyrics.txt"
-        with open(output_file, "w", encoding="utf-8") as file:
-            file.write(utau_lyrics)
+        region_name = region.capitalize()
+        vocal_midi_file_path = f"/tmp/{region}/vocals/{region_name}Track{trackId}MIDI.mid"
+        backing_midi_file_path = f"/tmp/{region}/backing/{region_name}Track{trackId}ChordMIDI.mid"
+        main_melody_generation(lyrics, 115, backing_midi_file_path, vocal_midi_file_path)
         end_time = time.monotonic()
         duration = (end_time - start_time)  
         logger.info("midimain() stats")
         logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
         logger.info("============================================================")
+        
+        
+        # lyrics_with_syllable, utau_lyrics = midimain() #this assumes lyrics are already present in /tmp/lyrics_readable.txt
+        # print(lyrics_with_syllable, " lyrics_with_syllable")
+        # print(utau_lyrics, " utau_lyrics")
+        # output_file = "/tmp/lyrics.txt"
+        # with open(output_file, "w", encoding="utf-8") as file:
+        #     file.write(utau_lyrics)
+        
 
-        print(f"UTAU lyrics written to {output_file}")
+        # print(f"UTAU lyrics written to {output_file}")
     
         # Run processing
         start_time = time.monotonic()
@@ -244,6 +267,7 @@ def lambda_handler(event, context):
         base_s3_path = "Lambda_Utau/"
         local_base_path = "/tmp/OpenUtau/"
         os.makedirs(local_base_path, exist_ok=True)
+        region = os.getenv('REGION_PROD')
 
         # Define folder mappings
         folders_to_download = {
@@ -256,6 +280,35 @@ def lambda_handler(event, context):
             print(f"Downloading {folder_key} to {local_output_dir}...")
             download_folder_from_s3(BUCKET_NAME, base_s3_path + folder_key, local_output_dir)
             print(f"Finished downloading {folder_key}")
+            
+        region_specific_s3_path = f"{base_s3_path}{region}/backing_track/"
+        region_specific_local_vocal_path = f"/tmp/{region}/vocals/"
+        region_specific_local_backing_path = f"/tmp/{region}/backing/"
+        os.makedirs(region_specific_local_vocal_path, exist_ok=True)
+
+        # List of region-specific files (example: RomaniaTrack1MIDI.MID, RomaniaTrack2MIDI.MID)
+        region_vocal_files = ["RomaniaTrack1MIDI.MID", "RomaniaTrack2MIDI.MID", "RomaniaTrack3MIDI.MID", "RomaniaTrack4MIDI.MID", "RomaniaTrack5MIDI.MID"]  # Add or dynamically fetch file names if needed
+        region_backing_files = ["RomaniaTrack1ChordMIDI.mid", "RomaniaTrack2ChordMIDI.mid", "RomaniaTrack3ChordMIDI.mid", 
+                                "RomaniaTrack4ChordMIDI.mid", "RomaniaTrack5ChordMIDI.mid", "RomaniaTrack6ChordMIDI.mid",
+                                "RomaniaTrack7ChordMIDI.mid", "RomaniaTrack8ChordMIDI.mid", "RomaniaTrack9ChordMIDI.mid",
+                                "RomaniaTrack10ChordMIDI.mid"
+                               ]
+        # Download region-specific files
+        for file_name in region_vocal_files:
+            s3_file_path = f"{region_specific_s3_path}{file_name}"
+            local_file_path = os.path.join(region_specific_local_vocal_path, file_name)
+            
+            print(f"Downloading {s3_file_path} to {local_file_path}...")
+            download_file_from_s3(BUCKET_NAME, s3_file_path, local_file_path)  # Replace with your S3 file download function
+            print(f"Finished downloading {file_name}")
+            
+        for file_name in region_backing_files:
+            s3_file_path = f"{region_specific_s3_path}{file_name}"
+            local_file_path = os.path.join(region_specific_local_backing_path, file_name)
+            
+            print(f"Downloading {s3_file_path} to {local_file_path}...")
+            download_file_from_s3(BUCKET_NAME, s3_file_path, local_file_path)  # Replace with your S3 file download function
+            print(f"Finished downloading {file_name}")
         
         # download_folder_from_s3(BUCKET_NAME, "Singers/", "/tmp/OpenUtau/Singers/", "")
         # Process each record
@@ -332,6 +385,12 @@ def run_openutau(project_name, export_wav_path, song_id):
     song_handler.setFormatter(song_format)
     song_logger.addHandler(song_handler)
     song_logger.propagate = False  # Prevents logging to propagate to root logger
+    phonemizer = ""
+    region = os.getenv('REGION_PROD')
+    if region.lower() == "germany":
+        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerGermanPhonemizer"
+    elif region.lower() == "romania":
+        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerRomanianPhonemizer"
     
     
     
@@ -449,7 +508,10 @@ def run_openutau(project_name, export_wav_path, song_id):
                 # Respond to phonemizer selection prompt
                 elif "Enter the phonemizer name to apply:" in accumulated_output:
                     print("Detected phonemizer selection prompt; entering 'OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer'")
-                    process.stdin.write("OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer\n")
+                    # OpenUtau.Core.DiffSinger.DiffSingerGermanPhonemizer
+                    # OpenUtau.Core.DiffSinger.DiffSingerRomanianPhonemizer
+                    # OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer
+                    process.stdin.write(f"{phonemizer}\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
                 # elif "> " in accumulated_output and not pitch_processing:

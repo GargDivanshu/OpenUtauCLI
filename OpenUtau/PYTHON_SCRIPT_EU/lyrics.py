@@ -1,0 +1,1 @@
+from lyrics_de import analyze_lyrics as analyze_lyrics_de
