@@ -272,7 +272,8 @@ def lambda_handler(event, context):
         # Define folder mappings
         folders_to_download = {
             "Singers/": os.path.join(local_base_path, "Singers"),
-            "Dependencies/": os.path.join(local_base_path, "Dependencies")
+            "Dependencies/": os.path.join(local_base_path, "Dependencies"),
+            "Plugins/": os.path.join(local_base_path, "Plugins")
         }
         
          # Download folders from S3
