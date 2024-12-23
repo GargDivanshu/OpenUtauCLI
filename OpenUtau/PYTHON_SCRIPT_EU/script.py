@@ -42,7 +42,7 @@ load_dotenv()
 log_file = "/tmp/Logs/openutau_process.log"
 logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
-
+region_lang = os.getenv("REGION_LANG")
 
 # Initialize the configuration
 config = initialize_config()
@@ -78,24 +78,24 @@ class PathManager:
         self.local_system_log_path = f"/tmp/Logs/openutau_process.log"
 
         # Define S3 paths
-        self.s3_export_path = f"utau_inference/{self.export_filename}.wav"
-        self.s3_log_path = f"Logs/song_{self.song_id}/song_{self.song_id}_utaulogs.log"
-        self.s3_midi_path = f"Logs/song_{self.song_id}/{self.song_id}_midi.mid"
-        self.s3_lyrics_txt_path = f"Logs/song_{self.song_id}/{self.song_id}_lyrics.txt"
-        self.s3_lyrics_json_path = f"Logs/song_{self.song_id}/{self.song_id}_lyrics.json"
-        self.s3_wav_duplicate_path = f"Logs/song_{self.song_id}/{self.export_filename}.wav"
-        self.s3_section_summary_path = f"Logs/song_{self.song_id}/{self.song_id}_section_summary.csv"
-        self.s3_system_log_path = f"Logs/song_{self.song_id}/{self.song_id}_system_log.log"
+        self.s3_export_path = f"utau_inference/{region_lang}/{self.export_filename}.wav"
+        self.s3_log_path = f"Logs/{region_lang}/song_{self.song_id}/song_{self.song_id}_utaulogs.log"
+        self.s3_midi_path = f"Logs/{region_lang}/song_{self.song_id}/{self.song_id}_midi.mid"
+        self.s3_lyrics_txt_path = f"Logs/{region_lang}/song_{self.song_id}/{self.song_id}_lyrics.txt"
+        self.s3_lyrics_json_path = f"Logs/{region_lang}/song_{self.song_id}/{self.song_id}_lyrics.json"
+        self.s3_wav_duplicate_path = f"Logs/{region_lang}/song_{self.song_id}/{self.export_filename}.wav"
+        self.s3_section_summary_path = f"Logs/{region_lang}/song_{self.song_id}/{self.song_id}_section_summary.csv"
+        self.s3_system_log_path = f"Logs/{region_lang}/song_{self.song_id}/{self.song_id}_system_log.log"
 
         # Collect paths in a dictionary for convenience
         self.paths = {
             "utau_inference_wav": (self.local_export_path, self.s3_export_path),
             "utaulogs": (self.local_log_path, self.s3_log_path),
             "midi": (self.local_midi_path, self.s3_midi_path),
-            "lyrics_txt": (self.local_lyrics_path, self.s3_lyrics_txt_path),
-            "lyrics_json": (self.local_lyrics_json_path, self.s3_lyrics_json_path),
+            # "lyrics_txt": (self.local_lyrics_path, self.s3_lyrics_txt_path),
+            # "lyrics_json": (self.local_lyrics_json_path, self.s3_lyrics_json_path),
             "wav_duplicate": (self.local_export_path, self.s3_wav_duplicate_path),
-            "section_summary": (self.local_section_summary_path, self.s3_section_summary_path),
+            # "section_summary": (self.local_section_summary_path, self.s3_section_summary_path),
             "openutau_process": (self.local_system_log_path, self.s3_system_log_path)
         }
 
@@ -228,9 +228,9 @@ def process_message(body):
             OU_INFERENCE_LOCAL_EXPORT_PATH,
             OU_INFERENCE_LOCAL_USTX_PATH,
             f"/tmp/Logs/song_{song_id}_utaulogs.log",
-            OU_LYRICS_JSON_PATH,
-            f"/tmp/section_summary.csv",
-            f"/tmp/lyrics_readable.txt"
+            # OU_LYRICS_JSON_PATH,
+            # f"/tmp/section_summary.csv",
+            # f"/tmp/lyrics_readable.txt"
         ]
         with open(f"/tmp/Logs/openutau_process.log", 'w') as file:
             pass  # Do nothing, just opening in 'w' mode clears the file
