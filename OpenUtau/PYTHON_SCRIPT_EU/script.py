@@ -32,6 +32,8 @@ from config import Config, initialize_config
 os.makedirs("/tmp/Logs", exist_ok=True)
 os.makedirs("/tmp/OpenUtau", exist_ok=True)
 os.makedirs("/tmp/OpenUtau/Logs", exist_ok=True)
+os.makedirs("/tmp/outputs", exist_ok=True)
+os.makedirs("/tmp/outputs/sections", exist_ok=True)
 # Load environment variables from .env file
 load_dotenv()
 
