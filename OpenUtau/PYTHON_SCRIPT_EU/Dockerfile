@@ -2,7 +2,7 @@
 FROM python:3.9-slim
 
 
-ENV NLTK_DATA=/usr/local/nltk_data
+# ENV NLTK_DATA=/usr/local/nltk_data
 # Install required system dependencies for .NET runtime installation
 RUN apt-get update && \
     apt-get install -y wget apt-transport-https software-properties-common && \
@@ -23,8 +23,8 @@ COPY requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN python -m nltk.downloader -d /usr/local/share/nltk_data all
-RUN python -m nltk.downloader punkt
+# RUN python -m nltk.downloader -d /usr/local/share/nltk_data all
+# RUN python -m nltk.downloader punkt
 # Copy all files and folders into the container
 COPY . /app
 # Copy specific file to /tmp

@@ -16,7 +16,7 @@ from datetime import datetime
 from music21 import *
 import music21 as music21
 import itertools
-from helpers import chord_map, save_markov_model, midi_files, calculate_syllable_counts, lyrics, HAPPY_NOTE_PROGRESSIONS, ALL_SINGERS_RANGE, clamp, normalize, quantize_to_scale, quantize_note_durations
+from helpers import chord_map, save_markov_model, midi_files, calculate_syllable_counts, ALL_SINGERS_RANGE, clamp, quantize_to_scale, quantize_note_durations
 
 load_dotenv()
 # MODE = os.getenv("MODE")

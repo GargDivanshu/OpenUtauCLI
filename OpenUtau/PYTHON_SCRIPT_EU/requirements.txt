@@ -16,8 +16,6 @@ openai
 pyphen 
 pandas
 requests
-pickle 
 tabulate
 music21 
-collections
-itertools
+isobar

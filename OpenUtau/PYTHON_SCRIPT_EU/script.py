@@ -13,10 +13,7 @@ import glob
 from helpers import upload_file_to_s3,download_folder_from_s3, download_file_from_s3, wait_for_file, clean_tmp_wav_file, notify_system_api, check_files_and_directories
 from tqdm import tqdm
 import platform
-from OpenUtau.PYTHON_SCRIPT_EU.lyrics_de import lyrics_process, notify_lyrics_json_upload
-from midi_lyrics_service import midimain
 from dotenv import load_dotenv
-from dummy_payload import get_dummy_payload
 from datetime import datetime
 from lyrics import analyze_lyrics_de
 import time
@@ -264,6 +261,7 @@ def lambda_handler(event, context):
     """
 
     try:
+        
         base_s3_path = "Lambda_Utau/"
         local_base_path = "/tmp/OpenUtau/"
         os.makedirs(local_base_path, exist_ok=True)
