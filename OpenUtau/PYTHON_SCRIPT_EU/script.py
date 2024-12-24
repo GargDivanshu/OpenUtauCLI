@@ -280,27 +280,34 @@ def lambda_handler(event, context):
             download_folder_from_s3(BUCKET_NAME, base_s3_path + folder_key, local_output_dir)
             print(f"Finished downloading {folder_key}")
             
-        region_specific_s3_path = f"{base_s3_path}{region}/backing_track/"
+        region_specific_s3_path = f"{base_s3_path}{region}/"
         region_specific_local_vocal_path = f"/tmp/{region}/vocals/"
         region_specific_local_backing_path = f"/tmp/{region}/backing/"
         os.makedirs(region_specific_local_vocal_path, exist_ok=True)
 
         # List of region-specific files (example: RomaniaTrack1MIDI.MID, RomaniaTrack2MIDI.MID)
-        region_vocal_files = [f"{region.capitalize()}Track1MIDI.mid", 
-                              f"{region.capitalize()}Track2MIDI.mid", 
-                              f"{region.capitalize()}Track3MIDI.mid", 
-                              f"{region.capitalize()}Track4MIDI.mid", 
-                              f"{region.capitalize()}Track5MIDI.mid"]  # Add or dynamically fetch file names if needed
-        region_backing_files = [f"{region.capitalize()}Track1ChordMIDI.mid", 
-                                f"{region.capitalize()}Track2ChordMIDI.mid", 
-                                f"{region.capitalize()}Track3ChordMIDI.mid", 
-                                f"{region.capitalize()}Track4ChordMIDI.mid", 
-                                f"{region.capitalize()}Track5ChordMIDI.mid", 
-                                f"{region.capitalize()}Track6ChordMIDI.mid",
-                                f"{region.capitalize()}Track7ChordMIDI.mid", 
-                                f"{region.capitalize()}Track8ChordMIDI.mid", 
-                                f"{region.capitalize()}Track9ChordMIDI.mid",
-                                f"{region.capitalize()}Track10ChordMIDI.mid"
+        region_vocal_files = [f"vocal_track/{region.capitalize()}Track1MIDI.mid", 
+                              f"vocal_track/{region.capitalize()}Track2MIDI.mid", 
+                              f"vocal_track/{region.capitalize()}Track3MIDI.mid", 
+                              f"vocal_track/{region.capitalize()}Track4MIDI.mid", 
+                              f"vocal_track/{region.capitalize()}Track5MIDI.mid",
+                              f"vocal_track/{region.capitalize()}Track6MIDI.mid",
+                              f"vocal_track/{region.capitalize()}Track7MIDI.mid",
+                              f"vocal_track/{region.capitalize()}Track8MIDI.mid",
+                              f"vocal_track/{region.capitalize()}Track9MIDI.mid",
+                              f"vocal_track/{region.capitalize()}Track10MIDI.mid"
+                              
+                              ]  # Add or dynamically fetch file names if needed
+        region_backing_files = [f"backing_track/{region.capitalize()}Track1ChordMIDI.mid", 
+                                f"backing_track/{region.capitalize()}Track2ChordMIDI.mid", 
+                                f"backing_track/{region.capitalize()}Track3ChordMIDI.mid", 
+                                f"backing_track/{region.capitalize()}Track4ChordMIDI.mid", 
+                                f"backing_track/{region.capitalize()}Track5ChordMIDI.mid", 
+                                f"backing_track/{region.capitalize()}Track6ChordMIDI.mid",
+                                f"backing_track/{region.capitalize()}Track7ChordMIDI.mid", 
+                                f"backing_track/{region.capitalize()}Track8ChordMIDI.mid", 
+                                f"backing_track/{region.capitalize()}Track9ChordMIDI.mid",
+                                f"backing_track/{region.capitalize()}Track10ChordMIDI.mid"
                                ]
         # Download region-specific files
         for file_name in region_vocal_files:
