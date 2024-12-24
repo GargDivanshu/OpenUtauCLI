@@ -286,11 +286,21 @@ def lambda_handler(event, context):
         os.makedirs(region_specific_local_vocal_path, exist_ok=True)
 
         # List of region-specific files (example: RomaniaTrack1MIDI.MID, RomaniaTrack2MIDI.MID)
-        region_vocal_files = ["RomaniaTrack1MIDI.mid", "RomaniaTrack2MIDI.mid", "RomaniaTrack3MIDI.mid", "RomaniaTrack4MIDI.mid", "RomaniaTrack5MIDI.mid"]  # Add or dynamically fetch file names if needed
-        region_backing_files = ["RomaniaTrack1ChordMIDI.mid", "RomaniaTrack2ChordMIDI.mid", "RomaniaTrack3ChordMIDI.mid", 
-                                "RomaniaTrack4ChordMIDI.mid", "RomaniaTrack5ChordMIDI.mid", "RomaniaTrack6ChordMIDI.mid",
-                                "RomaniaTrack7ChordMIDI.mid", "RomaniaTrack8ChordMIDI.mid", "RomaniaTrack9ChordMIDI.mid",
-                                "RomaniaTrack10ChordMIDI.mid"
+        region_vocal_files = [f"{region.capitalize()}Track1MIDI.mid", 
+                              f"{region.capitalize()}Track2MIDI.mid", 
+                              f"{region.capitalize()}Track3MIDI.mid", 
+                              f"{region.capitalize()}Track4MIDI.mid", 
+                              f"{region.capitalize()}Track5MIDI.mid"]  # Add or dynamically fetch file names if needed
+        region_backing_files = [f"{region.capitalize()}Track1ChordMIDI.mid", 
+                                f"{region.capitalize()}Track2ChordMIDI.mid", 
+                                f"{region.capitalize()}Track3ChordMIDI.mid", 
+                                f"{region.capitalize()}Track4ChordMIDI.mid", 
+                                f"{region.capitalize()}Track5ChordMIDI.mid", 
+                                f"{region.capitalize()}Track6ChordMIDI.mid",
+                                f"{region.capitalize()}Track7ChordMIDI.mid", 
+                                f"{region.capitalize()}Track8ChordMIDI.mid", 
+                                f"{region.capitalize()}Track9ChordMIDI.mid",
+                                f"{region.capitalize()}Track10ChordMIDI.mid"
                                ]
         # Download region-specific files
         for file_name in region_vocal_files:
