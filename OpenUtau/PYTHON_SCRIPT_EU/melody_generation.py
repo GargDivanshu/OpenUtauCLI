@@ -17,6 +17,8 @@ from music21 import *
 import music21 as music21
 import itertools
 from helpers import chord_map, save_markov_model, midi_files, calculate_syllable_counts, ALL_SINGERS_RANGE, clamp, quantize_to_scale, quantize_note_durations
+import shutil
+
 
 load_dotenv()
 # MODE = os.getenv("MODE")
@@ -1921,8 +1923,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
 
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    # output_path = f"/tmp/outputs/sections/generated_sequence_{current_time}.mid"
-    output_path = f"/tmp/midi.mid"
+    output_path = f"/tmp/outputs/sections/generated_sequence_{current_time}.mid"
     final_output_path = f"/tmp/outputs/generated_sequence_{current_time}.mid"
     combine_sections(
                     output_folder="/tmp",
@@ -1932,6 +1933,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     section_gap_beats=2,  # Adjust this value for the gap between sections
                     ending_gap_beats=7    # Adjust this value for the ending gap
                 )  
+    shutil.copy(output_path, "/tmp/midi.mid")
     # detected_key = vocal_analysis["key"].tonic.name
     # detected_scale = vocal_analysis["key"].mode
     # reference_octave = 4
