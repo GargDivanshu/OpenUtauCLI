@@ -19,7 +19,7 @@ import pretty_midi
 load_dotenv()
 log_file = "/tmp/Logs/openutau_process.log"
 SYSTEM_API_URL = os.getenv("SYSTEM_API_URL")
-# region = SYSTEM_API_URL = os.getenv("REGION_PROD")
+region = SYSTEM_API_URL = os.getenv("REGION_PROD")
 region = "romania"
 
 # IS_LAMBDA_ENV 

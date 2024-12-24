@@ -1853,7 +1853,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     duration_sequence = info['duration_sequence']
                     amplitude_sequence = info['amplitude_sequence']
                    
-                    generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], [65, 69, 72], filename=f"outputs/sections/section_{bar_pair}.mid")
+                    generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], [65, 69, 72], filename=f"/tmp/outputs/sections/section_{bar_pair}.mid")
 
                     # Update the bar pair info to mark melody as generated
                     info['melody_generated'] = True
@@ -1945,4 +1945,22 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
 
 if __name__ == "__main__":
     # Example input
-    main_melody_generation()
+    lyrics="""
+    Sofia + du bist wunderbar + + +
+    Ein Lächeln + so hell und klar +
+    Danke + für all die schönen + Stunden +
+    Mit dir wird Freude + immer + gefunden + +
+    Danke + sage + ich dir von Herzen +
+    Für all die Liebe + all die Schmerzen +
+    Du bist immer + für mich da
+    Ein Freund + so nah so wunderbar + + +
+    In Hamburg + + an der Elbe + so weit
+    Erinnern + + wir uns an die schöne + Zeit
+    Sofia + du bist ein wahrer + Schatz
+    Gefüllt + mit Liebe + ohne + Matsch
+    """
+    reference_backing_track = "C:/Users/divan/Downloads/Romania Track 1 - Chord Track - MIDI.mid"
+    # reference_backing_track = "C:\\Users\\divan\\Downloads\\Germany-20241220T051109Z-001\\Germany\\Germany - Chord Tracks - MIDI\\GermanyTrack1ChordMIDI.mid"
+    reference_vocal_track = "C:\\Users\\divan\\Downloads\\MIDI x Untitled Production - Romania-20241210T150600Z-001\\MIDI x Untitled Production - Romania\\Romania Track 1 - MIDI.mid"
+    # reference_vocal_track = "C:\\Users\\divan\\Downloads\\Germany-20241220T051109Z-001\\Germany\\Germany - Melody Tracks - MIDI\\GermanyTrack1MIDI.mid"
+    main_melody_generation(lyrics, 115, reference_backing_track, reference_vocal_track)
