@@ -286,7 +286,7 @@ def lambda_handler(event, context):
         os.makedirs(region_specific_local_vocal_path, exist_ok=True)
 
         # List of region-specific files (example: RomaniaTrack1MIDI.MID, RomaniaTrack2MIDI.MID)
-        region_vocal_files = ["RomaniaTrack1MIDI.MID", "RomaniaTrack2MIDI.MID", "RomaniaTrack3MIDI.MID", "RomaniaTrack4MIDI.MID", "RomaniaTrack5MIDI.MID"]  # Add or dynamically fetch file names if needed
+        region_vocal_files = ["RomaniaTrack1MIDI.mid", "RomaniaTrack2MIDI.mid", "RomaniaTrack3MIDI.mid", "RomaniaTrack4MIDI.mid", "RomaniaTrack5MIDI.mid"]  # Add or dynamically fetch file names if needed
         region_backing_files = ["RomaniaTrack1ChordMIDI.mid", "RomaniaTrack2ChordMIDI.mid", "RomaniaTrack3ChordMIDI.mid", 
                                 "RomaniaTrack4ChordMIDI.mid", "RomaniaTrack5ChordMIDI.mid", "RomaniaTrack6ChordMIDI.mid",
                                 "RomaniaTrack7ChordMIDI.mid", "RomaniaTrack8ChordMIDI.mid", "RomaniaTrack9ChordMIDI.mid",
