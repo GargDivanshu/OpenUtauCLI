@@ -19,6 +19,8 @@ import pretty_midi
 load_dotenv()
 log_file = "/tmp/Logs/openutau_process.log"
 SYSTEM_API_URL = os.getenv("SYSTEM_API_URL")
+# region = SYSTEM_API_URL = os.getenv("REGION_PROD")
+region = "romania"
 
 # IS_LAMBDA_ENV 
 IS_LAMBDA_ENV = False
@@ -605,11 +607,11 @@ midi_files = [
         # "C:/Users/divan/Downloads/933_midi.mid",
         # "C:/Users/divan/Downloads/1057_midi.mid"
         # "C:/Users/divan/Downloads/[fadr.com] Midi - Germany Track 1 - Mixed Audio - Cm - 120BPM (1)/german_vocal_track1.mid"
-        "/tmp/romania/vocals/RomaniaTrack1MIDI.mid",
-        "/tmp/romania/vocals/RomaniaTrack2MIDI.mid",
-        "/tmp/romania/vocals/RomaniaTrack3MIDI.mid",
-        "/tmp/romania/vocals/RomaniaTrack4MIDI.mid",
-        "/tmp/romania/vocals/RomaniaTrack5MIDI.mid"
+        f"/tmp/{region}/vocal_track/RomaniaTrack1MIDI.mid",
+        f"/tmp/{region}/vocal_track/RomaniaTrack2MIDI.mid",
+        f"/tmp/{region}/vocal_track/RomaniaTrack3MIDI.mid",
+        f"/tmp/{region}/vocal_track/RomaniaTrack4MIDI.mid",
+        f"/tmp/{region}/vocal_track/RomaniaTrack5MIDI.mid"
         # "C:/Users/divan/Downloads/[fadr.com] Midi - Germany Track 5 - Revised Mix - D - 98BPM/Germany Track 5 - Revised Mix - D - 98BPM.wav-midi-vocals.mid"
     ]
 

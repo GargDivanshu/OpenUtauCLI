@@ -39,7 +39,7 @@ load_dotenv()
 log_file = "/tmp/Logs/openutau_process.log"
 logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
-region_lang = os.getenv("REGION_LANG")
+region_lang = os.getenv("REGION_PROD")
 
 # Initialize the configuration
 config = initialize_config()
