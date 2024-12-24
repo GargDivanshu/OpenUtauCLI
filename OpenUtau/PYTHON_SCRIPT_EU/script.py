@@ -15,7 +15,7 @@ from tqdm import tqdm
 import platform
 from dotenv import load_dotenv
 from datetime import datetime
-from lyrics import analyze_lyrics_de
+from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, analyze_lyrics_cs, analyze_lyrics_sk, analyze_lyrics_el
 import time
 from melody_generation import main_melody_generation
     
@@ -146,12 +146,22 @@ def process_message(body):
         total_syllables = 0
         start_time = time.monotonic()
         if region == "germany":
-            
             formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_de(lyrics)
-            with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
-                file.write(lyrics)
-                
-                
+        elif region == "romania":
+            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_ro(lyrics)
+        elif region == "hungary":
+            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_hu(lyrics)
+        elif region == "czech":
+            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
+        elif region == "slovakia":
+            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
+        elif region == "greece":
+            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
+        
+        
+        with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
+            file.write(lyrics)
+             
         output_file = "/tmp/lyrics.txt"
         with open(output_file, "w", encoding="utf-8") as file:
             file.write(formatted_lyrics)
@@ -171,7 +181,7 @@ def process_message(body):
         region_name = region.capitalize()
         vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
         backing_midi_file_path = f"/tmp/{region}/backing_track/{region_name}Track{trackId}ChordMIDI.mid"
-        main_melody_generation(lyrics, 115, backing_midi_file_path, vocal_midi_file_path)
+        main_melody_generation(formatted_lyrics, 115, backing_midi_file_path, vocal_midi_file_path)
         end_time = time.monotonic()
         duration = (end_time - start_time)  
         logger.info("midimain() stats")

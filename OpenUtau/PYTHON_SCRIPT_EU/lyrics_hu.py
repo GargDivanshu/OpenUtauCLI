@@ -1,7 +1,7 @@
 import pyphen
 
 # Initialize Pyphen for German syllabification
-syllable_splitter = pyphen.Pyphen(lang='de_DE')
+syllable_splitter = pyphen.Pyphen(lang='hu_HU')
 
 def count_syllables(word):
     """Count the number of syllables in a word using Pyphen."""
@@ -55,34 +55,3 @@ def analyze_lyrics(lyrics):
             total_syllables += syllable_count
 
     return '\n'.join(formatted_lines), all_breakdowns, total_syllables
-
-# # German lyrics
-# lyrics = """
-# Sofia, du bist wunderbar,
-# Ein Lächeln so hell und klar.
-# Danke für all die schönen Stunden,
-# Mit dir wird Freude immer gefunden.
-# Danke, sage ich dir, von Herzen,
-# Für all die Liebe, all die Schmerzen.
-# Du bist immer für mich da,
-# Ein Freund, so nah, so wunderbar.
-# In Hamburg, an der Elbe so weit,
-# Erinnern wir uns an die schöne Zeit.
-# Sofia, du bist ein wahrer Schatz,
-# Gefüllt mit Liebe, ohne Matsch.
-# """
-
-# # Analyze lyrics
-# formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)
-
-# # Print OpenUTAU-compatible formatted lyrics
-# print("Formatted Lyrics (OpenUTAU Compatible):")
-# print(formatted_lyrics)
-
-# # Print syllable breakdown
-# print("\nSyllable Breakdown (Word-by-Word):")
-# for breakdown in syllable_breakdown:
-#     print(breakdown)
-
-# # Print total syllable count
-# print(f"\nTotal Number of Syllables: {total_syllables}")
