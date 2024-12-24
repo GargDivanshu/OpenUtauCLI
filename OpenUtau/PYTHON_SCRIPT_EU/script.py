@@ -142,8 +142,9 @@ def process_message(body):
         formatted_lyrics = ""
         syllable_breakdown = ''
         total_syllables = 0
+        start_time = time.monotonic()
         if region == "germany":
-            start = time.monotonic()
+            
             formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_de(lyrics)
             with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
                 file.write(lyrics)
@@ -152,12 +153,12 @@ def process_message(body):
         output_file = "/tmp/lyrics.txt"
         with open(output_file, "w", encoding="utf-8") as file:
             file.write(formatted_lyrics)
-        end = time.monotonic()
+        end_time = time.monotonic()
         duration = (end_time - start_time)  
         logger.info("lyrics_process stats")
         logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
         logger.info("============================================================")
-        print(f"Lyrics processing took {end - start:.2f} seconds")
+        print(f"Lyrics processing took {end_time - start_time:.2f} seconds")
         
         # time.sleep(1)
         # lyrics_api_filename = f"lyrics/{song_id}_lyrics.json"
