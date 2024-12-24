@@ -1620,9 +1620,9 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
             # print("patterns ", patterns)
                 
             # Process lyrics into syllables
-            for item in lyrics:
-                syllable_counts = calculate_syllable_counts(item["lyrics"])
-                combined_syllables.extend(syllable_counts)
+            # for item in lyrics:
+            #     syllable_counts = calculate_syllable_counts(item["lyrics"])
+            #     combined_syllables.extend(syllable_counts)
                 
             # combined_syllables = [tuple(syllable) for syllable in combined_syllables]
             if input_note_sequence == None:
