@@ -167,8 +167,8 @@ def process_message(body):
         
         start_time = time.monotonic()
         region_name = region.capitalize()
-        vocal_midi_file_path = f"/tmp/{region}/vocals/{region_name}Track{trackId}MIDI.mid"
-        backing_midi_file_path = f"/tmp/{region}/backing/{region_name}Track{trackId}ChordMIDI.mid"
+        vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
+        backing_midi_file_path = f"/tmp/{region}/backing_track/{region_name}Track{trackId}ChordMIDI.mid"
         main_melody_generation(lyrics, 115, backing_midi_file_path, vocal_midi_file_path)
         end_time = time.monotonic()
         duration = (end_time - start_time)  
