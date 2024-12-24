@@ -1926,7 +1926,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
     output_path = f"/tmp/outputs/sections/generated_sequence_{current_time}.mid"
     final_output_path = f"/tmp/outputs/generated_sequence_{current_time}.mid"
     combine_sections(
-                    output_folder="/tmp",
+                    output_folder="/tmp/outputs/sections",
                     final_output_path=output_path,
                     bpm=115, 
                     initial_gap_beats=7,  # Adjust this value for the initial gap
