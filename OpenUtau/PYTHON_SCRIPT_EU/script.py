@@ -264,6 +264,7 @@ def lambda_handler(event, context):
         
         base_s3_path = "Lambda_Utau/"
         local_base_path = "/tmp/OpenUtau/"
+        local_tmp_path = "/tmp/"
         os.makedirs(local_base_path, exist_ok=True)
         region = os.getenv('REGION_PROD')
 
@@ -271,7 +272,9 @@ def lambda_handler(event, context):
         folders_to_download = {
             "Singers/": os.path.join(local_base_path, "Singers"),
             "Dependencies/": os.path.join(local_base_path, "Dependencies"),
-            "Plugins/": os.path.join(local_base_path, "Plugins")
+            "Plugins/": os.path.join(local_base_path, "Plugins"),
+            "germany/": os.path.join(local_tmp_path, "germany"),
+            "romania/": os.path.join(local_tmp_path, "romania"),
         }
         
          # Download folders from S3
@@ -280,51 +283,51 @@ def lambda_handler(event, context):
             download_folder_from_s3(BUCKET_NAME, base_s3_path + folder_key, local_output_dir)
             print(f"Finished downloading {folder_key}")
             
-        region_specific_s3_path = f"{base_s3_path}{region}/"
-        region_specific_local_vocal_path = f"/tmp/{region}/vocals/"
-        region_specific_local_backing_path = f"/tmp/{region}/backing/"
-        os.makedirs(region_specific_local_vocal_path, exist_ok=True)
+        # region_specific_s3_path = f"{base_s3_path}{region}/"
+        # region_specific_local_vocal_path = f"/tmp/{region}/"
+        # region_specific_local_backing_path = f"/tmp/{region}/"
+        # os.makedirs(region_specific_local_vocal_path, exist_ok=True)
 
-        # List of region-specific files (example: RomaniaTrack1MIDI.MID, RomaniaTrack2MIDI.MID)
-        region_vocal_files = [f"vocal_track/{region.capitalize()}Track1MIDI.mid", 
-                              f"vocal_track/{region.capitalize()}Track2MIDI.mid", 
-                              f"vocal_track/{region.capitalize()}Track3MIDI.mid", 
-                              f"vocal_track/{region.capitalize()}Track4MIDI.mid", 
-                              f"vocal_track/{region.capitalize()}Track5MIDI.mid",
-                              f"vocal_track/{region.capitalize()}Track6MIDI.mid",
-                              f"vocal_track/{region.capitalize()}Track7MIDI.mid",
-                              f"vocal_track/{region.capitalize()}Track8MIDI.mid",
-                              f"vocal_track/{region.capitalize()}Track9MIDI.mid",
-                              f"vocal_track/{region.capitalize()}Track10MIDI.mid"
+        # # List of region-specific files (example: RomaniaTrack1MIDI.MID, RomaniaTrack2MIDI.MID)
+        # region_vocal_files = [f"vocal_track/{region.capitalize()}Track1MIDI.mid", 
+        #                       f"vocal_track/{region.capitalize()}Track2MIDI.mid", 
+        #                       f"vocal_track/{region.capitalize()}Track3MIDI.mid", 
+        #                       f"vocal_track/{region.capitalize()}Track4MIDI.mid", 
+        #                       f"vocal_track/{region.capitalize()}Track5MIDI.mid",
+        #                       f"vocal_track/{region.capitalize()}Track6MIDI.mid",
+        #                       f"vocal_track/{region.capitalize()}Track7MIDI.mid",
+        #                       f"vocal_track/{region.capitalize()}Track8MIDI.mid",
+        #                       f"vocal_track/{region.capitalize()}Track9MIDI.mid",
+        #                       f"vocal_track/{region.capitalize()}Track10MIDI.mid"
                               
-                              ]  # Add or dynamically fetch file names if needed
-        region_backing_files = [f"backing_track/{region.capitalize()}Track1ChordMIDI.mid", 
-                                f"backing_track/{region.capitalize()}Track2ChordMIDI.mid", 
-                                f"backing_track/{region.capitalize()}Track3ChordMIDI.mid", 
-                                f"backing_track/{region.capitalize()}Track4ChordMIDI.mid", 
-                                f"backing_track/{region.capitalize()}Track5ChordMIDI.mid", 
-                                f"backing_track/{region.capitalize()}Track6ChordMIDI.mid",
-                                f"backing_track/{region.capitalize()}Track7ChordMIDI.mid", 
-                                f"backing_track/{region.capitalize()}Track8ChordMIDI.mid", 
-                                f"backing_track/{region.capitalize()}Track9ChordMIDI.mid",
-                                f"backing_track/{region.capitalize()}Track10ChordMIDI.mid"
-                               ]
-        # Download region-specific files
-        for file_name in region_vocal_files:
-            s3_file_path = f"{region_specific_s3_path}{file_name}"
-            local_file_path = os.path.join(region_specific_local_vocal_path, file_name)
+        #                       ]  # Add or dynamically fetch file names if needed
+        # region_backing_files = [f"backing_track/{region.capitalize()}Track1ChordMIDI.mid", 
+        #                         f"backing_track/{region.capitalize()}Track2ChordMIDI.mid", 
+        #                         f"backing_track/{region.capitalize()}Track3ChordMIDI.mid", 
+        #                         f"backing_track/{region.capitalize()}Track4ChordMIDI.mid", 
+        #                         f"backing_track/{region.capitalize()}Track5ChordMIDI.mid", 
+        #                         f"backing_track/{region.capitalize()}Track6ChordMIDI.mid",
+        #                         f"backing_track/{region.capitalize()}Track7ChordMIDI.mid", 
+        #                         f"backing_track/{region.capitalize()}Track8ChordMIDI.mid", 
+        #                         f"backing_track/{region.capitalize()}Track9ChordMIDI.mid",
+        #                         f"backing_track/{region.capitalize()}Track10ChordMIDI.mid"
+        #                        ]
+        # # Download region-specific files
+        # for file_name in region_vocal_files:
+        #     s3_file_path = f"{region_specific_s3_path}{file_name}"
+        #     local_file_path = os.path.join(region_specific_local_vocal_path, file_name)
             
-            print(f"Downloading {s3_file_path} to {local_file_path}...")
-            download_file_from_s3(BUCKET_NAME, s3_file_path, local_file_path)  # Replace with your S3 file download function
-            print(f"Finished downloading {file_name}")
+        #     print(f"Downloading {s3_file_path} to {local_file_path}...")
+        #     download_file_from_s3(BUCKET_NAME, s3_file_path, local_file_path)  # Replace with your S3 file download function
+        #     print(f"Finished downloading {file_name}")
             
-        for file_name in region_backing_files:
-            s3_file_path = f"{region_specific_s3_path}{file_name}"
-            local_file_path = os.path.join(region_specific_local_backing_path, file_name)
+        # for file_name in region_backing_files:
+        #     s3_file_path = f"{region_specific_s3_path}{file_name}"
+        #     local_file_path = os.path.join(region_specific_local_backing_path, file_name)
             
-            print(f"Downloading {s3_file_path} to {local_file_path}...")
-            download_file_from_s3(BUCKET_NAME, s3_file_path, local_file_path)  # Replace with your S3 file download function
-            print(f"Finished downloading {file_name}")
+        #     print(f"Downloading {s3_file_path} to {local_file_path}...")
+        #     download_file_from_s3(BUCKET_NAME, s3_file_path, local_file_path)  # Replace with your S3 file download function
+        #     print(f"Finished downloading {file_name}")
         
         # download_folder_from_s3(BUCKET_NAME, "Singers/", "/tmp/OpenUtau/Singers/", "")
         # Process each record
