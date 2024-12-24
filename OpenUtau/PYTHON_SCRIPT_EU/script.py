@@ -286,14 +286,14 @@ def lambda_handler(event, context):
             "Singers/": os.path.join(local_base_path, "Singers"),
             "Dependencies/": os.path.join(local_base_path, "Dependencies"),
             "Plugins/": os.path.join(local_base_path, "Plugins"),
-            # "germany/": os.path.join(local_tmp_path, "germany"),
-            # "romania/": os.path.join(local_tmp_path, "romania"),
+            "germany/": os.path.join(local_tmp_path, "germany"),
+            "romania/": os.path.join(local_tmp_path, "romania"),
         }
         
-        if region == "germany":
-            folders_to_download["germany/"] = os.path.join(local_tmp_path, "germany")
-        elif region == "romania":
-            folders_to_download["romania/"] = os.path.join(local_tmp_path, "romania")
+        # if region == "germany":
+        #     folders_to_download["germany/"] = os.path.join(local_tmp_path, "germany")
+        # elif region == "romania":
+        #     folders_to_download["romania/"] = os.path.join(local_tmp_path, "romania")
         
          # Download folders from S3
         for folder_key, local_output_dir in folders_to_download.items():
