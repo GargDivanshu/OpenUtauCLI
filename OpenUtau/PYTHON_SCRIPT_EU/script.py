@@ -230,7 +230,7 @@ def process_message(body):
             f"/tmp/Logs/song_{song_id}_utaulogs.log",
             # OU_LYRICS_JSON_PATH,
             # f"/tmp/section_summary.csv",
-            # f"/tmp/lyrics_readable.txt"
+            # f"/tmp/lyrics_readable.txt",
         ]
         with open(f"/tmp/Logs/openutau_process.log", 'w') as file:
             pass  # Do nothing, just opening in 'w' mode clears the file
