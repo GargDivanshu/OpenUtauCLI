@@ -255,6 +255,18 @@ def process_message(body):
                     print(f"Removed {file_path}")
                 except Exception as remove_error:
                     logger.error(f"Failed to remove {file_path}: {remove_error}")
+        
+        # Additional logic to remove files in /tmp/outputs/sections
+        sections_folder = "/tmp/outputs/sections"
+        if os.path.exists(sections_folder):
+            for filename in os.listdir(sections_folder):
+                file_path = os.path.join(sections_folder, filename)
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        print(f"Removed {file_path}")
+                except Exception as remove_error:
+                    logger.error(f"Failed to remove {file_path}: {remove_error}")
 
         return {
         "statusCode": 200,
