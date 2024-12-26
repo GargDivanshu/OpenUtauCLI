@@ -201,14 +201,20 @@ def map_unique_progressions(paired_data):
 
 def combine_progressions(progression_map):
     """
-    Combine progression tuples into unified sorted progressions.
+    Combine progression tuples into unified progressions without sorting the order of chords.
+
+    Parameters:
+    - progression_map: A dictionary mapping progression tuples to bar pairs.
+
+    Returns:
+    - A dictionary combining progressions while preserving the original order.
     """
     combined_map = {}
 
     for progression, bars in progression_map.items():
-        # Flatten the progression tuple and sort its components
-        combined_progression = tuple(sorted(set(sum(progression, ()))))
-        
+        # Flatten the progression tuple while preserving the order
+        combined_progression = tuple(sum(progression, ()))
+
         # Update the dictionary
         if combined_progression in combined_map:
             combined_map[combined_progression].extend(bars)
@@ -216,6 +222,8 @@ def combine_progressions(progression_map):
             combined_map[combined_progression] = bars.copy()
 
     return combined_map
+
+
 
 def identify_vocal_activity(midi_file, bpm=120, velocity_threshold=10, duration_threshold=2):
     """
@@ -309,6 +317,7 @@ def filter_playing_progressions(combined_progressions, vocal_activity):
             filtered_progressions[progression] = filtered_pairs
 
     return filtered_progressions
+
 
 def preprocess_progression(progression):
     """
@@ -444,106 +453,89 @@ def find_and_replace_large_gaps(notes, validation_report, chord_map, measure_num
     return updated_notes
 
 
-def correct_hanging_notes(notes, validation_report, chord_map, measure_number):
+def correct_hanging_notes(notes):
     """
-    Correct hanging notes by repositioning them between their neighbors.
-    Hanging notes are identified based on the distance to neighbors and their direction.
+    Correct hanging notes by shifting them an octave if both neighbors are equidistant
+    and the distance exceeds 6 semitones.
 
     Parameters:
-    - notes: List of tuples (MIDI number, start time) for the measure.
-    - validation_report: Dictionary mapping measure numbers to note details.
-    - chord_map: Dictionary mapping chords to valid notes.
-    - measure_number: Measure number (for logging/debugging).
+    - notes: List of tuples (MIDI pitch, start time) representing notes in the measure.
 
     Returns:
-    - Updated list of notes with corrected hanging notes.
+    - List of corrected notes.
     """
-    from music21 import note
-    import logging
+    corrected_notes = notes.copy()  # Start with the original list of notes
 
-    updated_notes = notes[:]
-    logging.info(f"Processing measure {measure_number} for hanging notes")
-    print(f"Processing measure {measure_number} for hanging notes")
+    print("\nInitial notes:")
+    for midi_pitch, start_time in corrected_notes:
+        print(f"MIDI {midi_pitch}, Start time: {start_time}")
 
-    # Helper to get chord notes
-    def get_chord_notes(current_note_midi):
-        for val_note_name, _, chord in validation_report[measure_number]:
-            if note.Note(current_note_midi).name == val_note_name:
-                chord_name = chord.replace("Expected in ", "").replace("Valid in ", "").strip()
-                if chord_name in chord_map:
-                    return [note.Note(n).pitch.midi for n in chord_map[chord_name]]
-        return []
+    for i in range(len(corrected_notes)):
+        current_pitch, current_start = corrected_notes[i]
+        print(f"\nProcessing note: MIDI {current_pitch}, Start time: {current_start}")
 
-    # Iterate over all notes
-    for i, (current_note_midi, start_time) in enumerate(notes):
-        # Edge notes
-        if i == 0 or i == len(notes) - 1:
-            neighbor_midi = notes[i + 1][0] if i == 0 else notes[i - 1][0]
-            distance_to_neighbor = abs(current_note_midi - neighbor_midi)
+        # Skip edge notes (first and last) as they do not have two neighbors
+        if i == 0 or i == len(corrected_notes) - 1:
+            print("Skipping edge note (no two neighbors).")
+            continue
 
-            if distance_to_neighbor > 6:  # Hanging note
-                valid_chord_notes = get_chord_notes(current_note_midi)
-                all_notes_in_range = list(range(min(current_note_midi, neighbor_midi),
-                                                max(current_note_midi, neighbor_midi) + 1))
-                valid_range_notes = [n for n in valid_chord_notes if n in all_notes_in_range]
+        # Determine neighbors
+        left_neighbor = corrected_notes[i - 1][0]
+        right_neighbor = corrected_notes[i + 1][0]
+        print(f"Left neighbor: MIDI {left_neighbor}, Right neighbor: MIDI {right_neighbor}")
 
-                # Pick the best note
-                if valid_range_notes:
-                    best_note = min(
-                        valid_range_notes,
-                        key=lambda n: abs(n - neighbor_midi)
-                    )
-                else:
-                    # Fallback to neighbor's level
-                    best_note = neighbor_midi
+        # Calculate distances to neighbors
+        left_gap = abs(current_pitch - left_neighbor)
+        right_gap = abs(current_pitch - right_neighbor)
+        print(f"Gap with left neighbor: {left_gap} semitones, Gap with right neighbor: {right_gap} semitones")
 
-                updated_notes[i] = (best_note, start_time)
-                logging.info(
-                    f"Measure {measure_number}: Edge hanging note {current_note_midi} corrected to {best_note}"
-                )
-                print(
-                    f"Measure {measure_number}: Edge hanging note {current_note_midi} corrected to {best_note}"
-                )
-
-        # Non-edge notes
+        # Check for hanging note condition
+        if left_gap > 6 and right_gap > 6 and left_gap == right_gap:
+            print("Hanging note detected. Correcting...")
+            shift = 12 * (-1 if current_pitch > left_neighbor else 1)  # Direction depends on neighbors
+            new_pitch = current_pitch + shift
+            print(f"Shifting note from MIDI {current_pitch} to {new_pitch} by {shift} semitones.")
+            corrected_notes[i] = (new_pitch, current_start)
         else:
-            left_note_midi = notes[i - 1][0]
-            right_note_midi = notes[i + 1][0]
+            print("Note is not a hanging note. No correction applied.")
 
-            # Check if both neighbors are on one side
-            if (left_note_midi > current_note_midi and right_note_midi > current_note_midi) or \
-               (left_note_midi < current_note_midi and right_note_midi < current_note_midi):
-                left_distance = abs(current_note_midi - left_note_midi)
-                right_distance = abs(current_note_midi - right_note_midi)
+    print("\nFinal corrected notes for the measure:")
+    for midi_pitch, start_time in corrected_notes:
+        print(f"MIDI {midi_pitch}, Start time: {start_time}")
 
-                if max(left_distance, right_distance) > 6:  # Hanging note
-                    valid_chord_notes = get_chord_notes(current_note_midi)
-                    all_notes_in_range = list(range(min(left_note_midi, right_note_midi),
-                                                    max(left_note_midi, right_note_midi) + 1))
-                    valid_range_notes = [n for n in valid_chord_notes if n in all_notes_in_range]
-
-                    # Pick the best note
-                    if valid_range_notes:
-                        best_note = min(
-                            valid_range_notes,
-                            key=lambda n: abs(n - ((left_note_midi + right_note_midi) // 2))  # Midpoint
-                        )
-                    else:
-                        # Fallback to left neighbor's level, or right if left unavailable
-                        best_note = left_note_midi if i > 0 else right_note_midi
-
-                    updated_notes[i] = (best_note, start_time)
-                    logging.info(
-                        f"Measure {measure_number}: Hanging note {current_note_midi} corrected to {best_note}"
-                    )
-                    print(
-                        f"Measure {measure_number}: Hanging note {current_note_midi} corrected to {best_note}"
-                    )
-
-    return updated_notes
+    return corrected_notes
 
 
+def octave_normalization(midi_file, target_octave, output_file):
+    """
+    Normalize all notes in a MIDI file to the specified octave while preserving the pitch class.
 
+    Parameters:
+    - midi_file: Path to the input MIDI file.
+    - target_octave: The target octave to which all notes should be normalized.
+    - output_file: Path to save the normalized MIDI file.
+    """
+    print(f"Normalizing notes in {midi_file} to octave {target_octave}.")
+    
+    # Parse the MIDI file
+    midi_data = converter.parse(midi_file)
+    
+    # Iterate over each measure and normalize notes
+    for part in midi_data.parts:
+        for measure in part.getElementsByClass('Measure'):
+            for elem in measure.notes:
+                # if isinstance(elem, note.Note):
+                    original_pitch = elem.pitch
+                    pitch_class = original_pitch.pitchClass  # Get the pitch class (C=0, C#=1, ..., B=11)
+                    normalized_pitch = (target_octave * 12) + pitch_class
+                    elem.pitch.midi = normalized_pitch
+                    print(f"Note {original_pitch} normalized to {elem.pitch} in octave {target_octave}.")
+
+    # Save the normalized MIDI file
+    midi_data.write('midi', fp=output_file)
+    print(f"Normalized MIDI saved to {output_file}.")
+    
+    
 
 def correct_midi(midi_file, validation_report, chord_map, output_file):
     """
@@ -680,6 +672,8 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
             ]
             updated_notes = find_and_replace_large_gaps(notes_in_measure, validation_report, chord_map, measure_number)
             
+            updated_notes = correct_hanging_notes(updated_notes)
+                        
             for elem, (new_note, _) in zip(measure.notes, updated_notes):
                 # if isinstance(elem, note.Note):
                     elem.name = note.Note(new_note).name
@@ -692,7 +686,6 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
         logging.info(f"Measure {measure_number}: Corrected distances -> {corrected_distances[measure_number]}")
         print(f"Measure {measure_number}: Initial distances -> {initial_distances[measure_number]}")
         print(f"Measure {measure_number}: Corrected distances -> {corrected_distances[measure_number]}")
-
 
 
 # # Example usage
@@ -763,7 +756,7 @@ def transpose_to_key(midi_data, target_key):
     print(f"Transposed to: {target_key}")
     return transposed_data
 
-def analyze_bass_chords_by_bars(midi_data, consolidate_bars=1, convert_flats=True, deduplicate=True):
+def analyze_bass_chords_by_bars(is_backing_track, midi_data, consolidate_bars=1, convert_flats=True, deduplicate=True):
     """
     Analyze a MIDI file to extract bass chord progression, focusing on the lowest notes,
     and group the chords bar-wise or by specified bar groups.
@@ -831,6 +824,13 @@ def analyze_bass_chords_by_bars(midi_data, consolidate_bars=1, convert_flats=Tru
         group: [f"{bass}-{name}" for bass, name, _ in grouped_chords[group]]
         for group in grouped_chords
     }
+    
+    if is_backing_track:
+        # Add filtering to remove '-note' entries
+        simplified_bars = {
+            bar: [chord for chord in chords if not chord.endswith("-note")]
+            for bar, chords in simplified_bars.items()
+        }
 
     print("\nBar-Wise Chord Progression:")
     for group, chords in simplified_bars.items():
@@ -841,7 +841,7 @@ def analyze_bass_chords_by_bars(midi_data, consolidate_bars=1, convert_flats=Tru
     return simplified_bars
 
 
-def analyze_midi(midi_file, bpm=120, target_key=None, convert_flats=True, consolidate_bars=1, 
+def analyze_midi(midi_file, bpm=120, is_backing_track = False, target_key=None, convert_flats=True, consolidate_bars=1, 
                  velocity_threshold=10, duration_threshold=0.1):
     """
     Analyze a MIDI file to detect key, transpose if necessary, extract chord progression, pseudo-chords, 
@@ -865,7 +865,7 @@ def analyze_midi(midi_file, bpm=120, target_key=None, convert_flats=True, consol
     #     key_signature = enharmonic_key
 
     # Extract bar-wise bass chords
-    bar_wise_chords = analyze_bass_chords_by_bars(music_data, consolidate_bars=consolidate_bars)
+    bar_wise_chords = analyze_bass_chords_by_bars(is_backing_track, music_data, consolidate_bars=consolidate_bars)
     
     # Detect Tempo
     tempo = bpm  # Default tempo
@@ -922,6 +922,14 @@ def analyze_midi(midi_file, bpm=120, target_key=None, convert_flats=True, consol
     for bar in sorted(bar_wise_pseudo_chords.keys()):
         group = (bar - 1) // consolidate_bars + 1
         combined_pseudo_chords[group].extend(bar_wise_pseudo_chords[bar])
+        
+    if is_backing_track:
+        # Filter out invalid pseudo-chords with only one note and scale 'other'
+        for group in combined_pseudo_chords:
+            combined_pseudo_chords[group] = [
+                pseudo_chord for pseudo_chord in combined_pseudo_chords[group]
+                if not (len(pseudo_chord[0]) == 1 and pseudo_chord[1] == 'other')
+            ]
 
     # Convert combined pseudo-chords into arrays
     combined_pseudo_chords_array = [
@@ -1222,41 +1230,55 @@ def adjust_large_intervals_in_midi(input_midi_path, output_midi_path, detected_k
         logging.error(f"Failed to adjust large intervals in MIDI file: {e}")
 
 
-def generate_bar_pair_info(filtered_progressions, note_counts):
+def generate_bar_pair_info(filtered_progressions, line_level_total_syllables):
     """
-    Generate a JSON structure with information about each bar pair, including:
-    - Chord progression
-    - Number of notes in the bar pair
+    Generate a JSON structure with information about each bar pair, ensuring that note counts
+    are correctly mapped to bar pairs based on their positional order.
 
     Parameters:
     - filtered_progressions: A dictionary mapping chord progressions to bar pairs.
-    - note_counts: A list containing the number of notes for each bar pair in sequential order.
+    - line_level_total_syllables: A list containing the number of notes (syllables) for each line.
 
     Returns:
     - A JSON-like dictionary mapping each bar pair to its progression and note count.
     """
     bar_pair_info = {}
-    bar_pairs = []
-    
-    # Flatten the bar pairs from the filtered progressions in order
-    for progression, pairs in filtered_progressions.items():
-        for pair in pairs:
-            bar_pairs.append((pair, progression))
+    # Flatten all bar pairs from filtered_progressions
+    all_bar_pairs = []
+    for progression, bar_pairs in filtered_progressions.items():
+        all_bar_pairs.extend(bar_pairs)
 
-    # Ensure the number of bar pairs matches the note counts
-    if len(bar_pairs) != len(note_counts):
-        print("len(bar_pairs)")
-        print(len(bar_pairs))
-        print("len(note_counts)")
-        print(len(note_counts))
-        raise ValueError("The number of bar pairs and note counts do not match!")
+    # Parse the bar pairs to determine their positional indices
+    bar_positions = {}
+    for bar_pair in all_bar_pairs:
+        # Extract the bar number (e.g., 'bar5-6' -> 5)
+        first_bar = int(bar_pair.split('-')[0].replace('bar', ''))
+        bar_positions[bar_pair] = first_bar
 
-    # Build the JSON structure
-    for idx, (bar_pair, progression) in enumerate(bar_pairs):
+    # Sort bar pairs by their positional order
+    sorted_bar_pairs = sorted(bar_positions.items(), key=lambda x: x[1])
+
+    # Assign note counts based on positional order
+    for idx, (bar_pair, _) in enumerate(sorted_bar_pairs):
+        if idx >= len(line_level_total_syllables):
+            raise ValueError("The number of bar pairs exceeds the number of note counts provided!")
+
+        # Assign note count from the correct position
+        note_count = line_level_total_syllables[idx]
+        # Find the progression associated with the bar pair
+        progression = None
+        for prog, bars in filtered_progressions.items():
+            if bar_pair in bars:
+                progression = prog
+                break
+
+        if progression is None:
+            raise ValueError(f"No chord progression found for bar pair: {bar_pair}")
+
         bar_pair_info[bar_pair] = {
             "chord_progression": progression,
-            "note_count": note_counts[idx],
-            "melody_generated": False
+            "note_count": note_count,
+            "melody_generated": False,
         }
 
     return bar_pair_info
@@ -1737,7 +1759,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
     vocal_analysis = analyze_midi(reference_vocal_track, bpm)
     target_key = vocal_analysis["key"]
     # Analyze and transpose the backing track to match the vocal track's key
-    backing_analysis = analyze_midi(reference_backing_track, bpm)
+    backing_analysis = analyze_midi(reference_backing_track, bpm, True)
     print("backing track bar wise analysis")
     print(backing_analysis)
     print("vocal track bar wise analysis")
@@ -1788,10 +1810,11 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
         time.sleep(2)
         midi_file = f"/tmp/outputs/sections/section_{first_bar_pair}.mid"
         quantized_output_path = f"/tmp/outputs/sections/quantized_section_{first_bar_pair}.mid"
+        octave_correction_output_path = f"outputs/sections/octave_correction_section_{first_bar_pair}.mid"
         corrected_output_path = f"/tmp/outputs/sections/corrected_section_{first_bar_pair}.mid"
         quantize_note_durations(midi_file, quantized_output_path)
         
-        time.sleep(5)
+        time.sleep(2)
         bar_pair = first_bar_pair
         print("midi_file   ", midi_file)
         print("quantized_output_path    ", quantized_output_path)
@@ -1824,8 +1847,9 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     "pseudo_chords": backing_analysis["pseudo_chords"][bar - 1] if bar - 1 < len(backing_analysis["pseudo_chords"]) else []
                 }
                 
+            octave_normalization(quantized_output_path, 4, octave_correction_output_path)
             correct_midi(
-            midi_file=quantized_output_path,
+            midi_file=octave_correction_output_path,
             validation_report=validation_report,
             chord_map=chord_map,
             output_file=corrected_output_path
@@ -1861,6 +1885,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     # Optional: Save or process the generated MIDI
                     repeating_midi_file = f"/tmp/outputs/sections/section_{bar_pair}.mid"
                     repeating_quantized_output_path = f"/tmp/outputs/sections/quantized_section_{bar_pair}.mid"
+                    repeating_octave_correction_output_path = f"outputs/sections/octave_correction_section_{bar_pair}.mid"
                     repeating_corrected_output_path = f"/tmp/outputs/sections/corrected_section_{bar_pair}.mid"
                     print(f"MIDI generated for {bar_pair}: {repeating_midi_file}")
 
@@ -1868,7 +1893,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     time.sleep(2)
                     quantize_note_durations(repeating_midi_file, repeating_quantized_output_path)
                     
-                    time.sleep(5)
+                    time.sleep(2)
                     print("midi_file   ", repeating_midi_file)
                     print("quantized_output_path    ", repeating_quantized_output_path)
                     print("type of path is : ", type(repeating_quantized_output_path))
@@ -1899,9 +1924,10 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                                 "vocal_chords": vocal_analysis["bar_wise_chords"].get(bar, []),
                                 "pseudo_chords": backing_analysis["pseudo_chords"][bar - 1] if bar - 1 < len(backing_analysis["pseudo_chords"]) else []
                             }
-                            
+                        
+                        octave_normalization(repeating_quantized_output_path, 4, repeating_octave_correction_output_path)
                         correct_midi(
-                        midi_file=repeating_quantized_output_path,
+                        midi_file=repeating_octave_correction_output_path,
                         validation_report=validation_report,
                         chord_map=chord_map,
                         output_file=repeating_corrected_output_path
@@ -1925,11 +1951,13 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_path = f"/tmp/outputs/sections/generated_sequence_{current_time}.mid"
     final_output_path = f"/tmp/outputs/generated_sequence_{current_time}.mid"
+    starting_offset = vocal_analysis["first_vocal_start"]["time"]
+    print("starting_offset  ", starting_offset)
     combine_sections(
                     output_folder="/tmp/outputs/sections",
                     final_output_path=output_path,
-                    bpm=115, 
-                    initial_gap_beats=7,  # Adjust this value for the initial gap
+                    bpm=bpm, 
+                    initial_gap_beats=starting_offset,  # Adjust this value for the initial gap
                     section_gap_beats=2,  # Adjust this value for the gap between sections
                     ending_gap_beats=7    # Adjust this value for the ending gap
                 )  

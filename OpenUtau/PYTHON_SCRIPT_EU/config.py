@@ -4,6 +4,31 @@ from dotenv import load_dotenv
 
 load_dotenv()
 region = os.getenv("REGION_PROD")
+
+bpm_data = {}
+bpm_data['germany'] = {}
+bpm_data['germany'][1] = 120 
+bpm_data['germany'][2] = 120
+bpm_data['germany'][3] = 108 
+bpm_data['germany'][4] = 100
+bpm_data['germany'][5] = 98
+bpm_data['germany'][6] = 90
+bpm_data['germany'][7] = 96
+bpm_data['germany'][8] = 104
+bpm_data['germany'][9] = 106
+bpm_data['germany'][10] = 84
+bpm_data['romania'] = {}
+bpm_data['romania'][1] = 115
+bpm_data['romania'][2] = 90
+bpm_data['romania'][3] = 100
+bpm_data['romania'][4] = 100
+bpm_data['romania'][5] = 120
+bpm_data['romania'][6] = 120
+bpm_data['romania'][7] = 105
+bpm_data['romania'][8] = 100
+bpm_data['romania'][9] = 94
+bpm_data['romania'][10] = 100
+
 # Define a dataclass for initialization
 @dataclass
 class Config:

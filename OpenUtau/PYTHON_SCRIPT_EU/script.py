@@ -26,7 +26,7 @@ import logging
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
-from config import Config, initialize_config
+from config import Config, initialize_config, bpm_data
 
 
 os.makedirs("/tmp/Logs", exist_ok=True)
@@ -181,10 +181,11 @@ def process_message(body):
         region_name = region.capitalize()
         vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
         backing_midi_file_path = f"/tmp/{region}/backing_track/{region_name}Track{trackId}ChordMIDI.mid"
-        main_melody_generation(formatted_lyrics, 115, backing_midi_file_path, vocal_midi_file_path)
+        bpm = bpm_data[region][trackId]
+        main_melody_generation(formatted_lyrics, bpm, backing_midi_file_path, vocal_midi_file_path)
         end_time = time.monotonic()
         duration = (end_time - start_time)  
-        logger.info("midimain() stats")
+        logger.info("melody generation stats")
         logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
         logger.info("============================================================")
         
@@ -201,7 +202,7 @@ def process_message(body):
     
         # Run processing
         start_time = time.monotonic()
-        run_openutau(OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, song_id)
+        run_openutau(bpm, OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, song_id)
         end_time = time.monotonic()
         duration = (end_time - start_time)  
         logger.info("run_openutau stats")
@@ -409,7 +410,7 @@ payload = {
             ]
         }
 
-def run_openutau(project_name, export_wav_path, song_id):
+def run_openutau(bpm, project_name, export_wav_path, song_id):
     
     start_time = time.time()
     p = False
@@ -425,7 +426,7 @@ def run_openutau(project_name, export_wav_path, song_id):
     phonemizer = ""
     region = os.getenv('REGION_PROD')
     if region.lower() == "germany":
-        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerGermanPhonemizer"
+        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerGerman2Phonemizer"
     elif region.lower() == "romania":
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerRomanianPhonemizer"
     
@@ -492,6 +493,8 @@ def run_openutau(project_name, export_wav_path, song_id):
                 # Send MIDI import command after project selection is complete
                 elif '> ' in accumulated_output and project_selected and not midi_imported:
                     print(f"Detected '> ' prompt; sending '--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}'")
+                    process.stdin.write(f"--process --bpm {bpm}")
+                    process.stdin.flush()
                     process.stdin.write(f"--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}\n")
                     process.stdin.flush()
                     midi_imported = True  # Set flag to avoid re-sending MIDI import
@@ -544,28 +547,30 @@ def run_openutau(project_name, export_wav_path, song_id):
                     accumulated_output = ""  # Clear accumulated output
                 # Respond to phonemizer selection prompt
                 elif "Enter the phonemizer name to apply:" in accumulated_output:
-                    print("Detected phonemizer selection prompt; entering 'OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer'")
+                    print(f"Detected phonemizer selection prompt; entering {phonemizer}")
                     # OpenUtau.Core.DiffSinger.DiffSingerGermanPhonemizer
                     # OpenUtau.Core.DiffSinger.DiffSingerRomanianPhonemizer
                     # OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer
                     process.stdin.write(f"{phonemizer}\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
-                # elif "> " in accumulated_output and not pitch_processing:
-                #     print("Detected '> ' prompt; Sending '--process --pitch'")
-                #     time.sleep(2)
-                #     # process.stdin.write("--process --pitch\n")
-                #     # process.stdin.flush()
-                #     time.sleep(2)
-                #     accumulated_output = ""
+                elif "> " in accumulated_output and not pitch_processing:
+                    print("Detected '> ' prompt; Sending '--process --pitch'")
+                    time.sleep(2)
+                    process.stdin.write("--process --pitch\n")
+                    process.stdin.flush()
+                    time.sleep(2)
+                    accumulated_output = ""
                 #     # breakpoint()
 
-                # elif "Select a part to process:" in accumulated_output and not pitch_processing:
-                #     print("Detected Part selection prompt; entering '1'")
-                #     process.stdin.write("1\n")
-                #     process.stdin.flush()
-                #     pitch_processing = True
-                #     accumulated_output = ""
+                elif "Select a part to process:" in accumulated_output and not pitch_processing:
+                    print("Detected Part selection prompt; entering '1'")
+                    time.sleep(3)
+                    process.stdin.write("1\n")
+                    time.sleep(2)
+                    process.stdin.flush()
+                    pitch_processing = True
+                    accumulated_output = ""
                 # # SAVING
                 # # Send save command after export is complete
                 # elif '> ' in accumulated_output and not_saved:

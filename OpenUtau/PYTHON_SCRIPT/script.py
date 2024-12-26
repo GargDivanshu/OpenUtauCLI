@@ -452,21 +452,21 @@ def run_openutau(project_name, export_wav_path, song_id):
                     process.stdin.write("OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer\n")
                     process.stdin.flush()
                     accumulated_output = ""  # Clear accumulated output
-                # elif "> " in accumulated_output and not pitch_processing:
-                #     print("Detected '> ' prompt; Sending '--process --pitch'")
-                #     time.sleep(2)
-                #     # process.stdin.write("--process --pitch\n")
-                #     # process.stdin.flush()
-                #     time.sleep(2)
-                #     accumulated_output = ""
-                #     # breakpoint()
+                elif "> " in accumulated_output and not pitch_processing:
+                    print("Detected '> ' prompt; Sending '--process --pitch'")
+                    time.sleep(2)
+                    process.stdin.write("--process --pitch\n")
+                    process.stdin.flush()
+                    time.sleep(2)
+                    accumulated_output = ""
+                    # breakpoint()
 
-                # elif "Select a part to process:" in accumulated_output and not pitch_processing:
-                #     print("Detected Part selection prompt; entering '1'")
-                #     process.stdin.write("1\n")
-                #     process.stdin.flush()
-                #     pitch_processing = True
-                #     accumulated_output = ""
+                elif "Select a part to process:" in accumulated_output and not pitch_processing:
+                    print("Detected Part selection prompt; entering '1'")
+                    process.stdin.write("1\n")
+                    process.stdin.flush()
+                    pitch_processing = True
+                    accumulated_output = ""
                 # # SAVING
                 # # Send save command after export is complete
                 # elif '> ' in accumulated_output and not_saved:
