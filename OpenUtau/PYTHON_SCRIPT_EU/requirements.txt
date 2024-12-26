@@ -1,7 +1,5 @@
 boto3
 rich
-pexpect
-wexpect
 tqdm
 requests
 pyphen

@@ -1810,7 +1810,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
         time.sleep(2)
         midi_file = f"/tmp/outputs/sections/section_{first_bar_pair}.mid"
         quantized_output_path = f"/tmp/outputs/sections/quantized_section_{first_bar_pair}.mid"
-        octave_correction_output_path = f"outputs/sections/octave_correction_section_{first_bar_pair}.mid"
+        octave_correction_output_path = f"/tmp/outputs/sections/octave_correction_section_{first_bar_pair}.mid"
         corrected_output_path = f"/tmp/outputs/sections/corrected_section_{first_bar_pair}.mid"
         quantize_note_durations(midi_file, quantized_output_path)
         
@@ -1885,7 +1885,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     # Optional: Save or process the generated MIDI
                     repeating_midi_file = f"/tmp/outputs/sections/section_{bar_pair}.mid"
                     repeating_quantized_output_path = f"/tmp/outputs/sections/quantized_section_{bar_pair}.mid"
-                    repeating_octave_correction_output_path = f"outputs/sections/octave_correction_section_{bar_pair}.mid"
+                    repeating_octave_correction_output_path = f"/tmp/outputs/sections/octave_correction_section_{bar_pair}.mid"
                     repeating_corrected_output_path = f"/tmp/outputs/sections/corrected_section_{bar_pair}.mid"
                     print(f"MIDI generated for {bar_pair}: {repeating_midi_file}")
 

@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all files and folders into the container
 COPY . /app
 # Copy specific file to /tmp
-COPY tmp/bridgetnew.mid /tmp/bridgetnew.mid
+# COPY tmp/bridgetnew.mid /tmp/bridgetnew.mid
 
 # Ensure executables have the correct permissions
 RUN chmod +x /app/OpenUtau && chmod -R 777 /app
