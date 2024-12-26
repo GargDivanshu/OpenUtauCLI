@@ -91,7 +91,7 @@ class PathManager:
             "utau_inference_wav": (self.local_export_path, self.s3_export_path),
             "utaulogs": (self.local_log_path, self.s3_log_path),
             "midi": (self.local_midi_path, self.s3_midi_path),
-            # "lyrics_txt": (self.local_lyrics_path, self.s3_lyrics_txt_path),
+            "lyrics_txt": (self.local_lyrics_path, self.s3_lyrics_txt_path),
             # "lyrics_json": (self.local_lyrics_json_path, self.s3_lyrics_json_path),
             "wav_duplicate": (self.local_export_path, self.s3_wav_duplicate_path),
             # "section_summary": (self.local_section_summary_path, self.s3_section_summary_path),
@@ -505,7 +505,7 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
                 # Send MIDI import command after project selection is complete
                 elif '> ' in accumulated_output and project_selected and not midi_imported:
                     print(f"Detected '> ' prompt; sending '--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}'")
-                    process.stdin.write(f"--process --bpm {bpm}")
+                    process.stdin.write(f"--process --bpm {bpm}\n")
                     process.stdin.flush()
                     process.stdin.write(f"--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}\n")
                     process.stdin.flush()
