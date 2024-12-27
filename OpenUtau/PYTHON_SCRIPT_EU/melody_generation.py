@@ -386,14 +386,14 @@ def find_and_replace_large_gaps(notes, validation_report, chord_map, measure_num
     from music21 import note
     import logging
 
-    logging.info(f"Processing measure {measure_number} to align notes closer to average")
+    # logging.info(f"Processing measure {measure_number} to align notes closer to average")
     print(f"Processing measure {measure_number} to align notes closer to average")
     updated_notes = notes[:]
 
     # Calculate the average MIDI note for the measure
     all_midis = [midi for midi, _ in notes]
     avg_note = sum(all_midis) / len(all_midis)
-    logging.info(f"Measure {measure_number}: Average note: {avg_note:.2f}")
+    # logging.info(f"Measure {measure_number}: Average note: {avg_note:.2f}")
     print(f"Measure {measure_number}: Average note: {avg_note:.2f}")
 
     # Iterate over all notes in the measure
@@ -406,12 +406,12 @@ def find_and_replace_large_gaps(notes, validation_report, chord_map, measure_num
                 break
 
         if not current_chord:
-            logging.error(f"No chord found for note {current_note_midi} in measure {measure_number}")
+            # logging.error(f"No chord found for note {current_note_midi} in measure {measure_number}")
             print(f"ERROR: No chord found for note {current_note_midi} in measure {measure_number}")
             continue
 
         if current_chord not in chord_map:
-            logging.error(f"Chord {current_chord} not found in chord_map!")
+            # logging.error(f"Chord {current_chord} not found in chord_map!")
             print(f"ERROR: Chord {current_chord} not found in chord_map!")
             continue
 
@@ -429,10 +429,10 @@ def find_and_replace_large_gaps(notes, validation_report, chord_map, measure_num
         # If no valid chord notes, align to the left neighbor (or default to itself for the first note)
         if best_note is None:
             best_note = updated_notes[i - 1][0] if i > 0 else current_note_midi
-            logging.warning(
-                f"Measure {measure_number}: No valid chord notes for {current_note_midi}. "
-                f"Defaulting to left neighbor {best_note}."
-            )
+            # logging.warning(
+            #     f"Measure {measure_number}: No valid chord notes for {current_note_midi}. "
+            #     f"Defaulting to left neighbor {best_note}."
+            # )
             print(
                 f"WARNING: Measure {measure_number}: No valid chord notes for {current_note_midi}. "
                 f"Defaulting to left neighbor {best_note}."
@@ -440,10 +440,10 @@ def find_and_replace_large_gaps(notes, validation_report, chord_map, measure_num
 
         # Update the note if it differs
         if best_note != current_note_midi:
-            logging.info(
-                f"Measure {measure_number}: Replacing note {current_note_midi} with {best_note} "
-                f"(closer to average {avg_note:.2f})"
-            )
+            # logging.info(
+            #     f"Measure {measure_number}: Replacing note {current_note_midi} with {best_note} "
+            #     f"(closer to average {avg_note:.2f})"
+            # )
             print(
                 f"Measure {measure_number}: Replacing note {current_note_midi} with {best_note} "
                 f"(closer to average {avg_note:.2f})"
@@ -606,11 +606,11 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
                             if elem.name == note_name and elem_start_time == start_time:
                                 # Log current note and valid notes
                                 current_midi = elem.pitch.midi
-                                logging.debug(
-                                    f"DEBUG: Measure {measure_number}: Current note {note_name} "
-                                    f"(MIDI: {current_midi}), Start time: {elem_start_time}, "
-                                    f"Valid notes: {valid_notes}"
-                                )
+                                # logging.debug(
+                                #     f"DEBUG: Measure {measure_number}: Current note {note_name} "
+                                #     f"(MIDI: {current_midi}), Start time: {elem_start_time}, "
+                                #     f"Valid notes: {valid_notes}"
+                                # )
                                 print(
                                     f"DEBUG: Measure {measure_number}: Current note {note_name} "
                                     f"(MIDI: {current_midi}), Start time: {elem_start_time}, "
@@ -624,9 +624,9 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
                                 }
 
                                 # Log distances for debugging
-                                logging.debug(
-                                    f"DEBUG: Measure {measure_number}: Distances to valid notes: {distances}"
-                                )
+                                # logging.debug(
+                                #     f"DEBUG: Measure {measure_number}: Distances to valid notes: {distances}"
+                                # )
                                 print(
                                     f"DEBUG: Measure {measure_number}: Distances to valid notes: {distances}"
                                 )
@@ -638,10 +638,10 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
                                 )
 
                                 # Log the correction
-                                logging.debug(
-                                    f"DEBUG: Measure {measure_number}: Shifting note {note_name} "
-                                    f"to {shifted_pitch} for {chord_name}"
-                                )
+                                # logging.debug(
+                                #     f"DEBUG: Measure {measure_number}: Shifting note {note_name} "
+                                #     f"to {shifted_pitch} for {chord_name}"
+                                # )
                                 print(
                                     f"DEBUG: Measure {measure_number}: Shifting note {note_name} "
                                     f"to {shifted_pitch} for {chord_name}"
@@ -659,7 +659,7 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
                 
     # Save the corrected MIDI file
     midi_data.write('midi', fp=output_file)
-    logging.info(f"Corrected MIDI saved to {output_file}")
+    # logging.info(f"Corrected MIDI saved to {output_file}")
     
     corrected_distances = {}
     midi_data_corrected = converter.parse(output_file)
@@ -682,8 +682,8 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
 
     # Log the comparisons
     for measure_number in initial_distances:
-        logging.info(f"Measure {measure_number}: Initial distances -> {initial_distances[measure_number]}")
-        logging.info(f"Measure {measure_number}: Corrected distances -> {corrected_distances[measure_number]}")
+        # logging.info(f"Measure {measure_number}: Initial distances -> {initial_distances[measure_number]}")
+        # logging.info(f"Measure {measure_number}: Corrected distances -> {corrected_distances[measure_number]}")
         print(f"Measure {measure_number}: Initial distances -> {initial_distances[measure_number]}")
         print(f"Measure {measure_number}: Corrected distances -> {corrected_distances[measure_number]}")
 
@@ -1207,7 +1207,7 @@ def adjust_large_intervals_in_midi(input_midi_path, output_midi_path, detected_k
 
             for note in instrument.notes:
                 if prev_note is not None and abs(note.pitch - prev_note.pitch) > 8:
-                    logging.info(f"Adjusting note {note.pitch} to {root_note} due to large interval from {prev_note.pitch}")
+                    # logging.info(f"Adjusting note {note.pitch} to {root_note} due to large interval from {prev_note.pitch}")
                     adjusted_note = pretty_midi.Note(
                         velocity=note.velocity,
                         pitch=root_note,  # Adjust pitch to root note
@@ -1224,7 +1224,7 @@ def adjust_large_intervals_in_midi(input_midi_path, output_midi_path, detected_k
 
         # Save the updated MIDI file
         midi.write(output_midi_path)
-        logging.info(f"Adjusted MIDI file saved to: {output_midi_path}")
+        # logging.info(f"Adjusted MIDI file saved to: {output_midi_path}")
 
     except Exception as e:
         logging.error(f"Failed to adjust large intervals in MIDI file: {e}")
@@ -1383,7 +1383,7 @@ def validate_notes_against_chords(midi_file, bar_pair, bar_pair_info, progressio
     # Analyze note start times
     note_start_times = analyze_note_start_times(midi_file)
 
-    logging.debug(f"Note start times for {bar_pair}: {note_start_times}")
+    # logging.debug(f"Note start times for {bar_pair}: {note_start_times}")
 
     # Validate notes against chords
     validation_report = {}
@@ -1397,10 +1397,10 @@ def validate_notes_against_chords(midi_file, bar_pair, bar_pair_info, progressio
         for note_name, start_time in notes:
             # Log note and segment
             segment = min(int(start_time // segment_size), len(active_chords) - 1)
-            logging.debug(
-                f"Measure {measure}: Note {note_name} starts at {start_time}. "
-                f"Segment {segment}, Expected Chord: {active_chords[segment]}"
-            )
+            # logging.debug(
+            #     f"Measure {measure}: Note {note_name} starts at {start_time}. "
+            #     f"Segment {segment}, Expected Chord: {active_chords[segment]}"
+            # )
 
             # Validate note
             chord_name = clean_chord_name(active_chords[segment])
@@ -1545,9 +1545,9 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
     # Initialize logging
     logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
 
-    logging.info(f"Input sequence: {input_sequence}")
-    logging.info(f"Chord notes for extension: {chord_notes}")
-    logging.info(f"Total desired notes: {total_notes}")
+    # logging.info(f"Input sequence: {input_sequence}")
+    # logging.info(f"Chord notes for extension: {chord_notes}")
+    # logging.info(f"Total desired notes: {total_notes}")
 
     # Create the initial note sequence
     generated_notes = list(input_sequence)
@@ -1559,9 +1559,9 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
         generated_notes = input_sequence[:total_notes]
         generated_duration = input_duration_sequence[:total_notes]
         generated_amplitude = input_amplitude_sequence[:total_notes]
-        logging.info(f"Trimmed sequence: {generated_notes}")
-        logging.info(f"Trimmed sequence: {generated_duration}")
-        logging.info(f"Trimmed sequence: {generated_amplitude}")
+        # logging.info(f"Trimmed sequence: {generated_notes}")
+        # logging.info(f"Trimmed sequence: {generated_duration}")
+        # logging.info(f"Trimmed sequence: {generated_amplitude}")
 
     # Extend the sequence with chord notes if more notes are required
     while len(generated_notes) < total_notes:
@@ -1576,7 +1576,7 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
         next_note = 1.0
         generated_duration.append(next_note)
     
-    logging.info(f"Final generated sequence: {generated_notes}")
+    # logging.info(f"Final generated sequence: {generated_notes}")
 
     # Create a pattern for the notes
     note_pattern = PSequence(generated_notes, 1)
@@ -1638,7 +1638,7 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
     
     for filename in midi_files:
         try:
-            logging.info(f"Loading MIDI data from {filename}")
+            # logging.info(f"Loading MIDI data from {filename}")
             midi_input = MidiFileInputDevice(filename)
             patterns = midi_input.read(quantize=1 / 8)  # Quantize to 1/8th notes
             # print("patterns ", patterns)
@@ -1703,11 +1703,11 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         })
 
         try:
-            logging.info(f"Generating and saving Section {bar_pair_name}... with number of notes {number_of_notes}")
+            # logging.info(f"Generating and saving Section {bar_pair_name}... with number of notes {number_of_notes}")
             timeline.run()
             midi_output.write()
             time.sleep(1)
-            logging.info(f"Section {bar_pair_name} saved to {section_midi_path}")
+            # logging.info(f"Section {bar_pair_name} saved to {section_midi_path}")
         except KeyboardInterrupt:
             timeline.output_device.all_notes_off()
             
