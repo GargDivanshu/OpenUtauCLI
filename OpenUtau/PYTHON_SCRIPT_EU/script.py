@@ -379,6 +379,7 @@ def lambda_handler(event, context):
 
                 process_message(body)
                 
+                print("notifying system api end for file ", OU_FINAL_FILENAME)
                 notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
 
                 
@@ -466,6 +467,7 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
         # Continuously read output line-by-line
         accumulated_output = ""
         init_sent = False          # Flag to track if '--init' has been sent
+        bpm_changed = False
         project_selected = False   # Flag to track if project selection is complete
         midi_imported = False      # Flag to track MIDI import command
         lyrics_imported = False    # Flag to track lyrics import command
@@ -502,11 +504,15 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
                     process.stdin.flush()
                     project_selected = True  # Set flag after project selection
                     accumulated_output = ""  # Clear accumulated output
-                # Send MIDI import command after project selection is complete
-                elif '> ' in accumulated_output and project_selected and not midi_imported:
-                    print(f"Detected '> ' prompt; sending '--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}'")
+                elif '> ' in accumulated_output and project_selected and not bpm_changed:
+                    print(f"Detected '> ' prompt; sending '--process --bpm {bpm}'")
                     process.stdin.write(f"--process --bpm {bpm}\n")
                     process.stdin.flush()
+                    bpm_changed = True
+                    accumulated_output = ""
+                # Send MIDI import command after project selection is complete
+                elif '> ' in accumulated_output and project_selected and bpm_changed and not midi_imported:
+                    print(f"Detected '> ' prompt; sending '--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}'")
                     process.stdin.write(f"--import --midi {OU_INFERENCE_LOCAL_MIDI_PATH}\n")
                     process.stdin.flush()
                     midi_imported = True  # Set flag to avoid re-sending MIDI import
