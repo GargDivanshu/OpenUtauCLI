@@ -416,7 +416,10 @@ def find_and_replace_large_gaps(notes, validation_report, chord_map, measure_num
             continue
 
         # Determine valid notes from the chord
-        valid_chord_notes = [note.Note(n).pitch.midi for n in chord_map[current_chord]]
+        valid_chord_notes = [
+        n for chord_note in chord_map[current_chord]
+        for n in [note.Note(chord_note).pitch.midi - 12, note.Note(chord_note).pitch.midi, note.Note(chord_note).pitch.midi + 12]
+    ]
 
         # Select the best note: prioritize reducing the gap to the average
         best_note = None
@@ -506,6 +509,41 @@ def correct_hanging_notes(notes):
     return corrected_notes
 
 
+def octave_normalization_with_two_octaves(midi_file, target_octave1, target_octave2, output_file):
+    """
+    Normalize all notes in a MIDI file to the specified octaves while preserving the pitch class.
+    - First 6 pitch classes (C, C#, D, D#, E, F) are normalized to target_octave1.
+    - Next 6 pitch classes (F#, G, G#, A, A#, B) are normalized to target_octave2.
+    Parameters:
+    - midi_file: Path to the input MIDI file.
+    - target_octave1: The target octave for the first 6 pitch classes.
+    - target_octave2: The target octave for the next 6 pitch classes.
+    - output_file: Path to save the normalized MIDI file.
+    """
+    print(f"Normalizing notes in {midi_file} to octaves {target_octave1} and {target_octave2}.")
+    # Parse the MIDI file
+    from music21 import converter, note
+    midi_data = converter.parse(midi_file, format='midi')
+    # Iterate over each measure and normalize notes
+    for part in midi_data.parts:
+        for measure in part.getElementsByClass('Measure'):
+            for elem in measure.notes:
+                if isinstance(elem, note.Note):
+                    original_pitch = elem.pitch
+                    pitch_class = original_pitch.pitchClass  # Get the pitch class (C=0, C#=1, ..., B=11)
+                    # Assign to the appropriate octave based on pitch class
+                    if pitch_class <= 5:  # C, C#, D, D#, E, F
+                        normalized_pitch = (target_octave1 * 12) + pitch_class
+                    else:  # F#, G, G#, A, A#, B
+                        normalized_pitch = (target_octave2 * 12) + pitch_class
+                    elem.pitch.midi = normalized_pitch
+                    print(f"Note {original_pitch} normalized to {elem.pitch} in octaves {target_octave1}/{target_octave2}.")
+    # Save the normalized MIDI file
+    midi_data.write('midi', fp=output_file)
+    print(f"Normalized MIDI saved to {output_file}.")
+    
+    
+
 def octave_normalization(midi_file, target_octave, output_file):
     """
     Normalize all notes in a MIDI file to the specified octave while preserving the pitch class.
@@ -536,6 +574,97 @@ def octave_normalization(midi_file, target_octave, output_file):
     print(f"Normalized MIDI saved to {output_file}.")
     
     
+    
+def fix_far_notes(notes, validation_report, chord_map, measure_number):
+    """
+    Fix notes in a measure that have a distance of at least 7 semitones from one neighbor
+    and at least 4 semitones from the other. Adjust the note to a valid note within the range
+    defined by its neighbors, including edge notes, and account for octave normalization.
+    Parameters:
+    - notes: List of tuples (MIDI number, start time) for the measure.
+    - validation_report: Dictionary mapping measure numbers to note details.
+    - chord_map: Dictionary mapping chords to valid notes.
+    - measure_number: Measure number (for logging/debugging).
+    Returns:
+    - Updated list of notes with adjustments.
+    """
+    from music21 import note
+    import logging
+    logging.info(f"Processing measure {measure_number} to fix far notes.")
+    print(f"Processing measure {measure_number}...")
+    updated_notes = notes[:]
+    # Iterate over all notes in the measure
+    for i, (current_note_midi, start_time) in enumerate(notes):
+        # Determine the chord for the current note
+        current_chord = None
+        for val_note_name, _, chord in validation_report[measure_number]:
+            if note.Note(current_note_midi).name == val_note_name:
+                current_chord = chord.replace("Expected in ", "").replace("Valid in ", "").strip()
+                break
+        if not current_chord:
+            logging.error(f"[Measure {measure_number}] No chord found for note {current_note_midi}. Skipping adjustment.")
+            print(f"⚠️  [Measure {measure_number}] No chord found for note {current_note_midi}. Skipping adjustment.")
+            continue
+        if current_chord not in chord_map:
+            logging.error(f"[Measure {measure_number}] Chord {current_chord} not found in chord_map!")
+            print(f"❌  [Measure {measure_number}] Chord {current_chord} not found in chord_map!")
+            continue
+        # Determine valid notes from the chord
+        valid_chord_notes = sorted([note.Note(n).pitch.midi for n in chord_map[current_chord]])
+        print(f"[Measure {measure_number}] Valid chord notes: {valid_chord_notes}")
+        # Identify the neighbors
+        if i == 0:  # First note (edge case)
+            left_neighbor = None
+            right_neighbor = notes[i + 1][0]
+            range_start = right_neighbor - 7  # Start range based on the right neighbor
+            range_end = right_neighbor + 7
+            print(f"🔹 [Edge Note] First note. Neighbor = {right_neighbor}, Range: {range_start}-{range_end}.")
+        elif i == len(notes) - 1:  # Last note (edge case)
+            left_neighbor = notes[i - 1][0]
+            right_neighbor = None
+            range_start = left_neighbor - 7  # Start range based on the left neighbor
+            range_end = left_neighbor + 7
+            print(f"🔹 [Edge Note] Last note. Neighbor = {left_neighbor}, Range: {range_start}-{range_end}.")
+        else:  # Non-edge notes
+            left_neighbor = notes[i - 1][0]
+            right_neighbor = notes[i + 1][0]
+            range_start = min(left_neighbor, right_neighbor)
+            range_end = max(left_neighbor, right_neighbor)
+        # Expand the range incrementally and find potential notes
+        def get_octave_normalized_notes(notes, start, end):
+            potential = []
+            for n in notes:
+                if start <= n <= end:
+                    potential.append(n)
+                if start <= n - 12 <= end:  # Down one octave
+                    potential.append(n - 12)
+                if start <= n + 12 <= end:  # Up one octave
+                    potential.append(n + 12)
+            return sorted(set(potential))
+        potential_notes = []
+        for expansion in range(4):  # Expand up to ±3 semitones
+            expanded_range_start = range_start - expansion
+            expanded_range_end = range_end + expansion
+            potential_notes = get_octave_normalized_notes(valid_chord_notes, expanded_range_start, expanded_range_end)
+            print(f"  🔍 Expanded range {expanded_range_start}-{expanded_range_end}. Potential notes: {potential_notes}")
+            if potential_notes:
+                break
+        # Replace the current note with the closest valid note
+        if potential_notes:
+            best_note = min(potential_notes, key=lambda n: abs(n - current_note_midi))
+            print(f"  🎯 Found valid note {best_note}. Replacing {current_note_midi}.")
+        else:
+            best_note = current_note_midi  # Default to itself if no valid note is found
+            print(f"  ⚠️  No valid notes found in expanded ranges. Keeping {current_note_midi}.")
+        logging.info(
+            f"[Measure {measure_number}] Replacing note {current_note_midi} with {best_note}."
+        )
+        updated_notes[i] = (best_note, start_time)
+    print(f"✅ Finished processing measure {measure_number}.\n")
+    return updated_notes
+
+
+
 
 def correct_midi(midi_file, validation_report, chord_map, output_file):
     """
@@ -671,6 +800,8 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
                 for elem in measure.notes
             ]
             updated_notes = find_and_replace_large_gaps(notes_in_measure, validation_report, chord_map, measure_number)
+            
+            updated_notes = fix_far_notes(notes_in_measure, validation_report, chord_map, measure_number)
             
             updated_notes = correct_hanging_notes(updated_notes)
                         
@@ -878,6 +1009,8 @@ def analyze_midi(midi_file, bpm=120, is_backing_track = False, target_key=None, 
     # Find the first significant note (timing detection)
     first_significant_note = None
     first_significant_time = None
+    second_significant_note = None
+    second_significant_time = None 
     for part in music_data.parts:  # Iterate over parts
         for elem in part.flatten().notes:  # Flatten to get all notes
             if elem.volume.velocity >= velocity_threshold and (elem.quarterLength >= duration_threshold):
@@ -964,6 +1097,7 @@ def analyze_midi(midi_file, bpm=120, is_backing_track = False, target_key=None, 
         "key": key_signature,
         "bar_wise_chords": bar_wise_chords,
         "pseudo_chords": combined_pseudo_chords_array,
+        "combined_pseudo_chords": combined_pseudo_chords,
         "melodic_intervals": melodic_intervals,
         "first_vocal_start": {
             "note": first_significant_note if first_significant_note else None,
@@ -1106,6 +1240,10 @@ def combine_sections(
     # Normalize the paths
     output_folder = os.path.normpath(output_folder)
     final_output_path = os.path.normpath(final_output_path)
+    
+    def round_to_quarter(value):
+        """Round the value to the nearest quarter (0.25, 0.50, 0.75, X.00)."""
+        return round(value * 4) / 4
 
     # Look for files matching the pattern corrected_section_bar<range>.mid
     pattern = re.compile(r"corrected_section_bar\d+-\d+\.mid")
@@ -1124,16 +1262,21 @@ def combine_sections(
     initial_gap_duration = (60 / bpm) * initial_gap_beats
     section_gap_duration = (60 / bpm) * section_gap_beats
     ending_gap_duration = (60 / bpm) * ending_gap_beats
+    beat_duration = 60 / bpm  # Duration of one beat in seconds
+    bar_duration = beat_duration * 4  # Duration of one bar in seconds (assuming 4/4 time signature)
 
     # Track the cumulative time in seconds
-    cumulative_time = 0.0
+    cumulative_time = initial_gap_duration
 
-    # Add silence at the beginning
-    silent_note_start = pretty_midi.Note(
-        velocity=0, pitch=0, start=cumulative_time, end=cumulative_time + initial_gap_duration
-    )
-    combined_instrument.notes.append(silent_note_start)
-    cumulative_time += initial_gap_duration
+    # # Track the cumulative time in seconds
+    # cumulative_time = 0.0
+
+    # # Add silence at the beginning
+    # silent_note_start = pretty_midi.Note(
+    #     velocity=0, pitch=0, start=cumulative_time, end=cumulative_time + initial_gap_duration
+    # )
+    # combined_instrument.notes.append(silent_note_start)
+    # cumulative_time += initial_gap_duration
     print(f"Added {initial_gap_beats} beats of silence at the start, duration: {initial_gap_duration:.2f}s")
 
     for section_index, section_file in enumerate(section_files):
@@ -1143,22 +1286,41 @@ def combine_sections(
         # Load the section MIDI using pretty_midi
         section_midi = pretty_midi.PrettyMIDI(section_path)
 
+        # # Track the last note's end time for alignment
+        # section_end_time = 0.0
+        
+         # Determine the desired rounded bar start time
+        section_start_bar = cumulative_time / bar_duration
+        rounded_start_bar = round_to_quarter(section_start_bar)
+        adjusted_start_time = rounded_start_bar * bar_duration
+        # Ensure the section starts at the rounded bar time
+        alignment_offset = adjusted_start_time - cumulative_time
+        print(f"Section {section_index + 1} starts at bar: {section_start_bar:.2f}, rounded to: {rounded_start_bar:.2f}")
+        print(f"Alignment offset: {alignment_offset:.2f}s")
+
         # Track the last note's end time for alignment
-        section_end_time = 0.0
+        section_end_time = adjusted_start_time
 
         for instrument in section_midi.instruments:
             for note in instrument.notes:
                 # Adjust the start and end times of each note by the cumulative time
-                note.start += cumulative_time
-                note.end += cumulative_time
+                # note.start += cumulative_time
+                # note.end += cumulative_time
+                
+                 # Adjust the start and end times of each note by the alignment offset
+                note.start += adjusted_start_time
+                note.end += adjusted_start_time
                 combined_instrument.notes.append(note)
 
                 # Track the latest end time of notes in the section
                 section_end_time = max(section_end_time, note.end)
 
         # Log details of the section
-        print(f"Section {section_index + 1} duration: {section_end_time - cumulative_time:.2f}s, "
-              f"start time: {cumulative_time:.2f}s, end time: {section_end_time:.2f}s")
+        # print(f"Section {section_index + 1} duration: {section_end_time - cumulative_time:.2f}s, "
+        #       f"start time: {cumulative_time:.2f}s, end time: {section_end_time:.2f}s")
+        
+        print(f"Section {section_index + 1} duration after alignment: {section_end_time - adjusted_start_time:.2f}s, "
+              f"start time: {adjusted_start_time:.2f}s, end time: {section_end_time:.2f}s")
 
         # Update the cumulative time to the end of the section
         cumulative_time = section_end_time
@@ -1171,7 +1333,8 @@ def combine_sections(
             combined_instrument.notes.append(silent_note)
             cumulative_time += section_gap_duration
             print(f"Added silent gap of {section_gap_duration:.2f}s after Section {section_index + 1}, "
-                  f"gap start: {section_end_time:.2f}s, gap end: {cumulative_time:.2f}s")
+                #   f"gap start: {section_end_time:.2f}s, gap end: {cumulative_time:.2f}s")
+                f"gap start: {cumulative_time - section_gap_duration:.2f}s, gap end: {cumulative_time:.2f}s")
 
     # Add silence at the end of the final section
     silent_note_end = pretty_midi.Note(
@@ -1197,7 +1360,7 @@ def adjust_large_intervals_in_midi(input_midi_path, output_midi_path, detected_k
     """
     try:
         # Convert the detected_key to a MIDI note number
-        root_note = note_name_to_number(detected_key)
+        root_note = pretty_midi.note_name_to_number(detected_key)
 
         midi = PrettyMIDI(input_midi_path)
         
@@ -1207,7 +1370,7 @@ def adjust_large_intervals_in_midi(input_midi_path, output_midi_path, detected_k
 
             for note in instrument.notes:
                 if prev_note is not None and abs(note.pitch - prev_note.pitch) > 8:
-                    # logging.info(f"Adjusting note {note.pitch} to {root_note} due to large interval from {prev_note.pitch}")
+                    logging.info(f"Adjusting note {note.pitch} to {root_note} due to large interval from {prev_note.pitch}")
                     adjusted_note = pretty_midi.Note(
                         velocity=note.velocity,
                         pitch=root_note,  # Adjust pitch to root note
@@ -1224,11 +1387,51 @@ def adjust_large_intervals_in_midi(input_midi_path, output_midi_path, detected_k
 
         # Save the updated MIDI file
         midi.write(output_midi_path)
-        # logging.info(f"Adjusted MIDI file saved to: {output_midi_path}")
+        logging.info(f"Adjusted MIDI file saved to: {output_midi_path}")
 
     except Exception as e:
         logging.error(f"Failed to adjust large intervals in MIDI file: {e}")
 
+
+def adjust_to_octave_range(chord_notes, reference_sequence):
+    """
+    Adjust the chord notes to be in the same octave range as the reference sequence.
+    
+    Args:
+        chord_notes (list): List of MIDI numbers for the chord notes.
+        reference_sequence (list): List of MIDI numbers in the reference sequence.
+    
+    Returns:
+        list: Chord notes adjusted to the same octave range.
+    """
+    adjusted_notes = []
+    min_ref = min(reference_sequence)
+    max_ref = max(reference_sequence)
+    
+    for note in chord_notes:
+        # Adjust the note until it fits in the range of reference_sequence
+        while note < min_ref:
+            note += 12  # Move up an octave
+        while note > max_ref:
+            note -= 12  # Move down an octave
+        adjusted_notes.append(note)
+    
+    return adjusted_notes
+
+
+def pitch_class_to_midi(pitch_class):
+    """
+    Convert a pitch class (e.g., 'C#') to its MIDI pitch number in all octaves (ignores octave).
+    """
+    # Map of pitch classes to their MIDI pitch numbers in a single octave
+    pitch_to_midi = {
+        'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+        'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+    }
+    # Get the MIDI pitch number for the given pitch class
+    if pitch_class not in pitch_to_midi:
+        raise ValueError(f"Invalid pitch class: {pitch_class}")
+    return pitch_to_midi[pitch_class]
 
 def generate_bar_pair_info(filtered_progressions, line_level_total_syllables):
     """
@@ -1707,6 +1910,21 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
             timeline.run()
             midi_output.write()
             time.sleep(1)
+            section_file_size = os.path.getsize(section_midi_path)
+            logging.info(f"Section file size: {section_file_size} bytes")
+            # Extract and print the sequence of notes in terms of pitch numbers
+            try:
+                section_midi = PrettyMIDI(section_midi_path)
+                note_sequence = []
+                for instrument in section_midi.instruments:
+                    for note in instrument.notes:
+                        note_sequence.append(note.pitch)
+                
+                if not note_sequence:
+                    raise ValueError(f"Empty note sequence in section {bar_pair_name}. Please check the MIDI generation.")
+                logging.info(f"Sequence of notes (pitch numbers) in section {bar_pair_name}: {note_sequence}")
+            except Exception as e:
+                logging.error(f"Error reading section MIDI file {section_midi_path}: {e}")
             # logging.info(f"Section {bar_pair_name} saved to {section_midi_path}")
         except KeyboardInterrupt:
             timeline.output_device.all_notes_off()
@@ -1847,7 +2065,8 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     "pseudo_chords": backing_analysis["pseudo_chords"][bar - 1] if bar - 1 < len(backing_analysis["pseudo_chords"]) else []
                 }
                 
-            octave_normalization(quantized_output_path, 4, octave_correction_output_path)
+            # octave_normalization(quantized_output_path, 4, octave_correction_output_path)
+            octave_normalization_with_two_octaves(quantized_output_path, 5, 4, octave_correction_output_path)
             correct_midi(
             midi_file=octave_correction_output_path,
             validation_report=validation_report,
@@ -1876,8 +2095,30 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     note_sequence = info['note_sequence']
                     duration_sequence = info['duration_sequence']
                     amplitude_sequence = info['amplitude_sequence']
+                    
+                    last_bar = int(bar_pair.split('-')[-1])
+                    # Extract valid notes for the last chord in the last bar
+                    valid_notes = []
+                    if last_bar in backing_analysis['combined_pseudo_chords']:
+                        last_chord_info = backing_analysis['combined_pseudo_chords'][last_bar][-1]  # Last chord
+                        valid_notes = last_chord_info[0]  # Extract pitch names
+                        print(f"Valid notes for bar {last_bar} last chord: {valid_notes}")
+                        
+                    # Convert pitch names to MIDI numbers
+                    chord_notes = [pitch_class_to_midi(pitch) for pitch in valid_notes]
+                    print("chord_notes ", chord_notes)
+                    if not chord_notes:  # Fallback if no valid notes are found
+                        chord_notes = [60, 64, 67]  # Default to C major triad
+                        print(f"No valid notes found for bar {last_bar}, defaulting to: {chord_notes}")
+                    else:
+                        chord_notes = adjust_to_octave_range(chord_notes, note_sequence)
+                        print(f"Chord notes (MIDI numbers) for bar {last_bar}: {chord_notes}")
+
+                    print("about to start generate_melody_with_chord")
+                    # [65, 69, 72]
+                    generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], chord_notes, filename=f"outputs/sections/section_{bar_pair}.mid")
                    
-                    generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], [65, 69, 72], filename=f"/tmp/outputs/sections/section_{bar_pair}.mid")
+                    # generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], [65, 69, 72], filename=f"/tmp/outputs/sections/section_{bar_pair}.mid")
 
                     # Update the bar pair info to mark melody as generated
                     info['melody_generated'] = True
@@ -1925,7 +2166,8 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                                 "pseudo_chords": backing_analysis["pseudo_chords"][bar - 1] if bar - 1 < len(backing_analysis["pseudo_chords"]) else []
                             }
                         
-                        octave_normalization(repeating_quantized_output_path, 4, repeating_octave_correction_output_path)
+                        # octave_normalization(repeating_quantized_output_path, 4, repeating_octave_correction_output_path)
+                        octave_normalization_with_two_octaves(repeating_quantized_output_path, 5, 4, repeating_octave_correction_output_path)
                         correct_midi(
                         midi_file=repeating_octave_correction_output_path,
                         validation_report=validation_report,
@@ -1953,6 +2195,8 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
     final_output_path = f"/tmp/outputs/generated_sequence_{current_time}.mid"
     starting_offset = vocal_analysis["first_vocal_start"]["time"]
     print("starting_offset  ", starting_offset)
+    if starting_offset == None: 
+        starting_offset = 0
     combine_sections(
                     output_folder="/tmp/outputs/sections",
                     final_output_path=output_path,
