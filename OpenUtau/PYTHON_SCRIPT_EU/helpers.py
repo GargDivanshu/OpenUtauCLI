@@ -598,16 +598,17 @@ chord_map = {
     "Bminor": set(['B', 'D', 'F#']),
 }
 
+Region=region.capitalize()
 midi_files = [
         # "C:/Users/divan/OneDrive/Desktop/Ogilvy/OpenUtauCLI_v1/OpenUtau/PYTHON_SCRIPT/tmp/bridgetnew.mid",
         # "C:/Users/divan/Downloads/933_midi.mid",
         # "C:/Users/divan/Downloads/1057_midi.mid"
         # "C:/Users/divan/Downloads/[fadr.com] Midi - Germany Track 1 - Mixed Audio - Cm - 120BPM (1)/german_vocal_track1.mid"
-        f"/tmp/{region}/vocal_track/RomaniaTrack1MIDI.mid",
-        f"/tmp/{region}/vocal_track/RomaniaTrack2MIDI.mid",
-        f"/tmp/{region}/vocal_track/RomaniaTrack3MIDI.mid",
-        f"/tmp/{region}/vocal_track/RomaniaTrack4MIDI.mid",
-        f"/tmp/{region}/vocal_track/RomaniaTrack5MIDI.mid"
+        f"/tmp/{region}/vocal_track/{Region}Track1MIDI.mid",
+        f"/tmp/{region}/vocal_track/{Region}Track2MIDI.mid",
+        f"/tmp/{region}/vocal_track/{Region}Track3MIDI.mid",
+        f"/tmp/{region}/vocal_track/{Region}Track4MIDI.mid",
+        f"/tmp/{region}/vocal_track/{Region}Track5MIDI.mid"
         # "C:/Users/divan/Downloads/[fadr.com] Midi - Germany Track 5 - Revised Mix - D - 98BPM/Germany Track 5 - Revised Mix - D - 98BPM.wav-midi-vocals.mid"
     ]
 
