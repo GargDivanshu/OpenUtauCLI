@@ -389,12 +389,12 @@ def lambda_handler(event, context):
                 # OU_FINAL_FILENAME = f"song_{song_id}_vocals"
                 # OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, f"{OU_FINAL_FILENAME}.wav")
                 
-                notify_system_api(song_id, "utau_inference", f"start_{region}", None, None)
+                notify_system_api(song_id, "utau_inference", "start", None, None)
 
                 process_message(body)
                 
                 print("notifying system api end for file ", OU_FINAL_FILENAME)
-                notify_system_api(song_id, "utau_inference", f"end_{region}", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
+                notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
 
                 
 
