@@ -1,6 +1,5 @@
 import json
 import boto3
-import botocore
 import requests
 from botocore.exceptions import ClientError
 import time
@@ -9,18 +8,15 @@ import logging
 import re
 import glob
 import pretty_midi
-import pyphen
-from nltk.corpus import cmudict
 from dotenv import load_dotenv
 import pickle
 from tabulate import tabulate 
-import pretty_midi
 
 load_dotenv()
 log_file = "/tmp/Logs/openutau_process.log"
 SYSTEM_API_URL = os.getenv("SYSTEM_API_URL")
 region = os.getenv("REGION_PROD")
-region = "romania"
+# region = "romania"
 
 # IS_LAMBDA_ENV 
 IS_LAMBDA_ENV = False

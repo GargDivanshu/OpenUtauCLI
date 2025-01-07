@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-from mido import MidiFile, MidiTrack, Message
-import json
 import pretty_midi
 from pretty_midi import PrettyMIDI, note_name_to_number
-from tabulate import tabulate 
 import re
 import os
 from isobar import *
@@ -16,7 +13,7 @@ from datetime import datetime
 from music21 import *
 import music21 as music21
 import itertools
-from helpers import chord_map, save_markov_model, midi_files, calculate_syllable_counts, ALL_SINGERS_RANGE, clamp, quantize_to_scale, quantize_note_durations
+from helpers import save_markov_model, midi_files, calculate_syllable_counts, ALL_SINGERS_RANGE, clamp, quantize_to_scale, quantize_note_durations
 import shutil
 
 
@@ -34,6 +31,39 @@ load_dotenv()
 #         ACTIVE_SINGER_MAX_RANGE = singer["max_range"]
 #         print("max_range ", ACTIVE_SINGER_MAX_RANGE)
 
+
+
+
+# Example usage
+chord_map = {
+    # Major chords
+    "Cmajor": set(['C', 'E', 'G']),
+    "C#major": set(['C#', 'F', 'G#']),
+    "Dmajor": set(['D', 'F#', 'A']),
+    "D#major": set(['D#', 'G', 'A#']),
+    "Emajor": set(['E', 'G#', 'B']),
+    "Fmajor": set(['F', 'A', 'C']),
+    "F#major": set(['F#', 'A#', 'C#']),
+    "Gmajor": set(['G', 'B', 'D']),
+    "G#major": set(['G#', 'C', 'D#']),
+    "Amajor": set(['A', 'C#', 'E']),
+    "A#major": set(['A#', 'D', 'F']),
+    "Bmajor": set(['B', 'D#', 'F#']),
+
+    # Minor chords
+    "Cminor": set(['C', 'D#', 'G']),
+    "C#minor": set(['C#', 'E', 'G#']),
+    "Dminor": set(['D', 'F', 'A']),
+    "D#minor": set(['D#', 'F#', 'A#']),
+    "Eminor": set(['E', 'G', 'B']),
+    "Fminor": set(['F', 'G#', 'C']),
+    "F#minor": set(['F#', 'A', 'C#']),
+    "Gminor": set(['G', 'A#', 'D']),
+    "G#minor": set(['G#', 'B', 'D#']),
+    "Aminor": set(['A', 'C', 'E']),
+    "A#minor": set(['A#', 'C#', 'F']),
+    "Bminor": set(['B', 'D', 'F#']),
+}
 
 def note_to_midi(note, chord_type):
     """
