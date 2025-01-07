@@ -1,7 +1,7 @@
 import pyphen
 
 # Initialize Pyphen for German syllabification
-syllable_splitter = pyphen.Pyphen(lang='de_DE')
+syllable_splitter = pyphen.Pyphen(lang='es_ES')
 
 def count_syllables(word):
     """Count the number of syllables in a word using Pyphen."""
@@ -58,18 +58,22 @@ def analyze_lyrics(lyrics):
 
 # # German lyrics
 lyrics = """
-Anna, deine Einladung war so nett,
-Zu deiner Party, ich freu mich jetzt.
-Wir werden tanzen und viel lachen,
-Die Zeit mit Freunden einfach machen.
-Danke für die Einladung, Anna,
-Ich komme gerne, ganz bestimmt, ja.
-Deine Party wird der Hit,
-Darauf freue ich mich mit.
-In München, im Englischen Garten,
-Wollen wir feiern und Spaß erwarten.
-Anna, du bist die beste Gastgeberin,
-Mit dir wird die Party festlich sein.
+Hoy es tu día, Mateo.
+que cumplas muchos años más,
+que la vida te regale
+felicidad y paz.
+Que en este año nuevo
+se cumplan tus deseos
+y que siempre te rodees
+solo de amigos buenos
+Feliz cumple Mateo,
+que te la pases genial,
+que hoy sea un día especial
+lleno de alegría sin igual.
+Feliz cumple Mateo,
+que te la pases genial,
+que hoy sea un día especial
+lleno de alegría sin igual.
 """
 print(analyze_lyrics(lyrics))
 # # Analyze lyrics

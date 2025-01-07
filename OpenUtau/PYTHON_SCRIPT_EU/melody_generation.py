@@ -819,6 +819,66 @@ def correct_midi(midi_file, validation_report, chord_map, output_file):
         print(f"Measure {measure_number}: Corrected distances -> {corrected_distances[measure_number]}")
 
 
+
+
+def distance_based_octave_normalization(midi_file, output_file):
+    """
+    Perform distance-based octave normalization on a MIDI file.
+    Adjust the octave of each note to minimize its collective distance
+    from its immediate neighbors while preserving note durations.
+    
+    Parameters:
+    - midi_file: Path to the input MIDI file.
+    - output_file: Path to save the normalized MIDI file.
+    """
+    from music21 import converter, note
+
+    print(f"Performing distance-based octave normalization on {midi_file}.")
+
+    # Parse the MIDI file
+    midi_data = converter.parse(midi_file)
+
+    # Collect all notes in sequence (flattening all parts and measures)
+    all_notes = []
+    for part in midi_data.parts:
+        for measure in part.getElementsByClass('Measure'):
+            for elem in measure.notes:
+                if isinstance(elem, note.Note):
+                    all_notes.append(elem)
+
+    # Function to calculate the cumulative distance for a note
+    def calculate_distance(index, midi_number):
+        left_distance = abs(midi_number - all_notes[index - 1].pitch.midi) if index > 0 else 0
+        right_distance = abs(midi_number - all_notes[index + 1].pitch.midi) if index < len(all_notes) - 1 else 0
+        return left_distance + right_distance
+
+    # Iterate over each note and adjust its octave
+    for i, current_note in enumerate(all_notes):
+        original_midi = current_note.pitch.midi
+
+        # Calculate distances for original, octave up, and octave down
+        original_distance = calculate_distance(i, original_midi)
+        octave_up_distance = calculate_distance(i, original_midi + 12)
+        octave_down_distance = calculate_distance(i, original_midi - 12)
+
+        # Select the option that minimizes distance, but only change if it reduces distance
+        min_distance = min(original_distance, octave_up_distance, octave_down_distance)
+
+        if min_distance < original_distance:
+            if min_distance == octave_up_distance:
+                current_note.pitch.midi = original_midi + 12
+                print(f"Note {original_midi} shifted up to {current_note.pitch.midi}.")
+            elif min_distance == octave_down_distance:
+                current_note.pitch.midi = original_midi - 12
+                print(f"Note {original_midi} shifted down to {current_note.pitch.midi}.")
+        else:
+            print(f"Note {original_midi} remains unchanged.")
+
+    # Save the normalized MIDI file
+    midi_data.write('midi', fp=output_file)
+    print(f"Final normalized MIDI saved to {output_file}.")
+    
+    
 # # Example usage
 # chord_map = {
 #     # Major chords
@@ -1928,7 +1988,122 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
             # logging.info(f"Section {bar_pair_name} saved to {section_midi_path}")
         except KeyboardInterrupt:
             timeline.output_device.all_notes_off()
-            
+  
+    
+def add_offset_to_section(
+    section_path, output_path, start_bar, initial_gap_bars, bpm
+):
+    """
+    Add an offset to a single sectional MIDI file based on its starting bar.
+
+    Parameters:
+    - section_path: Path to the input sectional MIDI file.
+    - output_path: Path to save the offset-adjusted MIDI file.
+    - start_bar: The starting bar for this section.
+    - initial_gap_bars: Initial gap in bars to add at the beginning.
+    - bpm: Beats per minute for timing calculations.
+    """
+    import pretty_midi
+    from decimal import Decimal
+
+    print(f"Processing section: {section_path}")
+    print(f"Start bar: {start_bar}, Initial gap bars: {initial_gap_bars}, BPM: {bpm}")
+
+    # Timing constants
+    beat_duration = Decimal(60) / Decimal(bpm)
+    bar_duration = beat_duration * 4  # 4 beats per bar
+
+    # Calculate offset for this section in seconds
+    offset_bars = Decimal(start_bar - 1) + Decimal(initial_gap_bars)
+    offset_duration = offset_bars * bar_duration
+
+    print(f"Calculated timing:")
+    print(f" - Beat duration: {float(beat_duration):.4f} seconds")
+    print(f" - Bar duration: {float(bar_duration):.4f} seconds")
+    print(f" - Offset bars: {float(offset_bars):.2f} bars")
+    print(f" - Offset duration: {float(offset_duration):.4f} seconds")
+
+    # Load the section MIDI
+    section_midi = pretty_midi.PrettyMIDI(section_path)
+    print(f"Loaded MIDI file: {section_path}")
+
+    # Apply offset to all notes, control changes, and pitch bends
+    for instrument in section_midi.instruments:
+        print(f"Adjusting notes for instrument: {instrument.name if instrument.name else 'Unknown Instrument'}")
+        for note in instrument.notes:
+            print(
+                f"Note before offset: pitch={note.pitch}, "
+                f"start={note.start:.4f}s, end={note.end:.4f}s"
+            )
+            note.start += float(offset_duration)
+            note.end += float(offset_duration)
+            print(
+                f"Note after offset: pitch={note.pitch}, "
+                f"start={note.start:.4f}s, end={note.end:.4f}s"
+            )
+
+        print("Adjusting control changes and pitch bends...")
+        for cc in instrument.control_changes:
+            print(f"Control Change before offset: number={cc.number}, time={cc.time:.4f}s")
+            cc.time += float(offset_duration)
+            print(f"Control Change after offset: number={cc.number}, time={cc.time:.4f}s")
+        for pb in instrument.pitch_bends:
+            print(f"Pitch Bend before offset: pitch={pb.pitch}, time={pb.time:.4f}s")
+            pb.time += float(offset_duration)
+            print(f"Pitch Bend after offset: pitch={pb.pitch}, time={pb.time:.4f}s")
+
+    # Save the adjusted MIDI file
+    section_midi.write(output_path)
+    print(f"Offset added to {section_path}. New file saved as {output_path}.")
+    print("-" * 50)
+
+
+
+
+def combine_sectional_midis(
+    input_folder, final_output_path, bpm
+):
+    """
+    Combine all offset-adjusted sectional MIDI files into a single MIDI.
+
+    Parameters:
+    - input_folder: Folder containing the offset-adjusted sectional MIDI files.
+    - final_output_path: Path to save the combined MIDI file.
+    - bpm: Beats per minute for the combined MIDI.
+    """
+    import pretty_midi
+    import os
+
+    # Normalize paths
+    input_folder = os.path.normpath(input_folder)
+    final_output_path = os.path.normpath(final_output_path)
+
+    # Create a PrettyMIDI object for the combined MIDI
+    combined_midi = pretty_midi.PrettyMIDI()
+
+    # Create a single instrument for the combined MIDI
+    combined_instrument = pretty_midi.Instrument(program=0)  # Default: Acoustic Grand Piano
+
+    # Load each MIDI file and add its notes to the combined instrument
+    for midi_file in sorted(os.listdir(input_folder)):
+        midi_path = os.path.join(input_folder, midi_file)
+        section_midi = pretty_midi.PrettyMIDI(midi_path)
+
+        for instrument in section_midi.instruments:
+            combined_instrument.notes.extend(instrument.notes)
+            combined_instrument.control_changes.extend(instrument.control_changes)
+            combined_instrument.pitch_bends.extend(instrument.pitch_bends)
+
+        print(f"Added {midi_file} to the final combined MIDI.")
+
+    # Add the combined instrument to the PrettyMIDI object
+    combined_midi.instruments.append(combined_instrument)
+
+    # Save the final MIDI file
+    combined_midi.write(final_output_path)
+    print(f"Final combined MIDI saved to {final_output_path}.")
+
+              
             
 
 # def main(numer_of_notes, gap_positions, section_positions, reference_vocal_track, reference_octave, backing_analysis, vocal_analysis, consolidated_data, bpm=120):
@@ -2073,19 +2248,28 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
             chord_map=chord_map,
             output_file=corrected_output_path
         )
-            # Store the melody structure in original_midi_data for reuse
-            original_midi_data[chord_progression] = first_bar_pair
-
-            # Mark the melody as generated for the first bar pair
-            bar_pair_info[first_bar_pair]['melody_generated'] = True
-            
-            print("bar_pair_info ", bar_pair_info)
-            
-            note_sequence = extract_note_sequence(corrected_output_path)
-            
-            update_bar_pair_info_with_note_sequence(bar_pair_info, first_bar_pair, corrected_output_path)
-            
-            print("bar_pair_info_after_changes  ", bar_pair_info)
+            distance_based_octave_normalization(corrected_output_path, corrected_output_path)
+            try: 
+                print("codee reached here : ")
+                # Store the melody structure in original_midi_data for reuse
+                original_midi_data[chord_progression] = first_bar_pair
+                print("original_midi_data[chord_progression]  ", original_midi_data[chord_progression] )
+                
+                # Mark the melody as generated for the first bar pair
+                print("bar_pair_info[first_bar_pair] ", bar_pair_info[first_bar_pair])
+                bar_pair_info[first_bar_pair]['melody_generated'] = True
+                
+                print("bar_pair_info ", bar_pair_info)
+                
+                # note_sequence = extract_note_sequence(corrected_output_path)
+                # print("note_sequence ", note_sequence)
+                
+                update_bar_pair_info_with_note_sequence(bar_pair_info, first_bar_pair, corrected_output_path)
+                
+                print("bar_pair_info_after_changes  ", bar_pair_info)
+                
+            except Exception as e:
+                        print(f"updating original midi data {quantized_output_path}: {e}")
             
             for bar_pair, info in bar_pair_info.items():
                 if not info['melody_generated'] and 'note_sequence' in info:
@@ -2115,8 +2299,10 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                         print(f"Chord notes (MIDI numbers) for bar {last_bar}: {chord_notes}")
 
                     print("about to start generate_melody_with_chord")
-                    # [65, 69, 72]
+                    # [65, 69, 72]      
                     generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], chord_notes, filename=f"outputs/sections/section_{bar_pair}.mid")
+                    
+                    distance_based_octave_normalization(corrected_output_path, corrected_output_path)
                    
                     # generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], [65, 69, 72], filename=f"/tmp/outputs/sections/section_{bar_pair}.mid")
 
@@ -2197,15 +2383,42 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
     print("starting_offset  ", starting_offset)
     if starting_offset == None: 
         starting_offset = 0
-    combine_sections(
-                    output_folder="/tmp/outputs/sections",
-                    final_output_path=output_path,
-                    bpm=bpm, 
-                    initial_gap_beats=starting_offset,  # Adjust this value for the initial gap
-                    section_gap_beats=2,  # Adjust this value for the gap between sections
-                    ending_gap_beats=7    # Adjust this value for the ending gap
-                )  
-    shutil.copy(output_path, "/tmp/midi.mid")
+        
+    pattern = re.compile(r"corrected_section_bar(\d+)-\d+\.mid")
+
+    # Step 1: Add offsets to each sectional MIDI
+    for section_file in os.listdir("/tmp/outputs/sections"):
+        match = pattern.match(section_file)
+        if not match:
+            continue
+
+        start_bar = int(match.group(1))
+        section_path = os.path.join("/tmp/outputs/sections", section_file)
+        output_path = os.path.join("/tmp/outputs/adjusted_sections", section_file)
+
+        add_offset_to_section(
+            section_path=section_path,
+            output_path=output_path,
+            start_bar=start_bar,
+            initial_gap_bars=0,
+            bpm=bpm
+        )
+
+    # Step 2: Combine all offset-adjusted MIDIs
+    combine_sectional_midis(
+        input_folder="/tmp/outputs/adjusted_sections",
+        final_output_path=final_output_path,
+        bpm=bpm
+    )
+    # combine_sections(
+    #                 output_folder="/tmp/outputs/sections",
+    #                 final_output_path=output_path,
+    #                 bpm=bpm, 
+    #                 initial_gap_beats=starting_offset,  # Adjust this value for the initial gap
+    #                 section_gap_beats=2,  # Adjust this value for the gap between sections
+    #                 ending_gap_beats=7    # Adjust this value for the ending gap
+    #             )  
+    shutil.copy(final_output_path, "/tmp/midi.mid")
     # detected_key = vocal_analysis["key"].tonic.name
     # detected_scale = vocal_analysis["key"].mode
     # reference_octave = 4

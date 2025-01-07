@@ -15,7 +15,7 @@ from tqdm import tqdm
 import platform
 from dotenv import load_dotenv
 from datetime import datetime
-from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, analyze_lyrics_cs, analyze_lyrics_sk, analyze_lyrics_el
+from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, analyze_lyrics_cs, analyze_lyrics_sk, analyze_lyrics_el, analyze_lyrics_es
 import time
 from melody_generation import main_melody_generation
     
@@ -34,6 +34,7 @@ os.makedirs("/tmp/OpenUtau", exist_ok=True)
 os.makedirs("/tmp/OpenUtau/Logs", exist_ok=True)
 os.makedirs("/tmp/outputs", exist_ok=True)
 os.makedirs("/tmp/outputs/sections", exist_ok=True)
+os.makedirs("/tmp/outputs/adjusted_sections", exist_ok=True)
 # Load environment variables from .env file
 load_dotenv()
 
@@ -157,6 +158,8 @@ def process_message(body):
             formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
         elif region == "greece":
             formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
+        elif region == "mexico":
+            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
         
         
         with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
