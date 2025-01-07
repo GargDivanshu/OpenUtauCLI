@@ -56,26 +56,26 @@ def analyze_lyrics(lyrics):
 
     return '\n'.join(formatted_lines), all_breakdowns, total_syllables
 
-# # German lyrics
-lyrics = """
-Hoy es tu día, Mateo.
-que cumplas muchos años más,
-que la vida te regale
-felicidad y paz.
-Que en este año nuevo
-se cumplan tus deseos
-y que siempre te rodees
-solo de amigos buenos
-Feliz cumple Mateo,
-que te la pases genial,
-que hoy sea un día especial
-lleno de alegría sin igual.
-Feliz cumple Mateo,
-que te la pases genial,
-que hoy sea un día especial
-lleno de alegría sin igual.
-"""
-print(analyze_lyrics(lyrics))
+# # # German lyrics
+# lyrics = """
+# Hoy es tu día, Mateo.
+# que cumplas muchos años más,
+# que la vida te regale
+# felicidad y paz.
+# Que en este año nuevo
+# se cumplan tus deseos
+# y que siempre te rodees
+# solo de amigos buenos
+# Feliz cumple Mateo,
+# que te la pases genial,
+# que hoy sea un día especial
+# lleno de alegría sin igual.
+# Feliz cumple Mateo,
+# que te la pases genial,
+# que hoy sea un día especial
+# lleno de alegría sin igual.
+# """
+# print(analyze_lyrics(lyrics))
 # # Analyze lyrics
 # formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)
 

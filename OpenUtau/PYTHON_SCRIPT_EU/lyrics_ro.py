@@ -57,15 +57,15 @@ def analyze_lyrics(lyrics):
     return '\n'.join(formatted_lines), all_breakdowns, total_syllables
 
 
-input="""
-Mulțumesc, dragul Andrei, mereu,
-Pentru tot ce faci, ești un zeu.
-Ai fost alături, negreșit,
-Ești un prieten bun, te-am prețuit.
-Din suflet, îți spun, mulțumesc,
-Pentru ajutorul tău, firesc.
-Ești minunat, un om de vis,
-Cu tine-n viață, sunt fericit.
-"""
+# input="""
+# Mulțumesc, dragul Andrei, mereu,
+# Pentru tot ce faci, ești un zeu.
+# Ai fost alături, negreșit,
+# Ești un prieten bun, te-am prețuit.
+# Din suflet, îți spun, mulțumesc,
+# Pentru ajutorul tău, firesc.
+# Ești minunat, un om de vis,
+# Cu tine-n viață, sunt fericit.
+# """
 
-print(analyze_lyrics(input))
+# print(analyze_lyrics(input))

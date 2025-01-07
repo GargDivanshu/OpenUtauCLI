@@ -56,22 +56,22 @@ def analyze_lyrics(lyrics):
 
     return '\n'.join(formatted_lines), all_breakdowns, total_syllables
 
-# # German lyrics
-lyrics = """
-Anna, deine Einladung war so nett,
-Zu deiner Party, ich freu mich jetzt.
-Wir werden tanzen und viel lachen,
-Die Zeit mit Freunden einfach machen.
-Danke für die Einladung, Anna,
-Ich komme gerne, ganz bestimmt, ja.
-Deine Party wird der Hit,
-Darauf freue ich mich mit.
-In München, im Englischen Garten,
-Wollen wir feiern und Spaß erwarten.
-Anna, du bist die beste Gastgeberin,
-Mit dir wird die Party festlich sein.
-"""
-print(analyze_lyrics(lyrics))
+# # # German lyrics
+# lyrics = """
+# Anna, deine Einladung war so nett,
+# Zu deiner Party, ich freu mich jetzt.
+# Wir werden tanzen und viel lachen,
+# Die Zeit mit Freunden einfach machen.
+# Danke für die Einladung, Anna,
+# Ich komme gerne, ganz bestimmt, ja.
+# Deine Party wird der Hit,
+# Darauf freue ich mich mit.
+# In München, im Englischen Garten,
+# Wollen wir feiern und Spaß erwarten.
+# Anna, du bist die beste Gastgeberin,
+# Mit dir wird die Party festlich sein.
+# """
+# print(analyze_lyrics(lyrics))
 # # Analyze lyrics
 # formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)
 
