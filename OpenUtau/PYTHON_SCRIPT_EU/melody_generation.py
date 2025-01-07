@@ -2330,7 +2330,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
 
                     print("about to start generate_melody_with_chord")
                     # [65, 69, 72]      
-                    generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], chord_notes, filename=f"outputs/sections/section_{bar_pair}.mid")
+                    generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], chord_notes, filename=f"/tmp/outputs/sections/section_{bar_pair}.mid")
                     
                     distance_based_octave_normalization(corrected_output_path, corrected_output_path)
                    
