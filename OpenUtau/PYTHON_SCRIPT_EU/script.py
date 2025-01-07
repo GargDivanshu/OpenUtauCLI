@@ -394,7 +394,7 @@ def lambda_handler(event, context):
                 process_message(body)
                 
                 print("notifying system api end for file ", OU_FINAL_FILENAME)
-                notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
+                notify_system_api(song_id, "utau_inference", f"end_{region}", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
 
                 
 

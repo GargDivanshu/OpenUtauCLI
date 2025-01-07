@@ -2431,7 +2431,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
             output_path=output_path,
             start_bar=start_bar,
             initial_gap_bars=0,
-            bpm=bpm
+            bpm=120
         )
 
     # Step 2: Combine all offset-adjusted MIDIs
