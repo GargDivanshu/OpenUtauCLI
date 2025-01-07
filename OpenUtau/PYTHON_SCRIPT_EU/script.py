@@ -270,6 +270,17 @@ def process_message(body):
                         print(f"Removed {file_path}")
                 except Exception as remove_error:
                     logger.error(f"Failed to remove {file_path}: {remove_error}")
+                    
+        sections_folder = "/tmp/outputs/adjusted_sections"
+        if os.path.exists(sections_folder):
+            for filename in os.listdir(sections_folder):
+                file_path = os.path.join(sections_folder, filename)
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        print(f"Removed {file_path}")
+                except Exception as remove_error:
+                    logger.error(f"Failed to remove {file_path}: {remove_error}")
 
         return {
         "statusCode": 200,
@@ -378,7 +389,7 @@ def lambda_handler(event, context):
                 # OU_FINAL_FILENAME = f"song_{song_id}_vocals"
                 # OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, f"{OU_FINAL_FILENAME}.wav")
                 
-                notify_system_api(song_id, "utau_inference", "start", None, None)
+                notify_system_api(song_id, "utau_inference", f"start_{region}", None, None)
 
                 process_message(body)
                 
