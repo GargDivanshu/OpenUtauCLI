@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, analyze_lyrics_cs, analyze_lyrics_sk, analyze_lyrics_el, analyze_lyrics_es
 import time
-from melody_generation import main_melody_generation
+from melody_generation import main_melody_generation, lyrics_time_calculation
     
     
 import os
@@ -93,7 +93,7 @@ class PathManager:
             "utaulogs": (self.local_log_path, self.s3_log_path),
             "midi": (self.local_midi_path, self.s3_midi_path),
             "lyrics_txt": (self.local_lyrics_path, self.s3_lyrics_txt_path),
-            # "lyrics_json": (self.local_lyrics_json_path, self.s3_lyrics_json_path),
+            "lyrics_json": (self.local_lyrics_json_path, self.s3_lyrics_json_path),
             "wav_duplicate": (self.local_export_path, self.s3_wav_duplicate_path),
             # "section_summary": (self.local_section_summary_path, self.s3_section_summary_path),
             "openutau_process": (self.local_system_log_path, self.s3_system_log_path)
@@ -186,6 +186,23 @@ def process_message(body):
         backing_midi_file_path = f"/tmp/{region}/backing_track/{region_name}Track{trackId}ChordMIDI.mid"
         bpm = bpm_data[region][trackId]
         main_melody_generation(formatted_lyrics, bpm, backing_midi_file_path, vocal_midi_file_path)
+        try: 
+            lyrics_time_calculation(
+            output_folder="/tmp/outputs/sections",
+            bpm=bpm,
+            input_text=lyrics,
+            initial_gap_bars=0,
+            output_json_path=OU_LYRICS_JSON_PATH
+            )
+            lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
+            upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
+            notify_system_api(song_id, "lyrics-json", "end", f"{song_id}_lyrics.json", None)
+        except Exception as e:
+            notify_system_api(song_id, "lyrics-json", "error", None, str(e), None)
+            print(f"An error occurred during lyrics timing calculation or upload: {e}")
+
+            # Optionally re-raise the exception if it needs to be handled elsewhere
+            raise
         end_time = time.monotonic()
         duration = (end_time - start_time)  
         logger.info("melody generation stats")
@@ -242,7 +259,7 @@ def process_message(body):
             OU_INFERENCE_LOCAL_EXPORT_PATH,
             OU_INFERENCE_LOCAL_USTX_PATH,
             f"/tmp/Logs/song_{song_id}_utaulogs.log",
-            # OU_LYRICS_JSON_PATH,
+            OU_LYRICS_JSON_PATH,
             # f"/tmp/section_summary.csv",
             # f"/tmp/lyrics_readable.txt",
         ]

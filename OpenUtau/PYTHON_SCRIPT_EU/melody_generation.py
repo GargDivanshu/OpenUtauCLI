@@ -13,7 +13,7 @@ from datetime import datetime
 from music21 import *
 import music21 as music21
 import itertools
-from helpers import save_markov_model, midi_files, calculate_syllable_counts, ALL_SINGERS_RANGE, clamp, quantize_to_scale, quantize_note_durations
+from helpers import save_markov_model, load_markov_model, midi_files, calculate_syllable_counts, ALL_SINGERS_RANGE, clamp, quantize_to_scale, quantize_note_durations
 import shutil
 
 
@@ -30,7 +30,9 @@ load_dotenv()
 #         print("min_range ", ACTIVE_SINGER_MIN_RANGE)
 #         ACTIVE_SINGER_MAX_RANGE = singer["max_range"]
 #         print("max_range ", ACTIVE_SINGER_MAX_RANGE)
-
+note_markov = load_markov_model("./saved_pickle/note_markov.pkl")
+dur_markov = load_markov_model("./saved_pickle/dur_markov.pkl")
+amp_markov = load_markov_model("./saved_pickle/amp_markov.pkl")
 
 
 
@@ -1911,6 +1913,7 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         enharmonic_key = key_signature.tonic.getEnharmonic()
         print(f"Key Signature converted from {key_signature} to {enharmonic_key}")
         key_signature = enharmonic_key
+        print(key_signature)
     
     detected_key = midi_analysis_result["key"].tonic.name
     detected_scale = midi_analysis_result["key"].mode
@@ -1929,11 +1932,11 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
     
     combined_notes, combined_durations, combined_amplitudes, combined_gate, combined_syllables = [], [], [], [], []
     
-    for filename in midi_files:
-        try:
+    # for filename in midi_files:
+    # try:
             # logging.info(f"Loading MIDI data from {filename}")
-            midi_input = MidiFileInputDevice(filename)
-            patterns = midi_input.read(quantize=1 / 8)  # Quantize to 1/8th notes
+            # midi_input = MidiFileInputDevice(filename)
+            # patterns = midi_input.read(quantize=1 / 8)  # Quantize to 1/8th notes
             # print("patterns ", patterns)
                 
             # Process lyrics into syllables
@@ -1942,65 +1945,67 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
             #     combined_syllables.extend(syllable_counts)
                 
             # combined_syllables = [tuple(syllable) for syllable in combined_syllables]
-            if input_note_sequence == None:
-                combined_notes.extend(list(patterns[EVENT_NOTE]))
-            else:
-                combined_notes = input_note_sequence
-            # print("Combined Notes after extending with EVENT_NOTE:", combined_notes)
-            combined_durations.extend(list(patterns[EVENT_DURATION]))
-            combined_amplitudes.extend(list(patterns[EVENT_AMPLITUDE]))
-            combined_gate.extend(list(patterns[EVENT_GATE]))
-        except ValueError as e:
-            logging.error(f"Error reading {filename}: {e}")
-            continue
+            # if input_note_sequence == None:
+            #     combined_notes.extend(list(patterns[EVENT_NOTE]))
+            # else:
+            #     combined_notes = input_note_sequence
+            # # print("Combined Notes after extending with EVENT_NOTE:", combined_notes)
+            # combined_durations.extend(list(patterns[EVENT_DURATION]))
+            # combined_amplitudes.extend(list(patterns[EVENT_AMPLITUDE]))
+            # combined_gate.extend(list(patterns[EVENT_GATE]))
+    # except ValueError as e:
+    #         logging.error(f"Error reading {filename}: {e}")
+            # continue
     
     
-        note_learner = MarkovLearner()
-        note_learner.learn_pattern(PSequence(combined_notes, 1))
+        # note_learner = MarkovLearner()
+        # note_learner.learn_pattern(PSequence(combined_notes, 1))
 
-        dur_learner = MarkovLearner()
-        dur_learner.learn_pattern(PSequence(combined_durations, 1))
+        # dur_learner = MarkovLearner()
+        # dur_learner.learn_pattern(PSequence(combined_durations, 1))
 
-        amp_learner = MarkovLearner()
-        amp_learner.learn_pattern(PInt(PRound(PScalar(PSequence(combined_amplitudes, 1)), -1)))
+        # amp_learner = MarkovLearner()
+        # amp_learner.learn_pattern(PInt(PRound(PScalar(PSequence(combined_amplitudes, 1)), -1)))
         
         # syllable_learner = MarkovLearner()
         # syllable_learner.learn_pattern(PSequence(combined_syllables, 1))
         
-        gate_learner = MarkovLearner()
-        gate_learner.learn_pattern(PSequence(combined_gate, 1))
+        # gate_learner = MarkovLearner()
+        # gate_learner.learn_pattern(PSequence(combined_gate, 1))
 
-        # Generate Markov-based patterns for the section
-        max_note_duration = 1.0
-        min_note_duration = 1 / 2
-        note_pattern = PSubsequence(note_learner.markov, 0, number_of_notes)
-        detected_key = str(detected_key).replace("-", "")
-        scale = Key(detected_key, detected_scale).scale
-        note_pattern = PMap(note_pattern, lambda note: quantize_to_scale(note, scale))
-        duration_pattern = PMap(PSubsequence(dur_learner.markov, 0, number_of_notes), lambda d: clamp(d, min_note_duration, max_note_duration))
-        amplitude_pattern = PSubsequence(amp_learner.markov, 0, number_of_notes)
+        # # Generate Markov-based patterns for the section
+        # max_note_duration = 1.0
+        # min_note_duration = 1 / 2
+        # note_pattern = PSubsequence(note_learner.markov, 0, number_of_notes)
+        # detected_key = str(detected_key).replace("-", "")
+        # scale = Key(detected_key, detected_scale).scale
+        # note_pattern = PMap(note_pattern, lambda note: quantize_to_scale(note, scale))
+        # duration_pattern = PMap(PSubsequence(dur_learner.markov, 0, number_of_notes), lambda d: clamp(d, min_note_duration, max_note_duration))
+        # amplitude_pattern = PSubsequence(amp_learner.markov, 0, number_of_notes)
         
         
         # Save section MIDI
-        section_midi_path = f"/tmp/outputs/sections/section_{bar_pair_name}.mid"
-        midi_output = MidiFileOutputDevice(section_midi_path)
-        timeline = Timeline(bpm, midi_output)
-        timeline.stop_when_done = True
-        timeline.schedule({
-            "note": note_pattern,
-            "duration": duration_pattern,
-            "amplitude": amplitude_pattern,
+    section_midi_path = f"outputs/sections/section_{bar_pair_name}.mid"
+    midi_output = MidiFileOutputDevice(section_midi_path)
+    timeline = Timeline(bpm, midi_output)
+    timeline.stop_when_done = True
+    timeline.schedule({
+            "note": PSubsequence(note_markov, 0, number_of_notes),
+            "duration": PSubsequence(dur_markov, 0, number_of_notes),
+            "amplitude": PSubsequence(amp_markov, 0, number_of_notes),
             "key": PSequence((detected_key, detected_scale))
             # "scale": PSequence([detected_scale], 1),
             # "gate": gate_pattern
         })
 
-        try:
-            # logging.info(f"Generating and saving Section {bar_pair_name}... with number of notes {number_of_notes}")
+    try:
+            logging.info(f"Generating and saving Section {bar_pair_name}... with number of notes {number_of_notes}")
             timeline.run()
             midi_output.write()
             time.sleep(1)
+            # Print the section MIDI file size
             section_file_size = os.path.getsize(section_midi_path)
+            logging.info(f"Section {bar_pair_name} saved to {section_midi_path}")
             logging.info(f"Section file size: {section_file_size} bytes")
             # Extract and print the sequence of notes in terms of pitch numbers
             try:
@@ -2015,8 +2020,8 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
                 logging.info(f"Sequence of notes (pitch numbers) in section {bar_pair_name}: {note_sequence}")
             except Exception as e:
                 logging.error(f"Error reading section MIDI file {section_midi_path}: {e}")
-            # logging.info(f"Section {bar_pair_name} saved to {section_midi_path}")
-        except KeyboardInterrupt:
+                
+    except KeyboardInterrupt:
             timeline.output_device.all_notes_off()
   
     
@@ -2156,6 +2161,111 @@ def combine_sectional_midis(
 #     quantize_note_durations(gap_output_path, quantized_output_path)
 #     adjust_large_intervals_in_midi(quantized_output_path, final_output_path, detected_key+str(reference_octave))
     
+
+   
+def lyrics_time_calculation(
+    output_folder="outputs/sections",
+    bpm=120,
+    input_text=None,
+    initial_gap_bars=0,
+    output_json_path="output_timing.json"
+):
+    """
+    Calculate the timing for each sectional MIDI and associate it with the parsed lyrics.
+
+    Parameters:
+    - output_folder: Folder containing the sectional MIDI files.
+    - bpm: Beats per minute for timing calculations.
+    - input_text: String containing lyrics in the specified format.
+    - initial_gap_bars: Initial gap in bars before the first section starts.
+    - output_json_path: Path to save the final JSON output.
+
+    Returns:
+    - A JSON-like list of dictionaries with timing and lyric line associations.
+    """
+    import pretty_midi
+    import os
+    import re
+    from decimal import Decimal
+    import json
+
+    if not input_text:
+        raise ValueError("Input text with lyrics is required.")
+
+    # Parse lyrics from input_text
+    lyrics = [line.strip() for line in input_text.splitlines() if line.strip()]
+    print(f"Parsed {len(lyrics)} lyric lines from input text: {lyrics}")
+
+    # Normalize paths
+    output_folder = os.path.normpath(output_folder)
+
+    # Find section files matching the pattern
+    pattern = re.compile(r"corrected_section_bar(\d+)-(\d+)\.mid")
+    section_files = sorted(
+        [f for f in os.listdir(output_folder) if pattern.match(f)],
+        key=lambda x: int(re.search(r"(\d+)-", x).group(1))  # Sort by starting bar
+    )
+
+    # Timing constants
+    beat_duration = Decimal(60) / Decimal(bpm)
+    bar_duration = beat_duration * 4  # 4 beats per bar
+
+    # Calculate timings and associate with lyrics
+    result = []
+    lyric_index = 0
+
+    for section_file in section_files:
+        # Extract starting and ending bars from the file name
+        match = pattern.match(section_file)
+        if not match:
+            continue
+        start_bar = int(match.group(1))
+        end_bar = int(match.group(2))
+
+        # Calculate offset in seconds
+        offset_bars = Decimal(start_bar - 1) + Decimal(initial_gap_bars)
+        offset_duration = offset_bars * bar_duration
+
+        # Load the MIDI file and calculate section length
+        section_path = os.path.join(output_folder, section_file)
+        section_midi = pretty_midi.PrettyMIDI(section_path)
+
+        # Calculate the duration of the section in seconds
+        section_length_seconds = max(note.end for instrument in section_midi.instruments for note in instrument.notes)
+
+        # Assign lyrics to the timing
+        if lyric_index < len(lyrics):
+            result.append({
+                "line": lyrics[lyric_index],
+                "startTime": float(offset_duration),
+                "duration": float(section_length_seconds)
+            })
+            lyric_index += 1
+        else:
+            print(f"Warning: No more lyrics left to assign for section {section_file}. Skipping...")
+
+        print(
+            f"Section: {section_file}, Start Bar: {start_bar}, "
+            f"Offset: {float(offset_duration):.2f}s, Duration: {float(section_length_seconds):.2f}s"
+        )
+
+    # Check if all lyrics were used
+    if lyric_index < len(lyrics):
+        print(f"Warning: Not all lyrics were assigned to sections. Remaining lines: {len(lyrics) - lyric_index}")
+
+    # Save result to JSON file
+    with open(output_json_path, "w") as json_file:
+        json.dump(result, json_file, indent=4)
+    print(f"Timing JSON saved to {output_json_path}.")
+
+    # Output result as JSON string for reference
+    json_output = json.dumps(result, indent=4)
+    print("Generated timing JSON:")
+    print(json_output)
+
+    return result
+
+
 
 def main_melody_generation(input_text, bpm, reference_backing_track, reference_vocal_track):
 
