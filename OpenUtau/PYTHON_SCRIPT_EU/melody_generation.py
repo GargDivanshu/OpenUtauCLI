@@ -1985,7 +1985,7 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         
         
         # Save section MIDI
-    section_midi_path = f"outputs/sections/section_{bar_pair_name}.mid"
+    section_midi_path = f"/tmp/outputs/sections/section_{bar_pair_name}.mid"
     midi_output = MidiFileOutputDevice(section_midi_path)
     timeline = Timeline(bpm, midi_output)
     timeline.stop_when_done = True
