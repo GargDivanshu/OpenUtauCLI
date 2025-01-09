@@ -473,7 +473,14 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerGerman2Phonemizer"
     elif region.lower() == "romania":
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerRomanianPhonemizer"
-    
+    elif region.lower() == "czech":
+        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerCzechPhonemizer"
+    elif region.lower() == "mexico":
+        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerSpanishPhonemizer"
+    elif region.lower() == "australia":
+        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer"
+    elif region.lower() == "hungary":
+        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerHungarianPhonemizer"
     
     
     try:

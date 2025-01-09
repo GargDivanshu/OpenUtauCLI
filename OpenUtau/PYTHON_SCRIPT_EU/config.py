@@ -51,10 +51,16 @@ def initialize_config():
     
     if region == "australia":
         ou_singer_num = "1"
-    elif region == "germany":
+    elif region == "czech":
         ou_singer_num = "2"
-    elif region == "romania":
+    elif region == "germany":
         ou_singer_num = "3"
+    elif region == "hungary":
+        ou_singer_num = "4"
+    elif region == "romania":
+        ou_singer_num = "5"
+    elif region == "mexico":
+        ou_singer_num = "6"
     
     config = Config(
         BUCKET_NAME=os.getenv("BUCKET_NAME"),
