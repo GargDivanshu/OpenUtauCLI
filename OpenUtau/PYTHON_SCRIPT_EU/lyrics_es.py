@@ -58,22 +58,40 @@ def analyze_lyrics(lyrics):
 
 # # # German lyrics
 # lyrics = """
-# Hoy es tu día, Mateo.
-# que cumplas muchos años más,
-# que la vida te regale
+# Mariana, gracias por llegar
+# a mi vida y siempre estar
+# en las buenas y en las malas,
+# tu amistad no se va.
+# Con tu alegría,
+# me contagias cada día.
+# Eres luz en mi camino,
+# un tesoro genuino.
+# Gracias, Mariana, en verdad
+# por tu apoyo y tu amistad.
+# Eres única y especial,
+# un regalo sin igual.
+# Te quiero agradecer,
+# por todo lo que haces crecer.
+# Tu amistad es mi bendición;
+# mi refugio, mi inspiración.
+# """
+# lyrics="""
+# Hoy es tu día, Mateo,
+# que cumplas muchos más,
+# que la vida te regale,
 # felicidad y paz.
-# Que en este año nuevo
-# se cumplan tus deseos
-# y que siempre te rodees
-# solo de amigos buenos
-# Feliz cumple Mateo,
+# Que en este año nuevo,
+# se cumplan tus deseos,
+# y que siempre te rodees,
+# solo de amigos buenos.
+# Feliz cumpleaños, Mateo,
 # que te la pases genial,
-# que hoy sea un día especial
+# que sea un día muy especial,
 # lleno de alegría sin igual.
-# Feliz cumple Mateo,
-# que te la pases genial,
-# que hoy sea un día especial
-# lleno de alegría sin igual.
+# Que el futuro sea brillante,
+# y tus sueños sean realidad,
+# que sigas celebrando siempre,
+# con amor y felicidad.
 # """
 # print(analyze_lyrics(lyrics))
 # # Analyze lyrics

@@ -58,18 +58,33 @@ def analyze_lyrics(lyrics):
 
 # # # German lyrics
 # lyrics = """
-# Anna, deine Einladung war so nett,
-# Zu deiner Party, ich freu mich jetzt.
-# Wir werden tanzen und viel lachen,
-# Die Zeit mit Freunden einfach machen.
-# Danke für die Einladung, Anna,
-# Ich komme gerne, ganz bestimmt, ja.
-# Deine Party wird der Hit,
-# Darauf freue ich mich mit.
-# In München, im Englischen Garten,
-# Wollen wir feiern und Spaß erwarten.
-# Anna, du bist die beste Gastgeberin,
-# Mit dir wird die Party festlich sein.
+# An deiner Seite fühl ich mich frei,
+# Du bist die Sonne in meinem Mai.
+# Deine Liebe gibt mir so viel Kraft,
+# Mama, du bist, was das Leben schafft.
+# Danke, liebe Mama, für jedes Jahr,
+# Für jeden Moment, der so besonders war.
+# Mit dir ist das Leben ein heller Tag,
+# Deine Wärme bleibt, egal was kommt, stark.
+# Im Garten, wo wir die Zeit oft teilen,
+# Lass mich dir danken für all dein Heilen.
+# Dein Lächeln gibt mir so viel Mut,
+# Mama, bei dir ist alles gut.
+# """
+
+# lyrics="""
+# In jeder Stunde, da bist du hier,
+# Beste Freunde, das sind wir.
+# Dein Lachen bringt die Sonne hervor,
+# Mit dir fühl ich mich nie verloren.
+# Danke, mein Freund, für die schöne Zeit,
+# Du gibst mir Halt, bist immer bereit.
+# Mit dir zu lachen, das macht mich froh,
+# Egal wo wir sind, das bleibt immer so.
+# Ob Regen oder Sonnenschein,
+# Mit dir wird jeder Tag ein Fest sein.
+# Du bist die Stärke, die mir oft fehlt,
+# Unsere Freundschaft ist, was zählt
 # """
 # print(analyze_lyrics(lyrics))
 # # Analyze lyrics
