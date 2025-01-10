@@ -1887,7 +1887,7 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
         print(f"number of notes is {total_notes} so we will reduce max_note_duration to 1/2")
         max_note_duration = 1/2
         min_note_duration = 1 / 2
-        duration_pattern = PMap(PSubsequence(dur_markov, 0, number_of_notes), lambda d: clamp(d, min_note_duration, max_note_duration))
+        duration_pattern = PMap(PSubsequence(dur_markov, 0, total_notes), lambda d: clamp(d, min_note_duration, max_note_duration))
     
 
     # Write to MIDI using Isobar
