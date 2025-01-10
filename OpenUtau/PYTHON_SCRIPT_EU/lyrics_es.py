@@ -93,6 +93,24 @@ def analyze_lyrics(lyrics):
 # que sigas celebrando siempre,
 # con amor y felicidad.
 # """
+# lyrics = """
+# Sofía, amiga fiel,
+# siempre estás cuando te llamo,
+# un consejo, una ayuda,
+# tu amistad es mi aliento.
+# En todo momento,
+# sé que cuento contigo,
+# tu apoyo es mi regalo,
+# que ilumina mi camino.
+# Gracias, Sofía, de corazón,
+# por tu amistad única,
+# eres un tesoro,
+# siempre te cuidaré.
+# Tu sonrisa, tu bondad,
+# tu energía especial,
+# Sofía, gracias por ser tú,
+# mi amiga más leal.
+# """
 # print(analyze_lyrics(lyrics))
 # # Analyze lyrics
 # formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)

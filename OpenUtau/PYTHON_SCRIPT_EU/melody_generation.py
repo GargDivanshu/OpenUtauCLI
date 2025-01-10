@@ -1827,6 +1827,7 @@ def update_bar_pair_info_with_note_sequence(bar_pair_info, first_bar_pair, corre
 
 
 
+
 def generate_melody_with_chord(input_sequence, input_duration_sequence, input_amplitude_sequence, total_notes, chord_notes, filename="generated_melody.mid"):
     """
     Generate a melody based on the given sequence and extend it using a chord for additional notes.
@@ -1840,9 +1841,9 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
     # Initialize logging
     logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
 
-    # logging.info(f"Input sequence: {input_sequence}")
-    # logging.info(f"Chord notes for extension: {chord_notes}")
-    # logging.info(f"Total desired notes: {total_notes}")
+    logging.info(f"Input sequence: {input_sequence}")
+    logging.info(f"Chord notes for extension: {chord_notes}")
+    logging.info(f"Total desired notes: {total_notes}")
 
     # Create the initial note sequence
     generated_notes = list(input_sequence)
@@ -1854,9 +1855,9 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
         generated_notes = input_sequence[:total_notes]
         generated_duration = input_duration_sequence[:total_notes]
         generated_amplitude = input_amplitude_sequence[:total_notes]
-        # logging.info(f"Trimmed sequence: {generated_notes}")
-        # logging.info(f"Trimmed sequence: {generated_duration}")
-        # logging.info(f"Trimmed sequence: {generated_amplitude}")
+        logging.info(f"Trimmed sequence: {generated_notes}")
+        logging.info(f"Trimmed sequence: {generated_duration}")
+        logging.info(f"Trimmed sequence: {generated_amplitude}")
 
     # Extend the sequence with chord notes if more notes are required
     while len(generated_notes) < total_notes:
@@ -1871,7 +1872,9 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
         next_note = 1.0
         generated_duration.append(next_note)
     
-    # logging.info(f"Final generated sequence: {generated_notes}")
+    logging.info(f"Final generated sequence: {generated_notes}")
+    
+    
 
     # Create a pattern for the notes
     note_pattern = PSequence(generated_notes, 1)
@@ -1879,6 +1882,13 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
     # Define a simple amplitude and duration pattern
     amplitude_pattern = PSequence(generated_amplitude, 1)
     duration_pattern = PSequence(generated_duration, 1)
+    max_note_duration = 1.0
+    if total_notes >= 13:
+        print(f"number of notes is {total_notes} so we will reduce max_note_duration to 1/2")
+        max_note_duration = 1/2
+        min_note_duration = 1 / 2
+        duration_pattern = PMap(PSubsequence(dur_markov, 0, number_of_notes), lambda d: clamp(d, min_note_duration, max_note_duration))
+    
 
     # Write to MIDI using Isobar
     output = MidiFileOutputDevice(filename)
@@ -1899,6 +1909,7 @@ def generate_melody_with_chord(input_sequence, input_duration_sequence, input_am
     
     
 
+
 def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, reference_octave, backing_analysis, vocal_analysis, consolidated_data, bpm=120, input_note_sequence=None):
     logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
     
@@ -1916,6 +1927,8 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         print(key_signature)
     
     detected_key = midi_analysis_result["key"].tonic.name
+    if "-" in detected_key:
+        detected_key = midi_analysis_result["key"].getEnharmonic()
     detected_scale = midi_analysis_result["key"].mode
     # chord_progression = midi_analysis_result["chords"]
     pseudo_chords = midi_analysis_result["pseudo_chords"]
@@ -1974,25 +1987,29 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         # gate_learner.learn_pattern(PSequence(combined_gate, 1))
 
         # # Generate Markov-based patterns for the section
-        # max_note_duration = 1.0
-        # min_note_duration = 1 / 2
+    max_note_duration = 1.0
+    if number_of_notes >= 13:
+        print(f"number of notes is {number_of_notes} so we will reduce max_note_duration to 1/2")
+        max_note_duration = 1/2
+    min_note_duration = 1 / 2
         # note_pattern = PSubsequence(note_learner.markov, 0, number_of_notes)
-        # detected_key = str(detected_key).replace("-", "")
-        # scale = Key(detected_key, detected_scale).scale
-        # note_pattern = PMap(note_pattern, lambda note: quantize_to_scale(note, scale))
-        # duration_pattern = PMap(PSubsequence(dur_learner.markov, 0, number_of_notes), lambda d: clamp(d, min_note_duration, max_note_duration))
-        # amplitude_pattern = PSubsequence(amp_learner.markov, 0, number_of_notes)
+    # detected_key = str(detected_key).replace("-", "")
+    # enharmonic_key = key_signature.tonic.getEnharmonic()
+    scale = Key(detected_key, detected_scale).scale
+    note_pattern = PMap(note_markov, lambda note: quantize_to_scale(note, scale))
+    duration_pattern = PMap(PSubsequence(dur_markov, 0, number_of_notes), lambda d: clamp(d, min_note_duration, max_note_duration))
+    amplitude_pattern = PSubsequence(amp_markov, 0, number_of_notes)
         
         
         # Save section MIDI
-    section_midi_path = f"/tmp/outputs/sections/section_{bar_pair_name}.mid"
+    section_midi_path = f"outputs/sections/section_{bar_pair_name}.mid"
     midi_output = MidiFileOutputDevice(section_midi_path)
     timeline = Timeline(bpm, midi_output)
     timeline.stop_when_done = True
     timeline.schedule({
-            "note": PSubsequence(note_markov, 0, number_of_notes),
-            "duration": PSubsequence(dur_markov, 0, number_of_notes),
-            "amplitude": PSubsequence(amp_markov, 0, number_of_notes),
+            "note": PSubsequence(note_pattern, 0, number_of_notes),
+            "duration": PSubsequence(duration_pattern, 0, number_of_notes),
+            "amplitude": PSubsequence(amplitude_pattern, 0, number_of_notes),
             "key": PSequence((detected_key, detected_scale))
             # "scale": PSequence([detected_scale], 1),
             # "gate": gate_pattern
@@ -2023,6 +2040,7 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
                 
     except KeyboardInterrupt:
             timeline.output_device.all_notes_off()
+            
   
     
 def add_offset_to_section(
