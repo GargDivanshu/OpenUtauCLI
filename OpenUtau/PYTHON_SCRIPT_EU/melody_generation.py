@@ -1927,8 +1927,9 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         print(key_signature)
     
     detected_key = midi_analysis_result["key"].tonic.name
-    if "-" in detected_key:
-        detected_key = midi_analysis_result["key"].getEnharmonic()
+    # if "-" in detected_key:
+    #     detected_key = midi_analysis_result["key"].getEnharmonic()
+    detected_key = str(detected_key).replace("-", "")
     detected_scale = midi_analysis_result["key"].mode
     # chord_progression = midi_analysis_result["chords"]
     pseudo_chords = midi_analysis_result["pseudo_chords"]
