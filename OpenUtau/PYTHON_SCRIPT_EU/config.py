@@ -58,18 +58,18 @@ def initialize_config():
     is_lambda_env = IS_LAMBDA_ENV  # Modify this as needed for your environment check
     ou_singer_num = "1"
     
-    if region == "australia":
-        ou_singer_num = "1"
-    elif region == "czech":
-        ou_singer_num = "2"
-    elif region == "germany":
-        ou_singer_num = "3"
-    elif region == "hungary":
-        ou_singer_num = "4"
-    elif region == "romania":
-        ou_singer_num = "5"
-    elif region == "mexico":
-        ou_singer_num = "6"
+    # if region == "australia":
+    #     ou_singer_num = "1"
+    # elif region == "czech":
+    #     ou_singer_num = "2"
+    # elif region == "germany":
+    #     ou_singer_num = "3"
+    # elif region == "hungary":
+    #     ou_singer_num = "4"
+    # elif region == "romania":
+    #     ou_singer_num = "5"
+    # elif region == "mexico":
+    #     ou_singer_num = "6"
     
     config = Config(
         BUCKET_NAME=os.getenv("BUCKET_NAME"),
