@@ -39,7 +39,7 @@ bpm_data['romania'][10] = 100
 class Config:
     BUCKET_NAME: str
     REGION_NAME: str
-    IS_LAMBDA_ENV: bool
+    is_lambda_env: bool
     SQS_QUEUE_URL: str
     OU_INFERENCE_LOCAL_MIDI_PATH: str
     OU_INFERENCE_LOCAL_LYRICS_PATH: str
@@ -74,7 +74,7 @@ def initialize_config():
     config = Config(
         BUCKET_NAME=os.getenv("BUCKET_NAME"),
         REGION_NAME=os.getenv("REGION_NAME"),
-        IS_LAMBDA_ENV=IS_LAMBDA_ENV,
+        is_lambda_env=IS_LAMBDA_ENV,
         SQS_QUEUE_URL=os.getenv("SQS_QUEUE_URL"),
         OU_INFERENCE_LOCAL_MIDI_PATH="/tmp/midi.mid" if is_lambda_env else "tmp/midi.mid",
         OU_INFERENCE_LOCAL_LYRICS_PATH="/tmp/lyrics.txt" if is_lambda_env else "tmp/lyrics.txt",

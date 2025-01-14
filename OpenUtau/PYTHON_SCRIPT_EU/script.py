@@ -31,7 +31,7 @@ from config import Config, initialize_config, bpm_data
 # Initialize the configuration
 config = initialize_config()
 
-is_lambda_env = config.IS_LAMBDA_ENV
+is_lambda_env = config.is_lambda_env
 if is_lambda_env:
     os.makedirs("/tmp/Logs", exist_ok=True)
     with open("/tmp/Logs/openutau_process.log", "w") as log_file:
@@ -65,7 +65,7 @@ region_lang = os.getenv("REGION_PROD")
 BUCKET_NAME = config.BUCKET_NAME
 bucket_name = BUCKET_NAME # For consistency with existing code, some nonsense @divanshu can we clean it up?
 REGION_NAME = config.REGION_NAME
-IS_LAMBDA_ENV = config.IS_LAMBDA_ENV
+# IS_LAMBDA_ENV = config.is_lambda_env
 SQS_QUEUE_URL = config.SQS_QUEUE_URL
 OU_INFERENCE_LOCAL_MIDI_PATH = config.OU_INFERENCE_LOCAL_MIDI_PATH
 OU_INFERENCE_LOCAL_LYRICS_PATH = config.OU_INFERENCE_LOCAL_LYRICS_PATH
