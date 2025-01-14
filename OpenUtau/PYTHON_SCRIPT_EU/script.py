@@ -338,15 +338,28 @@ def lambda_handler(event, context):
         local_tmp_path = "/tmp/"
         os.makedirs(local_base_path, exist_ok=True)
         region = os.getenv('REGION_PROD')
+        
+        region_singer_mapping = {
+        "australia": "Singers/au_singer/",
+        "romania": "Singers/ro_singer/",
+        "germany": "Singers/de_singer/",
+        "mexico": "Singers/es_singer/",
+        "hungary": "Singers/hu_singer/",
+        "czech": "Singers/cz_singer/"
+    }
 
         # Define folder mappings
         folders_to_download = {
-            "Singers/": os.path.join(local_base_path, "Singers"),
+            # "Singers/": os.path.join(local_base_path, "Singers"),
             "Dependencies/": os.path.join(local_base_path, "Dependencies"),
             "Plugins/": os.path.join(local_base_path, "Plugins"),
             "germany/": os.path.join(local_tmp_path, "germany"),
             "romania/": os.path.join(local_tmp_path, "romania"),
         }
+        if region in region_singer_mapping:
+            folders_to_download[region_singer_mapping[region]] = os.path.join(
+                local_base_path, region_singer_mapping[region]
+            )
         
         # if region == "germany":
         #     folders_to_download["germany/"] = os.path.join(local_tmp_path, "germany")

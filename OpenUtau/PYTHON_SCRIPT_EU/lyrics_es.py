@@ -93,60 +93,74 @@ def analyze_lyrics(lyrics):
 # que sigas celebrando siempre,
 # con amor y felicidad.
 # """
+lyrics = """
+Sofía, amiga fiel,
+siempre estás cuando te llamo,
+un consejo, una ayuda,
+tu amistad es mi aliento.
+En todo momento,
+sé que cuento contigo,
+tu apoyo es mi regalo,
+que ilumina mi camino.
+Gracias, Sofía, de corazón,
+por tu amistad única,
+eres un tesoro,
+siempre te cuidaré.
+Tu sonrisa, tu bondad,
+tu energía especial,
+Sofía, gracias por ser tú,
+mi amiga más leal.
+"""
 # lyrics = """
-# Sofía, amiga fiel,
-# siempre estás cuando te llamo,
-# un consejo, una ayuda,
-# tu amistad es mi aliento.
-# En todo momento,
-# sé que cuento contigo,
-# tu apoyo es mi regalo,
-# que ilumina mi camino.
-# Gracias, Sofía, de corazón,
-# por tu amistad única,
-# eres un tesoro,
-# siempre te cuidaré.
-# Tu sonrisa, tu bondad,
-# tu energía especial,
-# Sofía, gracias por ser tú,
-# mi amiga más leal.
+# Fernando, mi querido amigo, 
+# eres team calor, lo admito, 
+# hablas hasta por los codos, 
+# a veces un poco extremo. 
+# No te gusta la basura, 
+# odias esa tarea, 
+# pero siempre algún dato, 
+# interesante nos entregas.
+# Bailas con tanto estilo, 
+# es lo que más aprecio, 
+# amas a todos los perros, 
+# tu corazón tan sincero. 
+# Fernando, con todo mi ser, 
+# te digo eres genial, 
+# con cariño, Bubulubu, 
+# nunca dejes de brillar.
 # """
-lyrics = """
-Fernando, mi querido amigo, 
-eres team calor, lo admito, 
-hablas hasta por los codos, 
-a veces un poco extremo. 
-No te gusta la basura, 
-odias esa tarea, 
-pero siempre algún dato, 
-interesante nos entregas.
-Bailas con tanto estilo, 
-es lo que más aprecio, 
-amas a todos los perros, 
-tu corazón tan sincero. 
-Fernando, con todo mi ser, 
-te digo eres genial, 
-con cariño, Bubulubu, 
-nunca dejes de brillar.
-"""
-lyrics = """
-Hoy celebro tu cumpleaños,
-en Puebla habrá festejo.
-Guillermo, eres especial,
-que se te cumplan tus sueños.
-TE DE SE O
-Que tu risa no se acabe,
-cada meta que la alcances,
-y que la vida te abrace.
-Feliz día para ti,
-con amor y porvenir.
-Eres luz en cada paso,
-tu alegría siempre es abrazo.
-Tus sueños se cumplirán,
-llenos de felicidad.
-Hoy la vida es para ti,
-siempre brilla y sé feliz.
-"""
+# lyrics = """
+# Hoy celebro tu cumpleaños,
+# en Puebla habrá festejo.
+# Guillermo, eres especial,
+# que se te cumplan tus sueños.
+# TE DE SE O
+# Que tu risa no se acabe,
+# cada meta que la alcances,
+# y que la vida te abrace.
+# Feliz día para ti,
+# con amor y porvenir.
+# Eres luz en cada paso,
+# tu alegría siempre es abrazo.
+# Tus sueños se cumplirán,
+# llenos de felicidad.
+# Hoy la vida es para ti,
+# siempre brilla y sé feliz.
+# """
+# lyrics = """
+# Mariana, gracias por llegar
+# a mi vida y siempre estar
+# en las buenas y en las malas,
+# tu amistad no se va.
+# Con tu alegría,
+# me contagias cada día.
+# Eres luz en mi camino,
+# un tesoro genuino.
+# Gracias, Mariana, en verdad
+# por tu apoyo y tu amistad.
+# Eres única y especial,
+# un regalo sin igual.
+# """
 # print(analyze_lyrics(lyrics))
 # # Analyze lyrics
 # formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)
