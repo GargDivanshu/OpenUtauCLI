@@ -23,7 +23,7 @@ region = os.getenv("REGION_PROD")
 # IS_LAMBDA_ENV 
 # IS_LAMBDA_ENV = False
 # Configure logging
-is_lambda_env = config.IS_LAMBDA_ENV
+is_lambda_env = config.is_lambda_env
 # Get the directory where the script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -330,7 +330,7 @@ def clean_tmp_wav_file():
     """
     # Determine the correct tmp directory path for both Unix and Windows
     tmp_dir = ''
-    tmp_dir = "/tmp" if IS_LAMBDA_ENV else "/tmp"
+    tmp_dir = "/tmp" if is_lambda_env else "/tmp"
 
     # Search for any .wav files in the tmp directory
     wav_files = glob.glob(os.path.join(tmp_dir, "*.wav"))
