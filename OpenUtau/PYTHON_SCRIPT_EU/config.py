@@ -4,6 +4,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 region = os.getenv("REGION_PROD")
+IS_LAMBDA_ENV = os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+if IS_LAMBDA_ENV != None:
+    IS_LAMBDA_ENV = True
+else:
+    IS_LAMBDA_ENV = False
 
 bpm_data = {}
 bpm_data['germany'] = {}
@@ -44,9 +49,13 @@ class Config:
     OU_INFERENCE_LOCAL_EXPORT_PATH: str
     OU_INFERENCE_LOCAL_USTX_PATH: str
     OU_LYRICS_JSON_PATH: str
+    OU_PROCESS_LOGS: str
+    SECTIONAL_MIDI_FOLDER: str
+    ADJUSTED_SECTIONAL_MIDI_FOLDER: str
+    OUTPUT_FOLDER: str
 
 def initialize_config():
-    is_lambda_env = True  # Modify this as needed for your environment check
+    is_lambda_env = IS_LAMBDA_ENV  # Modify this as needed for your environment check
     ou_singer_num = "1"
     
     if region == "australia":
@@ -65,7 +74,7 @@ def initialize_config():
     config = Config(
         BUCKET_NAME=os.getenv("BUCKET_NAME"),
         REGION_NAME=os.getenv("REGION_NAME"),
-        IS_LAMBDA_ENV=is_lambda_env,
+        IS_LAMBDA_ENV=IS_LAMBDA_ENV,
         SQS_QUEUE_URL=os.getenv("SQS_QUEUE_URL"),
         OU_INFERENCE_LOCAL_MIDI_PATH="/tmp/midi.mid" if is_lambda_env else "tmp/midi.mid",
         OU_INFERENCE_LOCAL_LYRICS_PATH="/tmp/lyrics.txt" if is_lambda_env else "tmp/lyrics.txt",
@@ -74,7 +83,11 @@ def initialize_config():
         OU_FINAL_FILENAME="",
         OU_INFERENCE_LOCAL_EXPORT_PATH="",
         OU_INFERENCE_LOCAL_USTX_PATH="",
-        OU_LYRICS_JSON_PATH=""
+        OU_LYRICS_JSON_PATH="/tmp/lyrics.json" if is_lambda_env else "tmp/lyrics.json",
+        OU_PROCESS_LOGS="/tmp/Logs/openutau_process.log" if is_lambda_env else "tmp/Logs/openutau_process.log",
+        SECTIONAL_MIDI_FOLDER="/tmp/outputs/sections" if is_lambda_env else "tmp/outputs/sections",
+        ADJUSTED_SECTIONAL_MIDI_FOLDER="/tmp/outputs/adjusted_sections" if is_lambda_env else "tmp/outputs/adjusted_sections",
+        OUTPUT_FOLDER="/tmp/outputs" if is_lambda_env else "tmp/outputs"
     )
     
     # Return initialized config

@@ -26,26 +26,40 @@ import logging
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
-from config import Config, initialize_config, bpm_data
+from config import Config, initialize_config, bpm_data, IS_LAMBDA_ENV
 
+# Initialize the configuration
+config = initialize_config()
 
-os.makedirs("/tmp/Logs", exist_ok=True)
-os.makedirs("/tmp/OpenUtau", exist_ok=True)
-os.makedirs("/tmp/OpenUtau/Logs", exist_ok=True)
-os.makedirs("/tmp/outputs", exist_ok=True)
-os.makedirs("/tmp/outputs/sections", exist_ok=True)
-os.makedirs("/tmp/outputs/adjusted_sections", exist_ok=True)
+is_lambda_env = config.IS_LAMBDA_ENV
+if is_lambda_env:
+    os.makedirs("/tmp/Logs", exist_ok=True)
+    with open("/tmp/Logs/openutau_process.log", "w") as log_file:
+        pass  # This creates an empty log file if it doesn't exist
+    os.makedirs("/tmp/OpenUtau", exist_ok=True)
+    os.makedirs("/tmp/OpenUtau/Logs", exist_ok=True)
+    os.makedirs("/tmp/outputs", exist_ok=True)
+    os.makedirs("/tmp/outputs/sections", exist_ok=True)
+    os.makedirs("/tmp/outputs/adjusted_sections", exist_ok=True)
+else:
+    os.makedirs("tmp/Logs", exist_ok=True)
+    with open("tmp/Logs/openutau_process.log", "w") as log_file:
+        pass  # This creates an empty log file if it doesn't exist
+    os.makedirs("tmp/OpenUtau", exist_ok=True)
+    os.makedirs("tmp/OpenUtau/Logs", exist_ok=True)
+    os.makedirs("tmp/outputs", exist_ok=True)
+    os.makedirs("tmp/outputs/sections", exist_ok=True)
+    os.makedirs("tmp/outputs/adjusted_sections", exist_ok=True)
 # Load environment variables from .env file
 load_dotenv()
 
 # Configure logging
-log_file = "/tmp/Logs/openutau_process.log"
+log_file = config.OU_PROCESS_LOGS
 logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 region_lang = os.getenv("REGION_PROD")
 
-# Initialize the configuration
-config = initialize_config()
+
 
 # Assign global variables based on the config struct
 BUCKET_NAME = config.BUCKET_NAME
@@ -140,7 +154,7 @@ def process_message(body):
         OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join("/tmp", f"{OU_FINAL_FILENAME}.wav")
         OU_INFERENCE_LOCAL_USTX_PATH = os.path.join("/tmp", f"{OU_FINAL_FILENAME}.ustx")
         # OU_LYRICS_JSON_PATH = os.path.join("/tmp", "lyrics.json")
-        OU_LYRICS_JSON_PATH = "/tmp/lyrics.json"
+        # OU_LYRICS_JSON_PATH = "/tmp/lyrics.json"
         
         formatted_lyrics = ""
         syllable_breakdown = ''

@@ -15,9 +15,14 @@ import music21 as music21
 import itertools
 from helpers import save_markov_model, load_markov_model, midi_files, calculate_syllable_counts, ALL_SINGERS_RANGE, clamp, quantize_to_scale, quantize_note_durations
 import shutil
+from config import initialize_config
 
 
 load_dotenv()
+config = initialize_config()
+SECTIONAL_MIDI_FOLDER = config.SECTIONAL_MIDI_FOLDER 
+ADJUSTED_SECTIONAL_MIDI_FOLDER = config.ADJUSTED_SECTIONAL_MIDI_FOLDER
+OUTPUT_FOLDER = config.OUTPUT_FOLDER
 # MODE = os.getenv("MODE")
 # ACTIVE_SINGER = os.getenv("ACTIVE_SINGER")
 # ACTIVE_SINGER_MIN_RANGE = 45
@@ -30,9 +35,15 @@ load_dotenv()
 #         print("min_range ", ACTIVE_SINGER_MIN_RANGE)
 #         ACTIVE_SINGER_MAX_RANGE = singer["max_range"]
 #         print("max_range ", ACTIVE_SINGER_MAX_RANGE)
-note_markov = load_markov_model("./saved_pickle/note_markov.pkl")
-dur_markov = load_markov_model("./saved_pickle/dur_markov.pkl")
-amp_markov = load_markov_model("./saved_pickle/amp_markov.pkl")
+
+
+# Get the directory where the script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Now these variables will hold the correct absolute paths
+note_markov = load_markov_model(os.path.join(script_dir, "./saved_pickle/note_markov.pkl"))
+dur_markov = load_markov_model(os.path.join(script_dir, "./saved_pickle/dur_markov.pkl"))
+amp_markov = load_markov_model(os.path.join(script_dir, "./saved_pickle/amp_markov.pkl"))
 
 
 
@@ -88,99 +99,6 @@ def note_to_midi(note, chord_type):
     # Assign proper octaves
     return [root_midi, third, fifth]
 
-
-  
-# def group_chord_progressions(json_data):
-#     """
-#     Group bars in pairs and extract unique chord progressions dynamically, 
-#     including major and minor distinctions based on the scale.
-#     """
-#     from music21 import key, chord
-
-#     bar_wise_chords = json_data["bar_wise_chords"]
-#     detected_key = json_data["key"].name  # e.g., "A#"
-#     detected_scale = "major"  # Placeholder: Assume "major"
-
-#     # Analyze scale (major or minor)
-#     if detected_scale.lower() == "major":
-#         is_major_scale = True
-#     else:
-#         is_major_scale = False
-
-#     # Group bars in pairs
-#     grouped_chord_progressions = []
-#     bars = sorted(bar_wise_chords.keys())
-#     for i in range(0, len(bars), 2):
-#         bar1 = bars[i]
-#         bar2 = bars[i + 1] if i + 1 < len(bars) else None
-
-#         # Combine chords from two bars
-#         chords = bar_wise_chords[bar1]
-#         if bar2:
-#             chords.extend(bar_wise_chords[bar2])
-
-#         # Simplify chords and include major/minor quality
-#         simplified_chords = []
-#         for c in chords:
-#             root = c.split('-')[0]  # Get the root (e.g., "A#", "C")
-#             quality = "major" if is_major_scale else "minor"
-#             if "minor" in c:
-#                 quality = "minor"
-#             simplified_chords.append(f"{root}{quality}")
-
-#         grouped_chord_progressions.append(simplified_chords)
-
-#     # Deduplicate chord progressions
-#     unique_progressions = []
-#     for progression in grouped_chord_progressions:
-#         if progression not in unique_progressions:
-#             unique_progressions.append(progression)
-
-#     return {
-#         "detected_key": detected_key,
-#         "detected_scale": detected_scale,
-#         "unique_progressions": unique_progressions
-#     }
-
-    
-
-# def replace_happy_progressions(json_data, target_list):
-#     """
-#     Replace hardcoded happy progressions with dynamically detected progressions,
-#     including major and minor chord qualities.
-#     """
-#     chord_data = group_chord_progressions(json_data)
-#     detected_key = chord_data["detected_key"]
-#     detected_scale = chord_data["detected_scale"]
-#     # detected_key = "F"
-#     # detected_scale = "major"
-#     unique_progressions = chord_data["unique_progressions"]
-
-#     print("Detected Key:", detected_key)
-#     print("Detected Scale:", detected_scale)
-#     print("Unique Progressions:", unique_progressions)
-
-#     # Replace target_list dynamically
-#     target_list.clear()
-#     for progression in unique_progressions:
-#         midi_notes = []
-#         for chord_name in progression:
-#             root, quality = chord_name[:-5], chord_name[-5:]  # Split root and quality
-#             chord_notes = get_chord_notes(root, quality)
-#             midi_notes.append([note_to_midi(note) for note in chord_notes])
-#         target_list.append(midi_notes)
-
-
-# def get_chord_notes(root, quality):
-#     """
-#     Get the notes of a chord based on its root and quality.
-#     """
-#     if quality == "major":
-#         return [root, f"{root}3", f"{root}5"]
-#     elif quality == "minor":
-#         return [root, f"{root}3-", f"{root}5"]
-#     else:
-#         return [root]
 
 def group_bars_in_pairs(bar_data):
     """
@@ -1926,7 +1844,7 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         key_signature = enharmonic_key
         print(key_signature)
     
-    detected_key = midi_analysis_result["key"].tonic.name
+    detected_key = key_signature.tonic.name
     # if "-" in detected_key:
     #     detected_key = midi_analysis_result["key"].getEnharmonic()
     detected_key = str(detected_key).replace("-", "")
@@ -1946,48 +1864,7 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
     
     combined_notes, combined_durations, combined_amplitudes, combined_gate, combined_syllables = [], [], [], [], []
     
-    # for filename in midi_files:
-    # try:
-            # logging.info(f"Loading MIDI data from {filename}")
-            # midi_input = MidiFileInputDevice(filename)
-            # patterns = midi_input.read(quantize=1 / 8)  # Quantize to 1/8th notes
-            # print("patterns ", patterns)
-                
-            # Process lyrics into syllables
-            # for item in lyrics:
-            #     syllable_counts = calculate_syllable_counts(item["lyrics"])
-            #     combined_syllables.extend(syllable_counts)
-                
-            # combined_syllables = [tuple(syllable) for syllable in combined_syllables]
-            # if input_note_sequence == None:
-            #     combined_notes.extend(list(patterns[EVENT_NOTE]))
-            # else:
-            #     combined_notes = input_note_sequence
-            # # print("Combined Notes after extending with EVENT_NOTE:", combined_notes)
-            # combined_durations.extend(list(patterns[EVENT_DURATION]))
-            # combined_amplitudes.extend(list(patterns[EVENT_AMPLITUDE]))
-            # combined_gate.extend(list(patterns[EVENT_GATE]))
-    # except ValueError as e:
-    #         logging.error(f"Error reading {filename}: {e}")
-            # continue
     
-    
-        # note_learner = MarkovLearner()
-        # note_learner.learn_pattern(PSequence(combined_notes, 1))
-
-        # dur_learner = MarkovLearner()
-        # dur_learner.learn_pattern(PSequence(combined_durations, 1))
-
-        # amp_learner = MarkovLearner()
-        # amp_learner.learn_pattern(PInt(PRound(PScalar(PSequence(combined_amplitudes, 1)), -1)))
-        
-        # syllable_learner = MarkovLearner()
-        # syllable_learner.learn_pattern(PSequence(combined_syllables, 1))
-        
-        # gate_learner = MarkovLearner()
-        # gate_learner.learn_pattern(PSequence(combined_gate, 1))
-
-        # # Generate Markov-based patterns for the section
     max_note_duration = 1.0
     if number_of_notes >= 13:
         print(f"number of notes is {number_of_notes} so we will reduce max_note_duration to 1/2")
@@ -2003,7 +1880,7 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         
         
         # Save section MIDI
-    section_midi_path = f"/tmp/outputs/sections/section_{bar_pair_name}.mid"
+    section_midi_path = f"{SECTIONAL_MIDI_FOLDER}/section_{bar_pair_name}.mid"
     midi_output = MidiFileOutputDevice(section_midi_path)
     timeline = Timeline(bpm, midi_output)
     timeline.stop_when_done = True
@@ -2360,10 +2237,10 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
         bpm=bpm
     )
         time.sleep(2)
-        midi_file = f"/tmp/outputs/sections/section_{first_bar_pair}.mid"
-        quantized_output_path = f"/tmp/outputs/sections/quantized_section_{first_bar_pair}.mid"
-        octave_correction_output_path = f"/tmp/outputs/sections/octave_correction_section_{first_bar_pair}.mid"
-        corrected_output_path = f"/tmp/outputs/sections/corrected_section_{first_bar_pair}.mid"
+        midi_file = f"{SECTIONAL_MIDI_FOLDER}/section_{first_bar_pair}.mid"
+        quantized_output_path = f"{SECTIONAL_MIDI_FOLDER}/quantized_section_{first_bar_pair}.mid"
+        octave_correction_output_path = f"{SECTIONAL_MIDI_FOLDER}/octave_correction_section_{first_bar_pair}.mid"
+        corrected_output_path = f"{SECTIONAL_MIDI_FOLDER}/corrected_section_{first_bar_pair}.mid"
         quantize_note_durations(midi_file, quantized_output_path)
         
         time.sleep(2)
@@ -2459,7 +2336,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
 
                     print("about to start generate_melody_with_chord")
                     # [65, 69, 72]      
-                    generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], chord_notes, filename=f"/tmp/outputs/sections/section_{bar_pair}.mid")
+                    generate_melody_with_chord(note_sequence, duration_sequence, amplitude_sequence, bar_pair_info[bar_pair]['note_count'], chord_notes, filename=f"{SECTIONAL_MIDI_FOLDER}/section_{bar_pair}.mid")
                     
                     distance_based_octave_normalization(corrected_output_path, corrected_output_path)
                    
@@ -2469,10 +2346,10 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                     info['melody_generated'] = True
 
                     # Optional: Save or process the generated MIDI
-                    repeating_midi_file = f"/tmp/outputs/sections/section_{bar_pair}.mid"
-                    repeating_quantized_output_path = f"/tmp/outputs/sections/quantized_section_{bar_pair}.mid"
-                    repeating_octave_correction_output_path = f"/tmp/outputs/sections/octave_correction_section_{bar_pair}.mid"
-                    repeating_corrected_output_path = f"/tmp/outputs/sections/corrected_section_{bar_pair}.mid"
+                    repeating_midi_file = f"{SECTIONAL_MIDI_FOLDER}/section_{bar_pair}.mid"
+                    repeating_quantized_output_path = f"{SECTIONAL_MIDI_FOLDER}/quantized_section_{bar_pair}.mid"
+                    repeating_octave_correction_output_path = f"{SECTIONAL_MIDI_FOLDER}/octave_correction_section_{bar_pair}.mid"
+                    repeating_corrected_output_path = f"{SECTIONAL_MIDI_FOLDER}/corrected_section_{bar_pair}.mid"
                     print(f"MIDI generated for {bar_pair}: {repeating_midi_file}")
 
                     # Simulate a delay for file saving
@@ -2536,8 +2413,8 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
 
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_path = f"/tmp/outputs/sections/generated_sequence_{current_time}.mid"
-    final_output_path = f"/tmp/outputs/generated_sequence_{current_time}.mid"
+    output_path = f"{SECTIONAL_MIDI_FOLDER}/generated_sequence_{current_time}.mid"
+    final_output_path = f"{OUTPUT_FOLDER}/generated_sequence_{current_time}.mid"
     starting_offset = vocal_analysis["first_vocal_start"]["time"]
     print("starting_offset  ", starting_offset)
     if starting_offset == None: 
@@ -2546,14 +2423,14 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
     pattern = re.compile(r"corrected_section_bar(\d+)-\d+\.mid")
 
     # Step 1: Add offsets to each sectional MIDI
-    for section_file in os.listdir("/tmp/outputs/sections"):
+    for section_file in os.listdir(f"{SECTIONAL_MIDI_FOLDER}"):
         match = pattern.match(section_file)
         if not match:
             continue
 
         start_bar = int(match.group(1))
-        section_path = os.path.join("/tmp/outputs/sections", section_file)
-        output_path = os.path.join("/tmp/outputs/adjusted_sections", section_file)
+        section_path = os.path.join(f"{SECTIONAL_MIDI_FOLDER}", section_file)
+        output_path = os.path.join(f"{ADJUSTED_SECTIONAL_MIDI_FOLDER}", section_file)
 
         add_offset_to_section(
             section_path=section_path,
@@ -2565,19 +2442,12 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
 
     # Step 2: Combine all offset-adjusted MIDIs
     combine_sectional_midis(
-        input_folder="/tmp/outputs/adjusted_sections",
+        input_folder=f"{ADJUSTED_SECTIONAL_MIDI_FOLDER}",
         final_output_path=final_output_path,
         bpm=bpm
     )
-    # combine_sections(
-    #                 output_folder="/tmp/outputs/sections",
-    #                 final_output_path=output_path,
-    #                 bpm=bpm, 
-    #                 initial_gap_beats=starting_offset,  # Adjust this value for the initial gap
-    #                 section_gap_beats=2,  # Adjust this value for the gap between sections
-    #                 ending_gap_beats=7    # Adjust this value for the ending gap
-    #             )  
-    shutil.copy(final_output_path, "/tmp/midi.mid")
+ 
+    shutil.copy(final_output_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
     # detected_key = vocal_analysis["key"].tonic.name
     # detected_scale = vocal_analysis["key"].mode
     # reference_octave = 4

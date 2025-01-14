@@ -11,18 +11,39 @@ import pretty_midi
 from dotenv import load_dotenv
 import pickle
 from tabulate import tabulate 
+from config import initialize_config
 
 load_dotenv()
-log_file = "/tmp/Logs/openutau_process.log"
+config = initialize_config()
+log_file_path = config.OU_PROCESS_LOGS
 SYSTEM_API_URL = os.getenv("SYSTEM_API_URL")
 region = os.getenv("REGION_PROD")
 # region = "romania"
 
 # IS_LAMBDA_ENV 
-IS_LAMBDA_ENV = False
+# IS_LAMBDA_ENV = False
 # Configure logging
+is_lambda_env = config.IS_LAMBDA_ENV
+if is_lambda_env:
+    os.makedirs("/tmp/Logs", exist_ok=True)
+    with open("/tmp/Logs/openutau_process.log", "w") as log_file:
+        pass  # This creates an empty log file if it doesn't exist
+    os.makedirs("/tmp/OpenUtau", exist_ok=True)
+    os.makedirs("/tmp/OpenUtau/Logs", exist_ok=True)
+    os.makedirs("/tmp/outputs", exist_ok=True)
+    os.makedirs("/tmp/outputs/sections", exist_ok=True)
+    os.makedirs("/tmp/outputs/adjusted_sections", exist_ok=True)
+else:
+    os.makedirs("tmp/Logs", exist_ok=True)
+    with open("tmp/Logs/openutau_process.log", "w") as log_file:
+        pass  # This creates an empty log file if it doesn't exist
+    os.makedirs("tmp/OpenUtau", exist_ok=True)
+    os.makedirs("tmp/OpenUtau/Logs", exist_ok=True)
+    os.makedirs("tmp/outputs", exist_ok=True)
+    os.makedirs("tmp/outputs/sections", exist_ok=True)
+    os.makedirs("tmp/outputs/adjusted_sections", exist_ok=True)
 logging.basicConfig(
-    filename=log_file,
+    filename=log_file_path,
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )

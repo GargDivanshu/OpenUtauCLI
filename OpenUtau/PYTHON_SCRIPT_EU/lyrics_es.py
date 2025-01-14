@@ -111,6 +111,42 @@ def analyze_lyrics(lyrics):
 # Sofía, gracias por ser tú,
 # mi amiga más leal.
 # """
+lyrics = """
+Fernando, mi querido amigo, 
+eres team calor, lo admito, 
+hablas hasta por los codos, 
+a veces un poco extremo. 
+No te gusta la basura, 
+odias esa tarea, 
+pero siempre algún dato, 
+interesante nos entregas.
+Bailas con tanto estilo, 
+es lo que más aprecio, 
+amas a todos los perros, 
+tu corazón tan sincero. 
+Fernando, con todo mi ser, 
+te digo eres genial, 
+con cariño, Bubulubu, 
+nunca dejes de brillar.
+"""
+lyrics = """
+Hoy celebro tu cumpleaños,
+en Puebla habrá festejo.
+Guillermo, eres especial,
+que se te cumplan tus sueños.
+TE DE SE O
+Que tu risa no se acabe,
+cada meta que la alcances,
+y que la vida te abrace.
+Feliz día para ti,
+con amor y porvenir.
+Eres luz en cada paso,
+tu alegría siempre es abrazo.
+Tus sueños se cumplirán,
+llenos de felicidad.
+Hoy la vida es para ti,
+siempre brilla y sé feliz.
+"""
 # print(analyze_lyrics(lyrics))
 # # Analyze lyrics
 # formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)
