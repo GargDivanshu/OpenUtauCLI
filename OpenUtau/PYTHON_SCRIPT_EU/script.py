@@ -355,7 +355,7 @@ def lambda_handler(event, context):
             "Plugins/": os.path.join(local_base_path, "Plugins"),
             "germany/": os.path.join(local_tmp_path, "germany"),
             "romania/": os.path.join(local_tmp_path, "romania"),
-            "mexico/": os.path.join(local_tmp_path, "romania"),
+            "mexico/": os.path.join(local_tmp_path, "mexico"),
         }
         if region in region_singer_mapping:
             folders_to_download[region_singer_mapping[region]] = os.path.join(
