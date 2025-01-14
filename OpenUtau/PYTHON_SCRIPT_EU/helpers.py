@@ -24,6 +24,9 @@ region = os.getenv("REGION_PROD")
 # IS_LAMBDA_ENV = False
 # Configure logging
 is_lambda_env = config.IS_LAMBDA_ENV
+# Get the directory where the script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 if is_lambda_env:
     os.makedirs("/tmp/Logs", exist_ok=True)
     with open("/tmp/Logs/openutau_process.log", "w") as log_file:
@@ -34,14 +37,14 @@ if is_lambda_env:
     os.makedirs("/tmp/outputs/sections", exist_ok=True)
     os.makedirs("/tmp/outputs/adjusted_sections", exist_ok=True)
 else:
-    os.makedirs("tmp/Logs", exist_ok=True)
-    with open("tmp/Logs/openutau_process.log", "w") as log_file:
+    os.makedirs(os.path.join(script_dir, "tmp/Logs"), exist_ok=True)
+    with open(os.path.join(script_dir, "tmp/Logs/openutau_process.log"), "w") as log_file:
         pass  # This creates an empty log file if it doesn't exist
-    os.makedirs("tmp/OpenUtau", exist_ok=True)
-    os.makedirs("tmp/OpenUtau/Logs", exist_ok=True)
-    os.makedirs("tmp/outputs", exist_ok=True)
-    os.makedirs("tmp/outputs/sections", exist_ok=True)
-    os.makedirs("tmp/outputs/adjusted_sections", exist_ok=True)
+    os.makedirs(os.path.join(script_dir, "tmp/OpenUtau"), exist_ok=True)
+    os.makedirs(os.path.join(script_dir, "tmp/OpenUtau/Logs"), exist_ok=True)
+    os.makedirs(os.path.join(script_dir, "tmp/outputs"), exist_ok=True)
+    os.makedirs(os.path.join(script_dir, "tmp/outputs/sections"), exist_ok=True)
+    os.makedirs(os.path.join(script_dir, "tmp/outputs/adjusted_sections"), exist_ok=True)
 logging.basicConfig(
     filename=log_file_path,
     level=logging.INFO,

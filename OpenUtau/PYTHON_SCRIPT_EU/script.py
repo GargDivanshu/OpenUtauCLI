@@ -26,7 +26,7 @@ import logging
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
-from config import Config, initialize_config, bpm_data, IS_LAMBDA_ENV
+from config import Config, initialize_config, bpm_data
 
 # Initialize the configuration
 config = initialize_config()
