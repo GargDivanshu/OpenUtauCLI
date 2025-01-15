@@ -174,6 +174,13 @@ def process_message(body):
             formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
         elif region == "mexico":
             formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
+             # Combine every two lines of `formatted_lyrics` into one
+            def combine_lines(text):
+                lines = [line.strip() for line in text.strip().split("\n") if line.strip()]
+                combined_lines = [" ".join(lines[i:i+2]) for i in range(0, len(lines), 2)]
+                return "\n".join(combined_lines)
+
+            formatted_lyrics = combine_lines(formatted_lyrics)
         
         
         with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
