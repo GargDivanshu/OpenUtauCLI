@@ -149,6 +149,14 @@ def process_message(body):
         region = body.get("region")
         trackId = body.get("trackID")
         lyrics = body.get("lyrics")
+        songType = body.get("type")
+        if os.getenv("REGION_PROD") == "greece":
+            if songType == "Pop":
+                trackId = 1
+            elif songType == "Ballad":
+                trackId = 2
+            elif songType == "Folk":
+                trackId = 3
         tag = body.get("tag")
         OU_FINAL_FILENAME = f"song_{song_id}_vocals"
         OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join("/tmp", f"{OU_FINAL_FILENAME}.wav")

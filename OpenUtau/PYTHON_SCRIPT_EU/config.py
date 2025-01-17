@@ -37,6 +37,10 @@ bpm_data['mexico'] = {}
 bpm_data['mexico'][1] = 99
 bpm_data['mexico'][2] = 99
 bpm_data['mexico'][3] = 120
+bpm_data['greece'] = {}
+bpm_data['greece'][1] = 134
+bpm_data['greece'][2] = 143
+bpm_data['greece'][3] = 130
 
 
 # Define a dataclass for initialization
