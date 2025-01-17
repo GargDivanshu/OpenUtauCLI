@@ -352,7 +352,8 @@ def lambda_handler(event, context):
         "germany": "Singers/de_singer/",
         "mexico": "Singers/es_singer/",
         "hungary": "Singers/hu_singer/",
-        "czech": "Singers/cz_singer/"
+        "czech": "Singers/cz_singer/",
+        "greece": "Singers/el_singer/"
     }
 
         # Define folder mappings
@@ -516,6 +517,8 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer"
     elif region.lower() == "hungary":
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerHungarianPhonemizer"
+    elif region.lower() == "greece":
+        phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerGreekPhonemizer"
     
     
     try:
