@@ -161,6 +161,63 @@ mi amiga más leal.
 # Eres única y especial,
 # un regalo sin igual.
 # """
+
+lyrics = """
+Fernando con sueños,
+pierdes hoy tu camino,
+terquedad no me gusta,
+cuando insiste sin fin.
+llegar tarde me cuesta,
+pierdo cada momento,
+su risa me ilumina,
+da luz a todo mi ser.
+su bondad me conmueve,
+cuando muestra su ser,
+crea cosas tan bellas,
+en su mundo curioso.
+"""
+lyrics = """
+Karla, impaciente vas,
+pero dulce al amar,
+tus enojos dan luz,
+cuando empiezas a amar.
+terca en todo tu ser,
+pero fiel sin igual,
+prisa siempre te da,
+tu sonrisa es mi paz.
+dudas tanto de ti,
+pero eres verdad,
+tu amor todo cambió,
+eres mi libertad
+"""
+lyrics = """
+Contigo siempre río,
+Pero tu impaciencia me agobia a diario.
+Tu valentía es lo que más aprecio,
+Porque enfrentás lo adverso sin fallo.
+Tus olvidos son un detalle
+Que desafía nuestro día a día.
+Tu lealtad me llama,
+Especialmente en noches frías.
+Tu desorden es un reto,
+Que a veces me desespera.
+Y tu creatividad es un cielo
+Que siempre mi corazón libera.
+"""
+lyrics = """
+Fernando con sueños,
+Pierdes hoy tu camino.
+Terquedad no me gusta
+Cuando insistes sin fin.
+Llegar tarde me cuesta,
+Pierdo cada momento.
+Su risa me ilumina,
+Da luz a todo mi ser.
+Su bondad me conmueve
+Cuando muestra su ser.
+Crea cosas tan bellas
+En su mundo curioso.
+"""
 # print(analyze_lyrics(lyrics))
 # # Analyze lyrics
 # formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)
