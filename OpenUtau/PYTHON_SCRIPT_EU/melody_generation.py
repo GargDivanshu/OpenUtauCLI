@@ -1989,6 +1989,40 @@ def add_offset_to_section(
     print("-" * 50)
 
 
+def add_silence_to_midi(input_midi_path, output_midi_path, bpm, silence_beats):
+    """
+    Add silence at the beginning of a MIDI file.
+
+    Parameters:
+    - input_midi_path: Path to the input MIDI file.
+    - output_midi_path: Path to save the MIDI file with silence added.
+    - bpm: Beats per minute of the MIDI.
+    - silence_beats: Number of beats of silence to add (can be a decimal, e.g., 2.7 beats).
+    """
+    import pretty_midi
+    from decimal import Decimal
+
+    # Calculate silence duration in seconds
+    beat_duration = Decimal(60) / Decimal(bpm)
+    silence_duration = float(Decimal(silence_beats) * beat_duration)
+
+    # Load the input MIDI file
+    midi_data = pretty_midi.PrettyMIDI(input_midi_path)
+
+    # Add silence by shifting all notes, control changes, and pitch bends
+    for instrument in midi_data.instruments:
+        for note in instrument.notes:
+            note.start += silence_duration
+            note.end += silence_duration
+        for control in instrument.control_changes:
+            control.time += silence_duration
+        for pitch_bend in instrument.pitch_bends:
+            pitch_bend.time += silence_duration
+
+    # Save the modified MIDI file
+    midi_data.write(output_midi_path)
+    print(f"Silence of {silence_beats} beats ({silence_duration:.2f} seconds) added to {input_midi_path}.")
+    print(f"New file saved as {output_midi_path}.")
 
 
 def combine_sectional_midis(
@@ -2163,7 +2197,7 @@ def lyrics_time_calculation(
 
 
 
-def main_melody_generation(input_text, bpm, reference_backing_track, reference_vocal_track):
+def main_melody_generation(input_text, bpm, reference_backing_track, reference_vocal_track, trackId):
 
     # Process the input text
     # bpm = 115
@@ -2278,6 +2312,8 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                 
             # octave_normalization(quantized_output_path, 4, octave_correction_output_path)
             octave_normalization_with_two_octaves(quantized_output_path, 5, 4, octave_correction_output_path)
+            if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece":
+                            octave_normalization_with_two_octaves(quantized_output_path, 4, 4, octave_correction_output_path)
             correct_midi(
             midi_file=octave_correction_output_path,
             validation_report=validation_report,
@@ -2390,6 +2426,8 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                         
                         # octave_normalization(repeating_quantized_output_path, 4, repeating_octave_correction_output_path)
                         octave_normalization_with_two_octaves(repeating_quantized_output_path, 5, 4, repeating_octave_correction_output_path)
+                        if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece":
+                            octave_normalization_with_two_octaves(repeating_quantized_output_path, 4, 4, repeating_octave_correction_output_path)
                         correct_midi(
                         midi_file=repeating_octave_correction_output_path,
                         validation_report=validation_report,
@@ -2446,6 +2484,29 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
         final_output_path=final_output_path,
         bpm=bpm
     )
+    
+    if os.getenv("REGION_PROD") == "mexico":
+        if trackId == 1:
+            add_silence_to_midi(
+            input_midi_path=final_output_path,  # The combined MIDI file from combine_sectional_midis
+            output_midi_path=final_output_path,  # Path for the final MIDI with silence
+            bpm=bpm,  # Beats per minute of the MIDI
+            silence_beats=2.265  # Silence duration in beats (4 beats = 1 bar)
+            )
+        elif trackId == 2:
+            add_silence_to_midi(
+            input_midi_path=final_output_path,  # The combined MIDI file from combine_sectional_midis
+            output_midi_path=final_output_path,  # Path for the final MIDI with silence
+            bpm=bpm,  # Beats per minute of the MIDI
+            silence_beats=10.5  # Silence duration in beats (4 beats = 1 bar)
+            )
+        elif trackId == 3: 
+            add_silence_to_midi(
+            input_midi_path=final_output_path,  # The combined MIDI file from combine_sectional_midis
+            output_midi_path=final_output_path,  # Path for the final MIDI with silence
+            bpm=bpm,  # Beats per minute of the MIDI
+            silence_beats=11.845  # Silence duration in beats (4 beats = 1 bar)
+            ) 
  
     shutil.copy(final_output_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
     # detected_key = vocal_analysis["key"].tonic.name
@@ -2477,4 +2538,4 @@ if __name__ == "__main__":
     # reference_backing_track = "C:\\Users\\divan\\Downloads\\Germany-20241220T051109Z-001\\Germany\\Germany - Chord Tracks - MIDI\\GermanyTrack1ChordMIDI.mid"
     reference_vocal_track = "C:\\Users\\divan\\Downloads\\MIDI x Untitled Production - Romania-20241210T150600Z-001\\MIDI x Untitled Production - Romania\\Romania Track 1 - MIDI.mid"
     # reference_vocal_track = "C:\\Users\\divan\\Downloads\\Germany-20241220T051109Z-001\\Germany\\Germany - Melody Tracks - MIDI\\GermanyTrack1MIDI.mid"
-    main_melody_generation(lyrics, 115, reference_backing_track, reference_vocal_track)
+    main_melody_generation(lyrics, 115, reference_backing_track, reference_vocal_track, 2)

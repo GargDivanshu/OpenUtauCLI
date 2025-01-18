@@ -214,7 +214,7 @@ def process_message(body):
         vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
         backing_midi_file_path = f"/tmp/{region}/backing_track/{region_name}Track{trackId}ChordMIDI.mid"
         bpm = bpm_data[region][trackId]
-        main_melody_generation(formatted_lyrics, bpm, backing_midi_file_path, vocal_midi_file_path)
+        main_melody_generation(formatted_lyrics, bpm, backing_midi_file_path, vocal_midi_file_path, trackId)
         try: 
             lyrics_time_calculation(
             output_folder="/tmp/outputs/sections",
@@ -531,6 +531,8 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerHungarianPhonemizer"
     elif region.lower() == "greece":
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerGreekPhonemizer"
+    elif region.lower() == "slovakia":
+        phonemizer = ""
     
     
     try:
