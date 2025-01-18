@@ -151,11 +151,11 @@ def process_message(body):
         lyrics = body.get("lyrics")
         songType = body.get("type")
         if os.getenv("REGION_PROD") == "greece":
-            if songType == "Pop":
+            if songType.lower() == "pop":
                 trackId = 1
-            elif songType == "Ballad":
+            elif songType.lower() == "ballad":
                 trackId = 2
-            elif songType == "Folk":
+            elif songType.lower() == "folk":
                 trackId = 3
         tag = body.get("tag")
         OU_FINAL_FILENAME = f"song_{song_id}_vocals"
