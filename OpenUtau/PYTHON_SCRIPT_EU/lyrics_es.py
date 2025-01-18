@@ -218,7 +218,35 @@ Cuando muestra su ser.
 Crea cosas tan bellas
 En su mundo curioso.
 """
-# print(analyze_lyrics(lyrics))
+lyrics = """
+Daniel, skater cool,
+bailas con pasión,
+aunque TikTok racha
+rompes sin razón.
+Eres aventura,
+luz y diversión,
+pero maps te pierde
+sin explicación.
+Mil memes me mandas,
+saturando el chat,
+pero eres mi cielo,
+no podría cambiar.
+"""
+lyrics ="""
+Marina, luz del mar,
+siempre me haces brillar,
+aunque tardas mil horas
+en fotos tomar.
+Tu risa genuina,
+me alegra sin parar,
+pero los podcasts
+me sueles mandar.
+Dejas en visto WhatsApp,
+sin respuesta especial,
+pero eres mi estrella,
+te quiero de verdad.
+"""
+print(analyze_lyrics(lyrics))
 # # Analyze lyrics
 # formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)
 
