@@ -41,9 +41,9 @@ bpm_data['greece'] = {}
 bpm_data['greece'][1] = 134
 bpm_data['greece'][2] = 143
 bpm_data['greece'][3] = 130
-bpm_data['slovak'] = {}
-bpm_data['slovak'][1] = 120
-bpm_data['slovak'][2] = 90
+bpm_data['slovakia'] = {}
+bpm_data['slovakia'][1] = 120
+bpm_data['slovakia'][2] = 90
 
 
 # Define a dataclass for initialization
