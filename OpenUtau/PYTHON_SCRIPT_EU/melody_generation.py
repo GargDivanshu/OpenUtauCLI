@@ -2092,7 +2092,7 @@ def combine_sectional_midis(
 #     adjust_large_intervals_in_midi(quantized_output_path, final_output_path, detected_key+str(reference_octave))
     
 
-   
+
 def lyrics_time_calculation(
     output_folder="outputs/sections",
     bpm=120,
@@ -2183,13 +2183,13 @@ def lyrics_time_calculation(
     if lyric_index < len(lyrics):
         print(f"Warning: Not all lyrics were assigned to sections. Remaining lines: {len(lyrics) - lyric_index}")
 
-    # Save result to JSON file
-    with open(output_json_path, "w") as json_file:
-        json.dump(result, json_file, indent=4)
+    # Save result to JSON file with UTF-8 encoding and ensure_ascii=False
+    with open(output_json_path, "w", encoding="utf-8") as json_file:
+        json.dump(result, json_file, indent=4, ensure_ascii=False)
     print(f"Timing JSON saved to {output_json_path}.")
 
-    # Output result as JSON string for reference
-    json_output = json.dumps(result, indent=4)
+    # Output result as JSON string for reference with correct encoding
+    json_output = json.dumps(result, indent=4, ensure_ascii=False)
     print("Generated timing JSON:")
     print(json_output)
 
