@@ -55,3 +55,8 @@ def analyze_lyrics(lyrics):
             total_syllables += syllable_count
 
     return '\n'.join(formatted_lines), all_breakdowns, total_syllables
+
+# lyrics = """
+# A szeretetet, a fájdalmat, mindenből.
+# """
+# print(analyze_lyrics(lyrics))

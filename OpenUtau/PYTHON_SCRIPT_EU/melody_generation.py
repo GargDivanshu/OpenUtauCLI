@@ -1844,7 +1844,7 @@ def markov_generation(bar_pair_name, number_of_notes, reference_vocal_track, ref
         key_signature = enharmonic_key
         print(key_signature)
     
-    detected_key = key_signature.tonic.name
+    detected_key = key_signature
     # if "-" in detected_key:
     #     detected_key = midi_analysis_result["key"].getEnharmonic()
     detected_key = str(detected_key).replace("-", "")
