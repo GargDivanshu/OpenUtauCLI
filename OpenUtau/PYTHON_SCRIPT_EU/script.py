@@ -174,7 +174,9 @@ def process_message(body):
             elif region == "romania":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_ro(lyrics)
             elif region == "hungary":
+                print(f"Processing lyrics for region: {region}, lyrics: {lyrics}")
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_hu(lyrics)
+                print(f"Processed lyrics successfully for region: {region}")
             elif region == "czech":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
             elif region == "slovakia":
@@ -193,7 +195,7 @@ def process_message(body):
             
         except Exception as e:
             # Handle exceptions and provide feedback
-            print(f"An error occurred: {str(e)}")
+            print(f"An error occurred {region}: {str(e)}")
         
         
         with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
