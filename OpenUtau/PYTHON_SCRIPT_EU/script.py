@@ -369,7 +369,7 @@ def lambda_handler(event, context):
         region_singer_mapping = {
         "australia": "Singers/au_singer/",
         "romania": "Singers/ro_singer/",
-        "germany": "Singers/de_singer/",
+        "germany": "Singers/ge_singer/",
         "mexico": "Singers/es_singer/",
         "hungary": "Singers/hu_singer/",
         "czech": "Singers/cz_singer/",
