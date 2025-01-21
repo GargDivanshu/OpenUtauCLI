@@ -2092,7 +2092,6 @@ def combine_sectional_midis(
 #     adjust_large_intervals_in_midi(quantized_output_path, final_output_path, detected_key+str(reference_octave))
     
 
-
 def lyrics_time_calculation(
     output_folder="outputs/sections",
     bpm=120,
@@ -2160,8 +2159,15 @@ def lyrics_time_calculation(
         section_path = os.path.join(output_folder, section_file)
         section_midi = pretty_midi.PrettyMIDI(section_path)
 
+        # Get all note end times safely
+        all_notes = [note.end for instrument in section_midi.instruments for note in instrument.notes]
+
+        if not all_notes:
+            print(f"Warning: No notes found in {section_file}. Skipping...")
+            continue  # Skip processing for empty MIDI files
+
         # Calculate the duration of the section in seconds
-        section_length_seconds = max(note.end for instrument in section_midi.instruments for note in instrument.notes)
+        section_length_seconds = max(all_notes)
 
         # Assign lyrics to the timing
         if lyric_index < len(lyrics):
@@ -2194,6 +2200,7 @@ def lyrics_time_calculation(
     print(json_output)
 
     return result
+
 
 
 
