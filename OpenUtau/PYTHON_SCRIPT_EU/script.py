@@ -192,6 +192,11 @@ def process_message(body):
                     return "\n".join(combined_lines)
 
                 formatted_lyrics = combine_lines(formatted_lyrics)
+            # Validate return values
+            if not formatted_lyrics or not syllable_breakdown or total_syllables is None:
+                logger.error(f"Invalid return values: {formatted_lyrics}, {syllable_breakdown}, {total_syllables}")
+                formatted_lyrics, syllable_breakdown, total_syllables = "", "", 0
+
             
         except Exception as e:
             # Handle exceptions and provide feedback
