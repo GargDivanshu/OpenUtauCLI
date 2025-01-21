@@ -168,27 +168,32 @@ def process_message(body):
         syllable_breakdown = ''
         total_syllables = 0
         start_time = time.monotonic()
-        if region == "germany":
-            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_de(lyrics)
-        elif region == "romania":
-            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_ro(lyrics)
-        elif region == "hungary":
-            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_hu(lyrics)
-        elif region == "czech":
-            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
-        elif region == "slovakia":
-            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
-        elif region == "greece":
-            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
-        elif region == "mexico":
-            formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
-             # Combine every two lines of `formatted_lyrics` into one
-            def combine_lines(text):
-                lines = [line.strip() for line in text.strip().split("\n") if line.strip()]
-                combined_lines = [" ".join(lines[i:i+2]) for i in range(0, len(lines), 2)]
-                return "\n".join(combined_lines)
+        try:
+            if region == "germany":
+                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_de(lyrics)
+            elif region == "romania":
+                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_ro(lyrics)
+            elif region == "hungary":
+                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_hu(lyrics)
+            elif region == "czech":
+                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
+            elif region == "slovakia":
+                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
+            elif region == "greece":
+                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
+            elif region == "mexico":
+                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
+                # Combine every two lines of `formatted_lyrics` into one
+                def combine_lines(text):
+                    lines = [line.strip() for line in text.strip().split("\n") if line.strip()]
+                    combined_lines = [" ".join(lines[i:i+2]) for i in range(0, len(lines), 2)]
+                    return "\n".join(combined_lines)
 
-            formatted_lyrics = combine_lines(formatted_lyrics)
+                formatted_lyrics = combine_lines(formatted_lyrics)
+            
+        except Exception as e:
+            # Handle exceptions and provide feedback
+            print(f"An error occurred: {str(e)}")
         
         
         with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
