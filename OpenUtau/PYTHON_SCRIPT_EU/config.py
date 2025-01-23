@@ -44,9 +44,38 @@ bpm_data['greece'][3] = 130
 bpm_data['slovakia'] = {}
 bpm_data['slovakia'][1] = 120
 bpm_data['slovakia'][2] = 90
+bpm_data['slovakia'][3] = 95
+bpm_data['slovakia'][4] = 97
+bpm_data['slovakia'][5] = 100
+bpm_data['slovakia'][6] = 110
+bpm_data['slovakia'][7] = 122
+bpm_data['slovakia'][8] = 102
+bpm_data['slovakia'][9] = 116
+bpm_data['slovakia'][10] = 105
+bpm_data['czech'] = {}
+bpm_data['czech'][1] = 120
+bpm_data['czech'][2] = 90
+bpm_data['czech'][3] = 95
+bpm_data['czech'][4] = 97
+bpm_data['czech'][5] = 100
+bpm_data['czech'][6] = 110
+bpm_data['czech'][7] = 112
+bpm_data['czech'][8] = 102
+bpm_data['czech'][9] = 116
+bpm_data['czech'][10] = 105
+bpm_data['hungary'] = {}
+bpm_data['hungary'][1] = 80
+bpm_data['hungary'][2] = 116
+bpm_data['hungary'][3] = 170
+bpm_data['hungary'][4] = 90
+bpm_data['hungary'][5] = 120
+bpm_data['hungary'][6] = 92
+bpm_data['hungary'][7] = 120
+bpm_data['hungary'][8] = 88
+bpm_data['hungary'][9] = 98
+bpm_data['hungary'][10] = 96
 
 
-# Define a dataclass for initialization
 @dataclass
 class Config:
     BUCKET_NAME: str
@@ -69,6 +98,9 @@ class Config:
 def initialize_config():
     is_lambda_env = IS_LAMBDA_ENV  # Modify this as needed for your environment check
     ou_singer_num = "1"
+    
+    # UNCOMMENT WHEN ALL MODELS ARE 
+    # PLACED IN SINGLE LAMBDA
     
     # if region == "australia":
     #     ou_singer_num = "1"
