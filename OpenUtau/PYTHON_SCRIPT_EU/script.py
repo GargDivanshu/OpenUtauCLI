@@ -176,7 +176,7 @@ def process_message(body):
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_ro(lyrics)
             elif region == "hungary":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_hu(lyrics)
-            elif region == "czech":
+            elif region == "czechia":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
             elif region == "slovakia":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
@@ -372,7 +372,7 @@ def lambda_handler(event, context):
         "germany": "Singers/ge_singer/",
         "mexico": "Singers/es_singer/",
         "hungary": "Singers/hu_singer/",
-        "czech": "Singers/cz_singer/",
+        "czechia": "Singers/cz_singer/",
         "greece": "Singers/el_singer/"
     }
 
@@ -386,7 +386,7 @@ def lambda_handler(event, context):
             "mexico/": os.path.join(local_tmp_path, "mexico"),
             "greece/": os.path.join(local_tmp_path, "greece"),
             "slovakia/": os.path.join(local_tmp_path, "slovakia"),
-            "czech/": os.path.join(local_tmp_path, "czech"),
+            "czechia/": os.path.join(local_tmp_path, "czechia"),
             "hungary/": os.path.join(local_tmp_path, "hungary"),
         }
         if region in region_singer_mapping:
@@ -533,7 +533,7 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerGerman2Phonemizer"
     elif region.lower() == "romania":
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerRomanianPhonemizer"
-    elif region.lower() == "czech":
+    elif region.lower() == "czechia":
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerCzechPhonemizer"
     elif region.lower() == "mexico":
         phonemizer = "OpenUtau.Core.DiffSinger.DiffSingerSpanishPhonemizer"

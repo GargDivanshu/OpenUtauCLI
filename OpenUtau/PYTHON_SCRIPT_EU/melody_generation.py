@@ -23,18 +23,7 @@ config = initialize_config()
 SECTIONAL_MIDI_FOLDER = config.SECTIONAL_MIDI_FOLDER 
 ADJUSTED_SECTIONAL_MIDI_FOLDER = config.ADJUSTED_SECTIONAL_MIDI_FOLDER
 OUTPUT_FOLDER = config.OUTPUT_FOLDER
-# MODE = os.getenv("MODE")
-# ACTIVE_SINGER = os.getenv("ACTIVE_SINGER")
-# ACTIVE_SINGER_MIN_RANGE = 45
-# ACTIVE_SINGER_MAX_RANGE = 75
 
-# for singer in ALL_SINGERS_RANGE:
-#     print(singer)
-#     if singer["name"] == ACTIVE_SINGER:
-#         ACTIVE_SINGER_MIN_RANGE = singer["min_range"]
-#         print("min_range ", ACTIVE_SINGER_MIN_RANGE)
-#         ACTIVE_SINGER_MAX_RANGE = singer["max_range"]
-#         print("max_range ", ACTIVE_SINGER_MAX_RANGE)
 
 
 # Get the directory where the script is located

@@ -52,17 +52,17 @@ bpm_data['slovakia'][7] = 122
 bpm_data['slovakia'][8] = 102
 bpm_data['slovakia'][9] = 116
 bpm_data['slovakia'][10] = 105
-bpm_data['czech'] = {}
-bpm_data['czech'][1] = 120
-bpm_data['czech'][2] = 90
-bpm_data['czech'][3] = 95
-bpm_data['czech'][4] = 97
-bpm_data['czech'][5] = 100
-bpm_data['czech'][6] = 110
-bpm_data['czech'][7] = 112
-bpm_data['czech'][8] = 102
-bpm_data['czech'][9] = 116
-bpm_data['czech'][10] = 105
+bpm_data['czechia'] = {}
+bpm_data['czechia'][1] = 120
+bpm_data['czechia'][2] = 90
+bpm_data['czechia'][3] = 95
+bpm_data['czechia'][4] = 97
+bpm_data['czechia'][5] = 100
+bpm_data['czechia'][6] = 110
+bpm_data['czechia'][7] = 112
+bpm_data['czechia'][8] = 102
+bpm_data['czechia'][9] = 116
+bpm_data['czechia'][10] = 105
 bpm_data['hungary'] = {}
 bpm_data['hungary'][1] = 80
 bpm_data['hungary'][2] = 116
@@ -104,7 +104,7 @@ def initialize_config():
     
     # if region == "australia":
     #     ou_singer_num = "1"
-    # elif region == "czech":
+    # elif region == "czechia":
     #     ou_singer_num = "2"
     # elif region == "germany":
     #     ou_singer_num = "3"
