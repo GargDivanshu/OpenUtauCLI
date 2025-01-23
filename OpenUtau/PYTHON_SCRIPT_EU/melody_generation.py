@@ -2014,6 +2014,41 @@ def add_silence_to_midi(input_midi_path, output_midi_path, bpm, silence_beats):
     print(f"New file saved as {output_midi_path}.")
 
 
+
+def add_silence_to_midi_in_secs(input_midi_path, output_midi_path, silence_seconds):
+    """
+    Add silence at the beginning of a MIDI file based on a specified duration in seconds.
+
+    Parameters:
+    - input_midi_path: Path to the input MIDI file.
+    - output_midi_path: Path to save the MIDI file with silence added.
+    - silence_seconds: Duration of silence to add in seconds (up to two decimal places).
+    """
+    import pretty_midi
+
+    # Round the silence duration to two decimal places for accuracy
+    silence_duration = round(float(silence_seconds), 2)
+
+    # Load the input MIDI file
+    midi_data = pretty_midi.PrettyMIDI(input_midi_path)
+
+    # Add silence by shifting all notes, control changes, and pitch bends
+    for instrument in midi_data.instruments:
+        for note in instrument.notes:
+            note.start += silence_duration
+            note.end += silence_duration
+        for control in instrument.control_changes:
+            control.time += silence_duration
+        for pitch_bend in instrument.pitch_bends:
+            pitch_bend.time += silence_duration
+
+    # Save the modified MIDI file
+    midi_data.write(output_midi_path)
+    print(f"Silence of {silence_seconds:.2f} seconds added to {input_midi_path}.")
+    print(f"New file saved as {output_midi_path}.")
+
+
+
 def combine_sectional_midis(
     input_folder, final_output_path, bpm
 ):
@@ -2483,11 +2518,12 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
             silence_beats=2.265  # Silence duration in beats (4 beats = 1 bar)
             )
         elif trackId == 2:
-            add_silence_to_midi(
+            add_silence_to_midi_in_secs(
             input_midi_path=final_output_path,  # The combined MIDI file from combine_sectional_midis
             output_midi_path=final_output_path,  # Path for the final MIDI with silence
-            bpm=bpm,  # Beats per minute of the MIDI
-            silence_beats=10.5  # Silence duration in beats (4 beats = 1 bar)
+            # bpm=bpm,  # Beats per minute of the MIDI
+            # silence_beats=10.5  # Silence duration in beats (4 beats = 1 bar)
+            silence_seconds=6.22
             )
         elif trackId == 3: 
             add_silence_to_midi(
