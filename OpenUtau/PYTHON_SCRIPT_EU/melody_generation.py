@@ -2518,19 +2518,19 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
             silence_beats=2.265  # Silence duration in beats (4 beats = 1 bar)
             )
         elif trackId == 2:
-            add_silence_to_midi_in_secs(
+            add_silence_to_midi(
             input_midi_path=final_output_path,  # The combined MIDI file from combine_sectional_midis
             output_midi_path=final_output_path,  # Path for the final MIDI with silence
-            # bpm=bpm,  # Beats per minute of the MIDI
-            # silence_beats=10.5  # Silence duration in beats (4 beats = 1 bar)
-            silence_seconds=6.22
+            bpm=120,  # Beats per minute of the MIDI
+            silence_beats=10.115  # Silence duration in beats (4 beats = 1 bar)
+            # silence_seconds=6.22
             )
         elif trackId == 3: 
             add_silence_to_midi(
             input_midi_path=final_output_path,  # The combined MIDI file from combine_sectional_midis
             output_midi_path=final_output_path,  # Path for the final MIDI with silence
-            bpm=bpm,  # Beats per minute of the MIDI
-            silence_beats=11.845  # Silence duration in beats (4 beats = 1 bar)
+            bpm=120,  # Beats per minute of the MIDI
+            silence_beats=11.245  # Silence duration in beats (4 beats = 1 bar)
             ) 
  
     shutil.copy(final_output_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)

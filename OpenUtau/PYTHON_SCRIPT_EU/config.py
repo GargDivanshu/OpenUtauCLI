@@ -38,9 +38,9 @@ bpm_data['mexico'][1] = 99
 bpm_data['mexico'][2] = 97
 bpm_data['mexico'][3] = 103
 bpm_data['greece'] = {}
-bpm_data['greece'][1] = 134
-bpm_data['greece'][2] = 143
-bpm_data['greece'][3] = 130
+bpm_data['greece'][1] = 134 # pop
+bpm_data['greece'][2] = 143 # ballad
+bpm_data['greece'][3] = 130 # folk
 bpm_data['slovakia'] = {}
 bpm_data['slovakia'][1] = 120
 bpm_data['slovakia'][2] = 90
@@ -131,7 +131,8 @@ def initialize_config():
         OU_PROCESS_LOGS="/tmp/Logs/openutau_process.log" if is_lambda_env else "tmp/Logs/openutau_process.log",
         SECTIONAL_MIDI_FOLDER="/tmp/outputs/sections" if is_lambda_env else "tmp/outputs/sections",
         ADJUSTED_SECTIONAL_MIDI_FOLDER="/tmp/outputs/adjusted_sections" if is_lambda_env else "tmp/outputs/adjusted_sections",
-        OUTPUT_FOLDER="/tmp/outputs" if is_lambda_env else "tmp/outputs"
+        OUTPUT_FOLDER="/tmp/outputs" if is_lambda_env else "tmp/outputs",
+        GREECE_TRACK1_SECTIONS="greek_track1_sections"
     )
     
     # Return initialized config

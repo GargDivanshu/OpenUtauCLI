@@ -233,20 +233,43 @@ pero eres mi cielo,
 no podría cambiar.
 """
 lyrics ="""
-Marina, luz del mar,
-siempre me haces brillar,
-aunque tardas mil horas
-en fotos tomar.
-Tu risa genuina,
-me alegra sin parar,
-pero los podcasts
-me sueles mandar.
-Dejas en visto WhatsApp,
-sin respuesta especial,
-pero eres mi estrella,
-te quiero de verdad.
+Mi amor quiero confesarte
+que me fascina mirarte
+Tú eres como una obra de arte
+aunque a veces me harte
+Y aunque la toalla 
+siempre la dejes tirada
+aunque a veces la taza
+la dejes toda mojada
+Este San Valentín
+quiero cantarte tan solo a ti
+de verdad ya siento que mi alma
+de la tuya está enamorada 
+Este San Valentín
+quiero cantarte tan solo a ti
+de verdad ya siento que mi alma
+de la tuya está enamorada
 """
-print(analyze_lyrics(lyrics))
+
+"""
+Mi amor quiero + confesarte + + +
+que me fascina + + mirarte + +
+Tú eres como + una obra de arte +
+aunque + a veces + me harte +
+Y aunque + la toalla +
+siempre + la dejes + tirada + +
+aunque + a veces + la taza +
+la dejes + toda + mojada + +
+Este + San Valentín + +
+quiero + cantarte + + tan solo + a ti
+de verdad + ya siento + que mi alma +
+de la tuya + está + enamorada + + +
+Este + San Valentín + +
+quiero + cantarte + + tan solo + a ti
+de verdad + ya siento + que mi alma +
+de la tuya + está + enamorada + + +
+"""
+# print(analyze_lyrics(lyrics))
 # # Analyze lyrics
 # formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics(lyrics)
 
