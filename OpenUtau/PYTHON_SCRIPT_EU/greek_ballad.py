@@ -70,41 +70,29 @@ import re
 
 
 def count_syllables(line):
-    """
-    Count the total syllables in a given lyric line by considering words and '+' signs.
-    
-    Parameters:
-    - line: The lyric line to analyze.
+    """ Count the total number of syllables in a line. """
+    return sum(len(word.split('+')) for word in line.split())
 
-    Returns:
-    - Total syllable count.
-    """
-    # Find all words and '+' signs
-    words = re.findall(r'\b\w+\b', line)  # Extracts words
-    plus_signs = line.count('+')  # Counts '+' occurrences
-
-    total_syllables = len(words) + plus_signs  # Syllables = Words + Number of '+'
-    return total_syllables
-
-
-
-def adjust_lyrics_to_midi(lyrics, midi_folder, output_folder="generations", bpm=120):
+def adjust_lyrics_to_midi(lyrics_str, midi_folder, output_folder="generations", bpm=120):
     """
     Adjust lyrics based on the number of notes in corresponding MIDI files and save adjusted versions
     to a separate folder.
 
     Parameters:
-    - lyrics: List of formatted lyric lines.
+    - lyrics_str: Multiline string containing formatted lyric lines.
     - midi_folder: Path to the folder containing section MIDI files.
     - output_folder: Path to save the modified MIDI files.
     - bpm: Beats per minute for calculating note durations.
 
     Returns:
-    - Adjusted lyrics where syllable counts (words + '+' signs) match the note count in corresponding MIDI files.
+    - Adjusted lyrics as a single formatted string with newlines.
     """
 
     # Ensure the output folder exists
     os.makedirs(output_folder, exist_ok=True)
+
+    # Split lyrics into lines
+    lyrics = lyrics_str.strip().split("\n")
 
     adjusted_lyrics = []
     beat_duration = 60 / bpm  # Calculate 1 beat duration in seconds
@@ -170,14 +158,13 @@ def adjust_lyrics_to_midi(lyrics, midi_folder, output_folder="generations", bpm=
 
         adjusted_lyrics.append(line)
 
-    print("\nFinal adjusted lyrics:")
-    for line in adjusted_lyrics:
-        print(line)
+    # Convert adjusted lyrics back to a multiline string
+    adjusted_lyrics_str = "\n".join(adjusted_lyrics)
 
-    return adjusted_lyrics
+    print("\nFinal adjusted lyrics:\n")
+    print(adjusted_lyrics_str)
 
-
-
+    return adjusted_lyrics_str
 
 
 
