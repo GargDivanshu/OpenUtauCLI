@@ -25,6 +25,13 @@ def lyrics_timing_for_sections(
     Returns:
     - A JSON-like list of dictionaries with timing and lyric line associations.
     """
+    
+    import pretty_midi
+    import os
+    import re
+    import json
+    from decimal import Decimal
+
 
     if not input_text:
         raise ValueError("Input text with lyrics is required.")
