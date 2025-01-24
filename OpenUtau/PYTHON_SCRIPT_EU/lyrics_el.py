@@ -56,7 +56,6 @@ def analyze_lyrics(lyrics):
 
     return '\n'.join(formatted_lines), all_breakdowns, total_syllables
 
-
 def process_ballad_lyrics(lyrics):
     """
     Process Greek lyrics by merging the last line with the preceding one,
@@ -67,12 +66,14 @@ def process_ballad_lyrics(lyrics):
     - lyrics: String containing the lyrics.
 
     Returns:
-    - A list of formatted lyric lines.
+    - A tuple containing:
+        1. A formatted lyrics string with proper line breaks.
+        2. A list of formatted lyric lines.
     """
     import re
 
     # Print initial lyrics
-    print("Initial lyrics:")
+    print("Initial lyrics:\n")
     print(lyrics)
 
     # Split lyrics into lines and remove empty lines
@@ -107,16 +108,18 @@ def process_ballad_lyrics(lyrics):
                 # Update the last two lines
                 lines[-2] = " ".join(previous_line_words)
                 lines[-1] = " ".join(words)
-                
+
             if len(words) < 6:
                 raise ValueError("Cannot ensure the last line has at least 6 words.")
 
-    # Print processed lyrics
-    print("Processed lyrics:")
-    for line in lines:
-        print(line)
+    # Create formatted lyrics string
+    formatted_lyrics_str = "\n".join(lines)
 
-    return [line for line in lines if line.strip()]
+    # Print processed lyrics
+    print("\nProcessed lyrics:\n")
+    print(formatted_lyrics_str)
+
+    return formatted_lyrics_str, lines
 
 lyrics = """
 Χριστίνα με φωτογραφίζεις,

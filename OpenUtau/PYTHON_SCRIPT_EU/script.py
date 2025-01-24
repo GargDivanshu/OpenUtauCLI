@@ -141,10 +141,6 @@ def process_message(body):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     try:
         print("process fn started")
-
-    
-    
-
     
         song_id = body.get("songID")
         name = body.get("name")
@@ -189,8 +185,8 @@ def process_message(body):
                     midi_folder = os.path.join(script_dir, "greek_track2_sections")
                     output_folder = os.path.join(script_dir, "greek_track2_sections", "generations")
                     
-                    lyrics = process_ballad_lyrics(lyrics)
-                    formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
+                    lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
+                    formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics_as_list)
                     formatted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, midi_folder, output_folder)
                     input_folder = "greek_track2_sections"
                     output_folder = config.OUTPUT_FOLDER
@@ -235,7 +231,7 @@ def process_message(body):
         # upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
         # notify_lyrics_json_upload(song_id, f"{song_id}_lyrics.json") 
         
-        if os.getenv("REGION_PROD") != "greece":
+        if os.getenv("REGION_PROD") != "greece" and trackId != 2:
             start_time = time.monotonic()
             region_name = region.capitalize()
             vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
