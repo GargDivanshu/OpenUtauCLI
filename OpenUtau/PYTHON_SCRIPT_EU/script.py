@@ -19,7 +19,7 @@ from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, anal
 import time
 from melody_generation import main_melody_generation, lyrics_time_calculation
 from lyrics_el import process_ballad_lyrics
-from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections
+from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections, lyrics_timing_for_track2
 import shutil
     
     
@@ -272,11 +272,11 @@ def process_message(body):
             
             try: 
                 if trackId == 2:
-                    lyrics_timing_for_sections(
+                    lyrics_timing_for_track2(
                     output_folder=os.path.join(script_dir, "greek_track2_sections"),
-                    bpm=bpm,
+                    # bpm=bpm,
                     input_text=greece_lyrics,
-                    initial_gap_bars=0,
+                    # initial_gap_bars=0,
                     output_json_path=OU_LYRICS_JSON_PATH
                     )
                 lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
