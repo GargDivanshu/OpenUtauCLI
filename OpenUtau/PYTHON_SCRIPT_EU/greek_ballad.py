@@ -4,6 +4,108 @@ import os
 from datetime import datetime
 from lyrics_el import process_ballad_lyrics
 
+
+def lyrics_timing_for_sections(
+    output_folder="outputs/sections",
+    bpm=120,
+    input_text=None,
+    initial_gap_bars=0,
+    output_json_path="output_timing.json"
+):
+    """
+    Calculate the timing for each sectional MIDI and associate it with the parsed lyrics.
+
+    Parameters:
+    - output_folder: Folder containing the sectional MIDI files.
+    - bpm: Beats per minute for timing calculations.
+    - input_text: String containing lyrics in the specified format.
+    - initial_gap_bars: Initial gap in bars before the first section starts.
+    - output_json_path: Path to save the final JSON output.
+
+    Returns:
+    - A JSON-like list of dictionaries with timing and lyric line associations.
+    """
+
+    if not input_text:
+        raise ValueError("Input text with lyrics is required.")
+
+    # Parse lyrics from input_text
+    lyrics = [line.strip() for line in input_text.splitlines() if line.strip()]
+    print(f"Parsed {len(lyrics)} lyric lines from input text: {lyrics}")
+
+    # Normalize paths
+    output_folder = os.path.normpath(output_folder)
+
+    # Find section files matching the pattern (e.g., section_1.mid, section_2.mid, etc.)
+    pattern = re.compile(r"section_(\d+)\.mid")
+    section_files = sorted(
+        [f for f in os.listdir(output_folder) if pattern.match(f)],
+        key=lambda x: int(re.search(r"section_(\d+)", x).group(1))  # Sort by section number
+    )
+
+    if not section_files:
+        raise FileNotFoundError(f"No section MIDI files found in {output_folder}")
+
+    # Timing constants
+    beat_duration = Decimal(60) / Decimal(bpm)
+    bar_duration = beat_duration * 4  # 4 beats per bar
+
+    # Calculate timings and associate with lyrics
+    result = []
+    lyric_index = 0
+
+    for section_file in section_files:
+        # Extract section number from filename
+        match = pattern.match(section_file)
+        if not match:
+            continue
+        section_number = int(match.group(1))
+
+        # Calculate offset in seconds
+        offset_bars = Decimal(section_number - 1) + Decimal(initial_gap_bars)
+        offset_duration = offset_bars * bar_duration
+
+        # Load the MIDI file and calculate section length
+        section_path = os.path.join(output_folder, section_file)
+        section_midi = pretty_midi.PrettyMIDI(section_path)
+
+        # Calculate the duration of the section in seconds
+        section_length_seconds = max(note.end for instrument in section_midi.instruments for note in instrument.notes)
+
+        # Assign lyrics to the timing
+        if lyric_index < len(lyrics):
+            result.append({
+                "line": lyrics[lyric_index],
+                "startTime": float(offset_duration),
+                "duration": float(section_length_seconds),
+                "file": section_file
+            })
+            lyric_index += 1
+        else:
+            print(f"Warning: No more lyrics left to assign for section {section_file}. Skipping...")
+
+        print(
+            f"Section: {section_file}, Start Time: {float(offset_duration):.2f}s, "
+            f"Duration: {float(section_length_seconds):.2f}s"
+        )
+
+    # Check if all lyrics were used
+    if lyric_index < len(lyrics):
+        print(f"Warning: Not all lyrics were assigned to sections. Remaining lines: {len(lyrics) - lyric_index}")
+
+    # Save result to JSON file with UTF-8 encoding and ensure_ascii=False
+    with open(output_json_path, "w", encoding="utf-8") as json_file:
+        json.dump(result, json_file, indent=4, ensure_ascii=False)
+    print(f"Timing JSON saved to {output_json_path}.")
+
+    # Output result as JSON string for reference with correct encoding
+    json_output = json.dumps(result, indent=4, ensure_ascii=False)
+    print("Generated timing JSON:")
+    print(json_output)
+
+    return result
+
+
 def combine_sectional_midis(input_folder, output_folder):
     """
     Combine all sectional MIDI files in the input folder into a single MIDI file.
