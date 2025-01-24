@@ -25,16 +25,14 @@ def lyrics_timing_for_sections(
     Returns:
     - A JSON-like list of dictionaries with timing and lyric line associations.
     """
-    
+    if not input_text:
+        raise ValueError("Input text with lyrics is required.")
+
     import pretty_midi
     import os
     import re
     import json
     from decimal import Decimal
-
-
-    if not input_text:
-        raise ValueError("Input text with lyrics is required.")
 
     # Parse lyrics from input_text
     lyrics = [line.strip() for line in input_text.splitlines() if line.strip()]
@@ -43,11 +41,11 @@ def lyrics_timing_for_sections(
     # Normalize paths
     output_folder = os.path.normpath(output_folder)
 
-    # Find section files matching the pattern (e.g., section_1.mid, section_2.mid, etc.)
+    # Find section files matching the pattern (e.g., section_1.mid, section_2.mid)
     pattern = re.compile(r"section_(\d+)\.mid")
     section_files = sorted(
         [f for f in os.listdir(output_folder) if pattern.match(f)],
-        key=lambda x: int(re.search(r"section_(\d+)", x).group(1))  # Sort by section number
+        key=lambda x: int(pattern.match(x).group(1))
     )
 
     if not section_files:
@@ -59,46 +57,37 @@ def lyrics_timing_for_sections(
 
     # Calculate timings and associate with lyrics
     result = []
-    lyric_index = 0
+    current_start_time = Decimal(initial_gap_bars) * bar_duration
 
-    for section_file in section_files:
-        # Extract section number from filename
-        match = pattern.match(section_file)
-        if not match:
-            continue
-        section_number = int(match.group(1))
-
-        # Calculate offset in seconds
-        offset_bars = Decimal(section_number - 1) + Decimal(initial_gap_bars)
-        offset_duration = offset_bars * bar_duration
+    for index, section_file in enumerate(section_files):
+        section_path = os.path.join(output_folder, section_file)
 
         # Load the MIDI file and calculate section length
-        section_path = os.path.join(output_folder, section_file)
         section_midi = pretty_midi.PrettyMIDI(section_path)
-
-        # Calculate the duration of the section in seconds
-        section_length_seconds = max(note.end for instrument in section_midi.instruments for note in instrument.notes)
+        section_duration = max(note.end for instrument in section_midi.instruments for note in instrument.notes)
 
         # Assign lyrics to the timing
-        if lyric_index < len(lyrics):
+        if index < len(lyrics):
             result.append({
-                "line": lyrics[lyric_index],
-                "startTime": float(offset_duration),
-                "duration": float(section_length_seconds),
+                "line": lyrics[index],
+                "startTime": float(current_start_time),
+                "duration": float(section_duration),
                 "file": section_file
             })
-            lyric_index += 1
         else:
             print(f"Warning: No more lyrics left to assign for section {section_file}. Skipping...")
 
         print(
-            f"Section: {section_file}, Start Time: {float(offset_duration):.2f}s, "
-            f"Duration: {float(section_length_seconds):.2f}s"
+            f"Section: {section_file}, Start Time: {float(current_start_time):.2f}s, "
+            f"Duration: {float(section_duration):.2f}s"
         )
 
+        # Increment the start time for the next section
+        current_start_time += Decimal(section_duration)
+
     # Check if all lyrics were used
-    if lyric_index < len(lyrics):
-        print(f"Warning: Not all lyrics were assigned to sections. Remaining lines: {len(lyrics) - lyric_index}")
+    if len(result) < len(lyrics):
+        print(f"Warning: Not all lyrics were assigned to sections. Remaining lines: {len(lyrics) - len(result)}")
 
     # Save result to JSON file with UTF-8 encoding and ensure_ascii=False
     with open(output_json_path, "w", encoding="utf-8") as json_file:
@@ -111,6 +100,7 @@ def lyrics_timing_for_sections(
     print(json_output)
 
     return result
+
 
 
 def combine_sectional_midis(input_folder, output_folder):
