@@ -18,6 +18,7 @@ from datetime import datetime
 from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, analyze_lyrics_cs, analyze_lyrics_sk, analyze_lyrics_el, analyze_lyrics_es
 import time
 from melody_generation import main_melody_generation, lyrics_time_calculation
+from lyrics_el import process_ballad_lyrics
     
     
 import os
@@ -181,7 +182,9 @@ def process_message(body):
             elif region == "slovakia":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
             elif region == "greece":
-                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
+                if trackId == 2:
+                    lyrics = process_ballad_lyrics(lyrics)
+                    formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
             elif region == "mexico":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
                 # Combine every two lines of `formatted_lyrics` into one
@@ -373,7 +376,8 @@ def lambda_handler(event, context):
         "mexico": "Singers/es_singer/",
         "hungary": "Singers/hu_singer/",
         "czechia": "Singers/cz_singer/",
-        "greece": "Singers/el_singer/"
+        "greece": "Singers/el_singer/",
+        "slovakia": "Singers/sk_singer/"
     }
 
         # Define folder mappings
