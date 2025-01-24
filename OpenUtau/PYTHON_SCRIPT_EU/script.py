@@ -182,8 +182,8 @@ def process_message(body):
             elif region == "greece":
                 if trackId == 2:
                     # Define the folder paths relative to the script's location
-                    midi_folder = os.path.join(script_dir, "greek_track2_sections")
-                    output_folder = os.path.join(script_dir, "greek_track2_sections", "generations")
+                    midi_folder = os.path.join("/tmp/greece/", "greek_track2_sections")
+                    output_folder = os.path.join("/tmp/greece/", "greek_track2_sections", "generations")
                     
                     lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
                     formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
