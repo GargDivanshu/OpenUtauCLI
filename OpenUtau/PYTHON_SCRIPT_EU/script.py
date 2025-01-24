@@ -290,12 +290,12 @@ def process_message(body):
             logger.info("melody generation stats")
             logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
             logger.info("============================================================")
-        lyrics_with_syllable, utau_lyrics = midimain() #this assumes lyrics are already present in /tmp/lyrics_readable.txt
-        print(lyrics_with_syllable, " lyrics_with_syllable")
-        print(utau_lyrics, " utau_lyrics")
-        output_file = "/tmp/lyrics.txt"
-        with open(output_file, "w", encoding="utf-8") as file:
-            file.write(utau_lyrics)
+        # lyrics_with_syllable, utau_lyrics = midimain() #this assumes lyrics are already present in /tmp/lyrics_readable.txt
+        # print(lyrics_with_syllable, " lyrics_with_syllable")
+        # print(utau_lyrics, " utau_lyrics")
+        # output_file = "/tmp/lyrics.txt"
+        # with open(output_file, "w", encoding="utf-8") as file:
+        #     file.write(utau_lyrics)
         
 
         # print(f"UTAU lyrics written to {output_file}")
