@@ -149,6 +149,7 @@ def process_message(body):
         region = body.get("region")
         trackId = body.get("trackID")
         lyrics = body.get("lyrics")
+        greece_lyrics = lyrics
         songType = body.get("type")
         if os.getenv("REGION_PROD") == "greece":
             if songType.lower() == "pop":
@@ -274,7 +275,7 @@ def process_message(body):
                     lyrics_time_calculation(
                     output_folder=os.path.join(script_dir, "greek_track2_sections"),
                     bpm=bpm,
-                    input_text=lyrics,
+                    input_text=greece_lyrics,
                     initial_gap_bars=0,
                     output_json_path=OU_LYRICS_JSON_PATH
                     )
