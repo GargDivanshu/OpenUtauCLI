@@ -20,6 +20,7 @@ import time
 from melody_generation import main_melody_generation, lyrics_time_calculation
 from lyrics_el import process_ballad_lyrics
 from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis
+import shutil
     
     
 import os
@@ -191,6 +192,7 @@ def process_message(body):
                     input_folder = "greek_track2_sections"
                     output_folder = config.OUTPUT_FOLDER
                     final_midi_path = combine_sectional_midis(input_folder, output_folder)
+                    shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
                     
             elif region == "mexico":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
