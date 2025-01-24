@@ -137,9 +137,9 @@ def lyrics_timing_for_track2(
         (16.7, 3.4),
         (22.67, 5.1),
         (30.0, 5.4),
-        (36.8, 7.3),
+        (36.8, 6.4),
         (44, 10.0),
-        (54.3, 2.5)
+        (54.5, 2.5)
     ]
 
     # Check if provided lyrics match the number of fixed timings
