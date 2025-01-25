@@ -259,20 +259,12 @@ def count_syllables(line):
     """ Count the total number of syllables in a line. """
     return sum(len(word.split('+')) for word in line.split())
 
-def adjust_lyrics_to_midi(lyrics_str, midi_folder, output_folder="generations", bpm=120):
-    """
-    Adjust lyrics based on the number of notes in corresponding MIDI files and save adjusted versions
-    to a separate folder.
 
-    Parameters:
-    - lyrics_str: Multiline string containing formatted lyric lines.
-    - midi_folder: Path to the folder containing section MIDI files.
-    - output_folder: Path to save the modified MIDI files.
-    - bpm: Beats per minute for calculating note durations.
-
-    Returns:
-    - Adjusted lyrics as a single formatted string with newlines.
-    """
+def adjust_lyrics_to_midi(lyrics_input, midi_folder, output_folder="generations", bpm=120):
+    if isinstance(lyrics_input, tuple):
+        lyrics_str = lyrics_input[0]  # Extract the string part
+    else:
+        lyrics_str = lyrics_input
 
     # Ensure the output folder exists
     os.makedirs(output_folder, exist_ok=True)
@@ -351,6 +343,7 @@ def adjust_lyrics_to_midi(lyrics_str, midi_folder, output_folder="generations", 
     print(adjusted_lyrics_str)
 
     return adjusted_lyrics_str
+
 
 
 
