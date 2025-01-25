@@ -190,18 +190,10 @@ def process_message(body):
                     lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
                     formatted_lyrics = analyze_lyrics_el(lyrics)
                     formatted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, midi_folder, output_folder)
-                    print("here are formatted_lyrics  ", formatted_lyrics )
                     input_folder = "greek_track2_sections"
                     output_folder = config.OUTPUT_FOLDER
                     final_midi_path = combine_sectional_midis(input_folder, output_folder)
                     shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
-                    with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
-                        print("printing lyrics in txt file ")
-                        file.write(lyrics)
-             
-                    output_file = "/tmp/lyrics.txt"
-                    with open(output_file, "w", encoding="utf-8") as file:
-                        file.write(formatted_lyrics)
                     
             elif region == "mexico":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
@@ -214,7 +206,7 @@ def process_message(body):
                 formatted_lyrics = combine_lines(formatted_lyrics)
             print(f"Processed lyrics successfully for region: {region}")
             # Validate return values
-            if not formatted_lyrics or not syllable_breakdown or total_syllables is None:
+            if not formatted_lyrics or not syllable_breakdown or total_syllables is None and os.getenv("REGION_PROD") != "greece":
                 logger.error(f"Invalid return values: {formatted_lyrics}, {syllable_breakdown}, {total_syllables}")
                 formatted_lyrics, syllable_breakdown, total_syllables = "", "", 0
 
