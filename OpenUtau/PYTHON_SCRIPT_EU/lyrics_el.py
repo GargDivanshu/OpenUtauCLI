@@ -24,16 +24,11 @@ def call_gpt_for_syllables(lyrics):
         "in the format: word(syllable_count). Ensure each syllable count is accurate.\n\n"
         f"Lyrics line: \"{lyrics}\"\n"
         "Return the formatted output in one line, like: word1(2) word2(1) word3(3) ... "
-        " Όταν το γράμμα «ι» (γιώτα) βρίσκεται μετά από ένα σύμφωνο και πριν από ένα άλλο φωνήεν, αλλά χωρίς τόνο στο «ι», "
-        "η τριάδα διαβάζεται σαν μια συλλαβή. Για παράδειγμα το \"μια\" και το \"τιά\" είναι μία συλλαβή, ενώ το \"μία\" είναι δύο συλλαβές. "
-        "Το «κι» ενώνεται με το φωνήεν της επόμενης λέξης και δημιουργεί μία συλλαβή. Για παράδειγμα, το «κι αν» ή το «κι αυτό» έχουν μία συλλαβή, "
-        "παρόλο που περιέχουν δύο λέξεις. Παράδειγμα, αν η φράση είναι κι ο χρόνος, ο συλλαβισμός είναι κιο(1) χρόνος (2). "
-        "Όταν χρησιμοποιούμε απόστροφο για να δείξουμε ότι ένα φωνήεν παραλείπεται, οι λέξεις που ενώνουμε συγχωνεύονται σε μία συλλαβή. "
-        "Για παράδειγμα στο «γι’ αυτό» το «ι» ενώνεται με το «α» και προφέρονται μαζί, άρα η φράση αποτελείται από 2 συλλαβές. "
         "Be intelligent when assigning syllables. Only generate the lyrics and no other commentary."
     )
 
     client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
+    # client = openai.Client(api_key="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")
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -44,7 +39,12 @@ def call_gpt_for_syllables(lyrics):
         max_tokens=500
     )
 
-    return response.choices[0].message.content.strip()
+    raw_response = response.choices[0].message.content.strip()
+    print(f"GPT raw response: {raw_response}")  # Debug output
+
+    return raw_response
+
+
 
 def parse_gpt_response(gpt_response):
     """
@@ -56,11 +56,22 @@ def parse_gpt_response(gpt_response):
     Returns:
     - A list of tuples (word, syllable_count).
     """
-    pattern = re.compile(r"(\w+)\((\d+)\)")
+    pattern = re.compile(r"(\S+)\((\d+)\)")  # Match any non-space characters followed by (number)
     matches = pattern.findall(gpt_response)
 
-    syllable_info = [(word, int(count)) for word, count in matches]
+    if not matches:
+        raise ValueError(f"Unexpected GPT response format: {gpt_response}")
+
+    syllable_info = []
+    for match in matches:
+        try:
+            word, count = match
+            syllable_info.append((word, int(count)))
+        except ValueError:
+            print(f"Skipping invalid entry: {match}")
+
     return syllable_info
+
 
 def count_syllables_pyphen(word):
     """Count the number of syllables in a word using Pyphen."""
@@ -94,6 +105,7 @@ def format_line_in_utau(lyrics):
 
     return ' '.join(formatted_words)
 
+
 def analyze_lyrics(lyrics):
     """
     Analyze lyrics for syllable breakdown and OpenUTAU formatting.
@@ -102,16 +114,23 @@ def analyze_lyrics(lyrics):
     - lyrics: Multi-line lyrics as input.
 
     Returns:
-    - Formatted lyrics.
+    - formatted_lyrics (str): The formatted lyrics in OpenUTAU format.
+    - syllable_breakdown (list): List of strings showing syllable breakdown for each word.
+    - total_syllables (int): Total count of syllables in the lyrics.
     """
     lines = lyrics.strip().split('\n')
     formatted_lines = []
+    syllable_breakdown = []
+    total_syllables = 0
 
     for line in lines:
-        formatted_line = format_line_in_utau(line)
+        formatted_line, breakdown = format_line_in_utau(line)
         formatted_lines.append(formatted_line)
+        syllable_breakdown.extend(breakdown)
+        total_syllables += sum(int(item.split('(')[1].split(')')[0]) for item in breakdown)
 
-    return '\n'.join(formatted_lines)
+    return '\n'.join(formatted_lines), syllable_breakdown, total_syllables
+
 
 def process_ballad_lyrics(lyrics):
     """
@@ -190,8 +209,8 @@ lyrics = """
 Για να αφήσω ότι έχω...και να έρθω να σε βρω
 """
 
-# print("\nFinal OpenUTAU Formatted Lyrics:\n")
-# print(analyze_lyrics(lyrics))
+print("\nFinal OpenUTAU Formatted Lyrics:\n")
+print(analyze_lyrics(lyrics))
 
 
 lyrics = """
