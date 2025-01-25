@@ -33,7 +33,9 @@ def call_gpt_for_syllables(lyrics):
         "Be intelligent when assigning syllables. Only generate the lyrics and no other commentary."
     )
 
+
     client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
+    # client = openai.Client(api_key="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")
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -190,8 +192,9 @@ lyrics = """
 Για να αφήσω ότι έχω...και να έρθω να σε βρω
 """
 
-# print("\nFinal OpenUTAU Formatted Lyrics:\n")
-# print(analyze_lyrics(lyrics))
+print("\nFinal OpenUTAU Formatted Lyrics:\n")
+print(analyze_lyrics(lyrics))
+
 
 
 lyrics = """
