@@ -3,7 +3,6 @@ import pretty_midi
 import os
 from datetime import datetime
 from lyrics_el import process_ballad_lyrics
-from lyrics import analyze_lyrics_el
 
 
 def lyrics_timing_for_sections(
@@ -350,9 +349,6 @@ def adjust_lyrics_to_midi(lyrics_str, midi_folder, output_folder="generations", 
 
     print("\nFinal adjusted lyrics:\n")
     print(adjusted_lyrics_str)
-    with open("/tmp/lyrics.txt", "w", encoding="utf-8") as file:
-        print("printing lyrics in txt file ")
-        file.write(lyrics)
 
     return adjusted_lyrics_str
 
@@ -360,7 +356,7 @@ def adjust_lyrics_to_midi(lyrics_str, midi_folder, output_folder="generations", 
 
 
 if __name__ == "__main__":
-    lyrics = """
+    input_lyrics = """
     Η σιωπή + σου με ξυπνάει +
     Μες της νύχτας + το κενό +
     Και ο χρόνος που κυλάει +
@@ -372,25 +368,11 @@ if __name__ == "__main__":
     """
 
     print("\nProcessing initial lyrics...\n")
-    # lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
-    # formatted_lyrics  = analyze_lyrics_el(lyrics)
-    # adjusted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "greek_track2_sections", "greek_track2_sections/generations")
+    formatted_lyrics = process_ballad_lyrics(input_lyrics)
+    adjusted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "outputs/greek_track1_sections", "outputs/greek_track1_sections/generations")
 
-    # input_folder = "greek_track2_sections"
-    # output_folder = "outputs"
-    # final_midi_path = combine_sectional_midis(input_folder, output_folder)
+    input_folder = "outputs/greek_track1_sections"
+    output_folder = "outputs"
+    final_midi_path = combine_sectional_midis(input_folder, output_folder)
 
-    # print(f"\nGenerated final MIDI: {final_midi_path}")
-    
-    # midi_folder = os.path.join("/tmp/greece/", "greek_track2_sections")
-    # output_folder = os.path.join("/tmp/greece/", "greek_track2_sections", "generations")
-                    
-    lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
-    formatted_lyrics = analyze_lyrics_el(lyrics)
-    formatted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "greek_track2_sections", "greek_track2_sections/generations")
-    print("formatted_lyrics  ", type(formatted_lyrics))
-    input_folder = "greek_track2_sections"
-    final_midi_path = combine_sectional_midis(input_folder, "outputs")
-    output_file = "lyrics.txt"
-    with open(output_file, "w", encoding="utf-8") as file:
-        file.write(formatted_lyrics)
+    print(f"\nGenerated final MIDI: {final_midi_path}")
