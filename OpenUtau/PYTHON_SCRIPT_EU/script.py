@@ -826,6 +826,6 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
 # if __name__ == "__main__":
         # logger.info("Starting SQS polling on EC2")
         
-response = lambda_handler(payload, None)
-print(response)
+# response = lambda_handler(payload, None)
+# print(response)
 # poll_sqs() #poll_sqs(sqs_client, SQS_QUEUE_URL, process_message)
