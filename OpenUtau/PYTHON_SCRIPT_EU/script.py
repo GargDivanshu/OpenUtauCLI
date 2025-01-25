@@ -194,6 +194,13 @@ def process_message(body):
                     output_folder = config.OUTPUT_FOLDER
                     final_midi_path = combine_sectional_midis(input_folder, output_folder)
                     shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
+                    with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
+                        print("printing lyrics in txt file ")
+                        file.write(lyrics)
+             
+                    output_file = "/tmp/lyrics.txt"
+                    with open(output_file, "w", encoding="utf-8") as file:
+                        file.write(formatted_lyrics)
                     
             elif region == "mexico":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
