@@ -94,6 +94,7 @@ class Config:
     SECTIONAL_MIDI_FOLDER: str
     ADJUSTED_SECTIONAL_MIDI_FOLDER: str
     OUTPUT_FOLDER: str
+    GREECE_TRACK2_SECTIONS: str
 
 def initialize_config():
     is_lambda_env = IS_LAMBDA_ENV  # Modify this as needed for your environment check
@@ -132,7 +133,7 @@ def initialize_config():
         SECTIONAL_MIDI_FOLDER="/tmp/outputs/sections" if is_lambda_env else "tmp/outputs/sections",
         ADJUSTED_SECTIONAL_MIDI_FOLDER="/tmp/outputs/adjusted_sections" if is_lambda_env else "tmp/outputs/adjusted_sections",
         OUTPUT_FOLDER="/tmp/outputs" if is_lambda_env else "tmp/outputs",
-        GREECE_TRACK1_SECTIONS="greek_track1_sections"
+        GREECE_TRACK2_SECTIONS="greek_track1_sections"
     )
     
     # Return initialized config

@@ -188,7 +188,7 @@ def process_message(body):
                     output_folder = os.path.join("/tmp/greece/", "greek_track2_sections", "generations")
                     
                     lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
-                    formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_el(lyrics)
+                    formatted_lyrics = analyze_lyrics_el(lyrics)
                     formatted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, midi_folder, output_folder)
                     input_folder = "greek_track2_sections"
                     output_folder = config.OUTPUT_FOLDER

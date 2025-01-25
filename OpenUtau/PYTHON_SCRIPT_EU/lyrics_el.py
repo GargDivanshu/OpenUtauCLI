@@ -94,7 +94,6 @@ def format_line_in_utau(lyrics):
 
     return ' '.join(formatted_words)
 
-
 def analyze_lyrics(lyrics):
     """
     Analyze lyrics for syllable breakdown and OpenUTAU formatting.
@@ -103,22 +102,16 @@ def analyze_lyrics(lyrics):
     - lyrics: Multi-line lyrics as input.
 
     Returns:
-    - formatted_lyrics (str): The formatted lyrics in OpenUTAU format.
-    - syllable_breakdown (list): List of strings showing syllable breakdown for each word.
-    - total_syllables (int): Total count of syllables in the lyrics.
+    - Formatted lyrics.
     """
     lines = lyrics.strip().split('\n')
     formatted_lines = []
-    syllable_breakdown = []
-    total_syllables = 0
 
     for line in lines:
-        formatted_line, breakdown = format_line_in_utau(line)
+        formatted_line = format_line_in_utau(line)
         formatted_lines.append(formatted_line)
-        syllable_breakdown.extend(breakdown)
-        total_syllables += sum(int(item.split('(')[1].split(')')[0]) for item in breakdown)
 
-    return '\n'.join(formatted_lines), syllable_breakdown, total_syllables
+    return '\n'.join(formatted_lines)
 
 def process_ballad_lyrics(lyrics):
     """

@@ -3,6 +3,7 @@ import pretty_midi
 import os
 from datetime import datetime
 from lyrics_el import process_ballad_lyrics
+from lyrics import analyze_lyrics_el
 
 
 def lyrics_timing_for_sections(
@@ -369,6 +370,7 @@ if __name__ == "__main__":
 
     print("\nProcessing initial lyrics...\n")
     formatted_lyrics = process_ballad_lyrics(input_lyrics)
+    formatted_lyrics  = analyze_lyrics_el(formatted_lyrics)
     adjusted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "outputs/greek_track1_sections", "outputs/greek_track1_sections/generations")
 
     input_folder = "outputs/greek_track1_sections"
