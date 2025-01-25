@@ -350,6 +350,9 @@ def adjust_lyrics_to_midi(lyrics_str, midi_folder, output_folder="generations", 
 
     print("\nFinal adjusted lyrics:\n")
     print(adjusted_lyrics_str)
+    with open("/tmp/lyrics.txt", "w", encoding="utf-8") as file:
+        print("printing lyrics in txt file ")
+        file.write(lyrics)
 
     return adjusted_lyrics_str
 
