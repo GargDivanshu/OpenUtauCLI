@@ -4,7 +4,7 @@ import re
 import pyphen
 
 # Choose method: "PYPHEN" or "OPENAI"
-SYLLABLE_METHOD = "PYPHEN"  # Change to "OPENAI" to use GPT
+SYLLABLE_METHOD = "OPENAI"  # Change to "OPENAI" to use GPT
 
 # Initialize Pyphen for Greek syllabification
 syllable_splitter = pyphen.Pyphen(lang='el_GR')

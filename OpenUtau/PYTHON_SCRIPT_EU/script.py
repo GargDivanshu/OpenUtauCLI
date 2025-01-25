@@ -217,6 +217,7 @@ def process_message(body):
         
         
         with open("/tmp/lyrics_readable.txt", "w", encoding="utf-8") as file:
+            print("printing lyrics in txt file ")
             file.write(lyrics)
              
         output_file = "/tmp/lyrics.txt"

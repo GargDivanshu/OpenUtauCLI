@@ -369,12 +369,22 @@ if __name__ == "__main__":
     """
 
     print("\nProcessing initial lyrics...\n")
+    # lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
+    # formatted_lyrics  = analyze_lyrics_el(lyrics)
+    # adjusted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "greek_track2_sections", "greek_track2_sections/generations")
+
+    # input_folder = "greek_track2_sections"
+    # output_folder = "outputs"
+    # final_midi_path = combine_sectional_midis(input_folder, output_folder)
+
+    # print(f"\nGenerated final MIDI: {final_midi_path}")
+    
+    # midi_folder = os.path.join("/tmp/greece/", "greek_track2_sections")
+    # output_folder = os.path.join("/tmp/greece/", "greek_track2_sections", "generations")
+                    
     lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
-    formatted_lyrics  = analyze_lyrics_el(lyrics)
-    adjusted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "greek_track2_sections", "greek_track2_sections/generations")
-
+    formatted_lyrics = analyze_lyrics_el(lyrics)
+    formatted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "greek_track2_sections", "greek_track2_sections/generations")
+    print("formatted_lyrics  ", type(formatted_lyrics))
     input_folder = "greek_track2_sections"
-    output_folder = "outputs"
-    final_midi_path = combine_sectional_midis(input_folder, output_folder)
-
-    print(f"\nGenerated final MIDI: {final_midi_path}")
+    final_midi_path = combine_sectional_midis(input_folder, "outputs")
