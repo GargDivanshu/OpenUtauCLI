@@ -24,11 +24,16 @@ def call_gpt_for_syllables(lyrics):
         "in the format: word(syllable_count). Ensure each syllable count is accurate.\n\n"
         f"Lyrics line: \"{lyrics}\"\n"
         "Return the formatted output in one line, like: word1(2) word2(1) word3(3) ... "
+        " Όταν το γράμμα «ι» (γιώτα) βρίσκεται μετά από ένα σύμφωνο και πριν από ένα άλλο φωνήεν, αλλά χωρίς τόνο στο «ι», "
+        "η τριάδα διαβάζεται σαν μια συλλαβή. Για παράδειγμα το \"μια\" και το \"τιά\" είναι μία συλλαβή, ενώ το \"μία\" είναι δύο συλλαβές. "
+        "Το «κι» ενώνεται με το φωνήεν της επόμενης λέξης και δημιουργεί μία συλλαβή. Για παράδειγμα, το «κι αν» ή το «κι αυτό» έχουν μία συλλαβή, "
+        "παρόλο που περιέχουν δύο λέξεις. Παράδειγμα, αν η φράση είναι κι ο χρόνος, ο συλλαβισμός είναι κιο(1) χρόνος (2). "
+        "Όταν χρησιμοποιούμε απόστροφο για να δείξουμε ότι ένα φωνήεν παραλείπεται, οι λέξεις που ενώνουμε συγχωνεύονται σε μία συλλαβή. "
+        "Για παράδειγμα στο «γι’ αυτό» το «ι» ενώνεται με το «α» και προφέρονται μαζί, άρα η φράση αποτελείται από 2 συλλαβές. "
         "Be intelligent when assigning syllables. Only generate the lyrics and no other commentary."
     )
 
     client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
-    # client = openai.Client(api_key="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")
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -39,12 +44,7 @@ def call_gpt_for_syllables(lyrics):
         max_tokens=500
     )
 
-    raw_response = response.choices[0].message.content.strip()
-    print(f"GPT raw response: {raw_response}")  # Debug output
-
-    return raw_response
-
-
+    return response.choices[0].message.content.strip()
 
 def parse_gpt_response(gpt_response):
     """
@@ -56,22 +56,11 @@ def parse_gpt_response(gpt_response):
     Returns:
     - A list of tuples (word, syllable_count).
     """
-    pattern = re.compile(r"(\S+)\((\d+)\)")  # Match any non-space characters followed by (number)
+    pattern = re.compile(r"(\w+)\((\d+)\)")
     matches = pattern.findall(gpt_response)
 
-    if not matches:
-        raise ValueError(f"Unexpected GPT response format: {gpt_response}")
-
-    syllable_info = []
-    for match in matches:
-        try:
-            word, count = match
-            syllable_info.append((word, int(count)))
-        except ValueError:
-            print(f"Skipping invalid entry: {match}")
-
+    syllable_info = [(word, int(count)) for word, count in matches]
     return syllable_info
-
 
 def count_syllables_pyphen(word):
     """Count the number of syllables in a word using Pyphen."""
@@ -130,7 +119,6 @@ def analyze_lyrics(lyrics):
         total_syllables += sum(int(item.split('(')[1].split(')')[0]) for item in breakdown)
 
     return '\n'.join(formatted_lines), syllable_breakdown, total_syllables
-
 
 def process_ballad_lyrics(lyrics):
     """
@@ -209,8 +197,8 @@ lyrics = """
 Για να αφήσω ότι έχω...και να έρθω να σε βρω
 """
 
-print("\nFinal OpenUTAU Formatted Lyrics:\n")
-print(analyze_lyrics(lyrics))
+# print("\nFinal OpenUTAU Formatted Lyrics:\n")
+# print(analyze_lyrics(lyrics))
 
 
 lyrics = """
