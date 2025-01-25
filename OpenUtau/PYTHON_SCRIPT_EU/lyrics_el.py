@@ -4,7 +4,7 @@ import re
 import pyphen
 
 # Choose method: "PYPHEN" or "OPENAI"
-SYLLABLE_METHOD = "OPENAI"  # Change to "OPENAI" to use GPT
+SYLLABLE_METHOD = "PYPHEN"  # Change to "OPENAI" to use GPT
 
 # Initialize Pyphen for Greek syllabification
 syllable_splitter = pyphen.Pyphen(lang='el_GR')
@@ -33,7 +33,8 @@ def call_gpt_for_syllables(lyrics):
         "Be intelligent when assigning syllables. Only generate the lyrics and no other commentary."
     )
 
-    client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
+    # client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
+    client = openai.Client(api_key="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")
 
     response = client.chat.completions.create(
         model="gpt-4o",
