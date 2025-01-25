@@ -348,24 +348,24 @@ def adjust_lyrics_to_midi(lyrics_input, midi_folder, output_folder="generations"
 
 
 
-if __name__ == "__main__":
-    input_lyrics = """
-    Η σιωπή + σου με ξυπνάει +
-    Μες της νύχτας + το κενό +
-    Και ο χρόνος που κυλάει +
-    Πιο μακριά + σε παρασέρνει + + + την αγάπη μας σκορπάει +
-    Και φωνάζω + στις πλατείες + + το όνομα + σου μα κενό +
-    Χάνομαι + μέσα στις μνήμες + που ακόμη αγαπώ +
-    Ένα χάδι ένα φιλί + σου ένα βλέμμα + είν' + αρκετό + + Για να αφήσω + ότι έχω
-    και να έρθω + να σε βρω
-    """
+# if __name__ == "__main__":
+#     input_lyrics = """
+#     Η σιωπή + σου με ξυπνάει +
+#     Μες της νύχτας + το κενό +
+#     Και ο χρόνος που κυλάει +
+#     Πιο μακριά + σε παρασέρνει + + + την αγάπη μας σκορπάει +
+#     Και φωνάζω + στις πλατείες + + το όνομα + σου μα κενό +
+#     Χάνομαι + μέσα στις μνήμες + που ακόμη αγαπώ +
+#     Ένα χάδι ένα φιλί + σου ένα βλέμμα + είν' + αρκετό + + Για να αφήσω + ότι έχω
+#     και να έρθω + να σε βρω
+#     """
 
-    print("\nProcessing initial lyrics...\n")
-    formatted_lyrics = process_ballad_lyrics(input_lyrics)
-    adjusted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "outputs/greek_track1_sections", "outputs/greek_track1_sections/generations")
+#     print("\nProcessing initial lyrics...\n")
+#     formatted_lyrics = process_ballad_lyrics(input_lyrics)
+#     adjusted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "outputs/greek_track1_sections", "outputs/greek_track1_sections/generations")
 
-    input_folder = "outputs/greek_track1_sections"
-    output_folder = "outputs"
-    final_midi_path = combine_sectional_midis(input_folder, output_folder)
+#     input_folder = "outputs/greek_track1_sections"
+#     output_folder = "outputs"
+#     final_midi_path = combine_sectional_midis(input_folder, output_folder)
 
-    print(f"\nGenerated final MIDI: {final_midi_path}")
+#     print(f"\nGenerated final MIDI: {final_midi_path}")

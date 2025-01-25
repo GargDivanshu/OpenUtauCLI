@@ -209,9 +209,9 @@ def process_message(body):
                 formatted_lyrics = combine_lines(formatted_lyrics)
             print(f"Processed lyrics successfully for region: {region}")
             # Validate return values
-            if not formatted_lyrics or not syllable_breakdown or total_syllables is None:
-                logger.error(f"Invalid return values: {formatted_lyrics}, {syllable_breakdown}, {total_syllables}")
-                formatted_lyrics, syllable_breakdown, total_syllables = "", "", 0
+            # if not formatted_lyrics or not syllable_breakdown or total_syllables is None:
+            #     logger.error(f"Invalid return values: {formatted_lyrics}, {syllable_breakdown}, {total_syllables}")
+            #     formatted_lyrics, syllable_breakdown, total_syllables = "", "", 0
 
             
         except Exception as e:
@@ -555,7 +555,7 @@ payload = {
                 {
                     "messageId": "unique-message-id",
                     "receiptHandle": "MessageReceiptHandle",
-                    "body": json.dumps({"fileName": None, "songID": 107, "name": "David", "reason": "Supportive"}),
+                    "body": "{\"songID\": 3, \"region\": \"greece\", \"trackID\": 2, \"type\": \"ballad\", \"lyrics\": \"nΗ σιωπή σου με ξυπνάει,  \\nΜες της νύχτας το κενό  \\nΚαι ο χρόνος που κυλάει,  \\nΠιο μακριά σε παρασέρνει, την αγάπη μας σκορπάει  \\nΚαι φωνάζω στις πλατείες, το όνομα σου μα κενό, \\nΧάνομαι μέσα στις μνήμες που ακόμη αγαπώ,  \\nΈνα χάδι, ένα φιλί σου, ένα βλέμμα είν' αρκετό, Για να αφήσω ότι έχω  \\nκαι να έρθω να σε βρω  \"}",
                     "attributes": {
                         "ApproximateReceiveCount": "1",
                         "SentTimestamp": str(int(time.time() * 1000)),
@@ -826,6 +826,6 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
 # if __name__ == "__main__":
         # logger.info("Starting SQS polling on EC2")
         
-# response = lambda_handler(payload, None)
-# print(response)
+response = lambda_handler(payload, None)
+print(response)
 # poll_sqs() #poll_sqs(sqs_client, SQS_QUEUE_URL, process_message)

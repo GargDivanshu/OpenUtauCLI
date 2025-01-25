@@ -192,8 +192,8 @@ lyrics = """
 Για να αφήσω ότι έχω...και να έρθω να σε βρω
 """
 
-print("\nFinal OpenUTAU Formatted Lyrics:\n")
-print(analyze_lyrics(lyrics))
+# print("\nFinal OpenUTAU Formatted Lyrics:\n")
+# print(analyze_lyrics(lyrics))
 
 
 
