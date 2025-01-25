@@ -388,3 +388,6 @@ if __name__ == "__main__":
     print("formatted_lyrics  ", type(formatted_lyrics))
     input_folder = "greek_track2_sections"
     final_midi_path = combine_sectional_midis(input_folder, "outputs")
+    output_file = "lyrics.txt"
+    with open(output_file, "w", encoding="utf-8") as file:
+        file.write(formatted_lyrics)

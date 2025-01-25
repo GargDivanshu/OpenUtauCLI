@@ -190,6 +190,7 @@ def process_message(body):
                     lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
                     formatted_lyrics = analyze_lyrics_el(lyrics)
                     formatted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, midi_folder, output_folder)
+                    print("here are formatted_lyrics  ", formatted_lyrics )
                     input_folder = "greek_track2_sections"
                     output_folder = config.OUTPUT_FOLDER
                     final_midi_path = combine_sectional_midis(input_folder, output_folder)
