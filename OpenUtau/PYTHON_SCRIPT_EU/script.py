@@ -197,6 +197,10 @@ def process_message(body):
                     output_folder = config.OUTPUT_FOLDER
                     final_midi_path = combine_sectional_midis(input_folder, output_folder)
                     shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
+                
+                elif trackId == 1 or trackId == 3:
+                    formatted_lyrics = analyze_lyrics_el(lyrics)
+                    
                     
             elif region == "mexico":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_es(lyrics)
