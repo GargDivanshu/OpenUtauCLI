@@ -236,7 +236,7 @@ def process_message(body):
         # lyrics_api_filename = f"lyrics/{song_id}_lyrics.json"
         # upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
         # notify_lyrics_json_upload(song_id, f"{song_id}_lyrics.json") 
-        
+        bpm = bpm_data[region][trackId]
         if os.getenv("REGION_PROD") != "greece" and trackId != 2:
             start_time = time.monotonic()
             region_name = region.capitalize()
