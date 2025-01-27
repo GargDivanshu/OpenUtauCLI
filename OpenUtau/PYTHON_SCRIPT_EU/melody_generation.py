@@ -2578,7 +2578,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
             input_midi_path=final_output_path,  # The combined MIDI file from combine_sectional_midis
             output_midi_path=final_output_path,  # Path for the final MIDI with silence
             bpm=120,  # Beats per minute of the MIDI
-            silence_beats=11.245  # Silence duration in beats (4 beats = 1 bar)
+            silence_beats=11.945  # Silence duration in beats (4 beats = 1 bar)
             ) 
  
     shutil.copy(final_output_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)

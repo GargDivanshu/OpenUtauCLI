@@ -176,6 +176,7 @@ def process_message(body):
             elif region == "romania":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_ro(lyrics)
             elif region == "hungary":
+                formatted_lyrics = add_plus_signs(formatted_lyrics)
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_hu(lyrics)
             elif region == "czechia":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
