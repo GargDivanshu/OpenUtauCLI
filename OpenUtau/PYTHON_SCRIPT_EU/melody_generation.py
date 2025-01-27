@@ -2222,12 +2222,14 @@ def lyrics_time_calculation(
 def add_plus_signs(lyrics: str) -> str:
     lines = lyrics.strip().split("\n")
     modified_lines = []
+    
     for line in lines:
         words = line.split()
         modified_words = []
         i = 0
+
         while i < len(words):
-            if words[i] != "+":
+            if words[i] not in ["+", "V", "v", "S", "s"]:
                 if i < len(words) - 1 and words[i + 1] == "+":
                     modified_words.append(words[i])
                 else:
@@ -2235,8 +2237,11 @@ def add_plus_signs(lyrics: str) -> str:
             else:
                 modified_words.append(words[i])
             i += 1
+        
         modified_lines.append(' '.join(modified_words))
+    
     return '\n'.join(modified_lines)
+
 
 def main_melody_generation(input_text, bpm, reference_backing_track, reference_vocal_track, trackId):
 
