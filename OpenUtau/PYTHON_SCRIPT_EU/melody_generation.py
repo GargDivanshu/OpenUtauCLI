@@ -2242,8 +2242,6 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
 
     # Process the input text
     # bpm = 115
-    # if os.getenv("REGION_PROD") == "czechia" or os.getenv("REGION_PROD") == "slovakia":
-    #     input_text = add_plus_signs(input_text)
         
     syllable_counts, total_syllables, line_level_total_syllables = calculate_syllable_counts(input_text)
     gap_positions = [line_level_total_syllables[0]]
