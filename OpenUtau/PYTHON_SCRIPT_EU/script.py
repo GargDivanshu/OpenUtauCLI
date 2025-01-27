@@ -199,7 +199,7 @@ def process_message(body):
                     shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
                 
                 elif trackId == 1 or trackId == 3:
-                    formatted_lyrics = analyze_lyrics_el(lyrics)
+                    formatted_lyrics = analyze_lyrics_el(lyrics, "PYPHEN")
                     
                     
             elif region == "mexico":

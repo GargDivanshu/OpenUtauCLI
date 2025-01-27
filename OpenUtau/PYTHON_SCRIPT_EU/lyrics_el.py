@@ -4,7 +4,7 @@ import re
 import pyphen
 
 # Choose method: "PYPHEN" or "OPENAI"
-SYLLABLE_METHOD = "OPENAI"  # Change to "OPENAI" to use GPT
+# SYLLABLE_METHOD = "OPENAI"  # Change to "OPENAI" to use GPT
 
 # Initialize Pyphen for Greek syllabification
 syllable_splitter = pyphen.Pyphen(lang='el_GR')
@@ -69,7 +69,7 @@ def count_syllables_pyphen(word):
     syllables = syllable_splitter.inserted(word)
     return len(syllables.split('-')), syllables
 
-def format_line_in_utau(lyrics):
+def format_line_in_utau(lyrics, syllable_method="OPENAI"):
     """
     Format lyrics into OpenUTAU format based on syllable counts.
     
@@ -79,7 +79,7 @@ def format_line_in_utau(lyrics):
     Returns:
     - Formatted lyrics string.
     """
-    if SYLLABLE_METHOD == "OPENAI":
+    if syllable_method == "OPENAI":
         gpt_response = call_gpt_for_syllables(lyrics)
         syllable_info = parse_gpt_response(gpt_response)
     else:
@@ -96,7 +96,7 @@ def format_line_in_utau(lyrics):
 
     return ' '.join(formatted_words)
 
-def analyze_lyrics(lyrics):
+def analyze_lyrics(lyrics, syllable_method):
     """
     Analyze lyrics for syllable breakdown and OpenUTAU formatting.
 
@@ -110,7 +110,7 @@ def analyze_lyrics(lyrics):
     formatted_lines = []
 
     for line in lines:
-        formatted_line = format_line_in_utau(line)
+        formatted_line = format_line_in_utau(line, syllable_method)
         formatted_lines.append(formatted_line)
 
     return '\n'.join(formatted_lines)

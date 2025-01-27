@@ -2219,12 +2219,32 @@ def lyrics_time_calculation(
 
     return result
 
-
+def add_plus_signs(lyrics: str) -> str:
+    lines = lyrics.strip().split("\n")
+    modified_lines = []
+    for line in lines:
+        words = line.split()
+        modified_words = []
+        i = 0
+        while i < len(words):
+            if words[i] != "+":
+                if i < len(words) - 1 and words[i + 1] == "+":
+                    modified_words.append(words[i])
+                else:
+                    modified_words.append(words[i] + ' +')
+            else:
+                modified_words.append(words[i])
+            i += 1
+        modified_lines.append(' '.join(modified_words))
+    return '\n'.join(modified_lines)
 
 def main_melody_generation(input_text, bpm, reference_backing_track, reference_vocal_track, trackId):
 
     # Process the input text
     # bpm = 115
+    if os.getenv("REGION_PROD") == "czechia":
+        input_text = add_plus_signs(input_text)
+        
     syllable_counts, total_syllables, line_level_total_syllables = calculate_syllable_counts(input_text)
     gap_positions = [line_level_total_syllables[0]]
     for idx in range(1, len(line_level_total_syllables)):
@@ -2336,7 +2356,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                 
             # octave_normalization(quantized_output_path, 4, octave_correction_output_path)
             octave_normalization_with_two_octaves(quantized_output_path, 5, 4, octave_correction_output_path)
-            if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece":
+            if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece" or os.getenv("REGION_PROD") == "czechia":
                             octave_normalization_with_two_octaves(quantized_output_path, 4, 4, octave_correction_output_path)
             correct_midi(
             midi_file=octave_correction_output_path,
@@ -2450,7 +2470,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                         
                         # octave_normalization(repeating_quantized_output_path, 4, repeating_octave_correction_output_path)
                         octave_normalization_with_two_octaves(repeating_quantized_output_path, 5, 4, repeating_octave_correction_output_path)
-                        if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece":
+                        if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece" or os.getenv("REGION_PROD") == "czechia":
                             octave_normalization_with_two_octaves(repeating_quantized_output_path, 4, 4, repeating_octave_correction_output_path)
                         correct_midi(
                         midi_file=repeating_octave_correction_output_path,
