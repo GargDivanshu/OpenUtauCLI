@@ -2253,7 +2253,7 @@ def slavic_lang_edge_case_handler(lyrics: str) -> str:
         i = 0
 
         while i < len(words):
-            if words[i] in ["S", "V"] and i < len(words) - 1:
+            if words[i] in ["S", "V", "s", "v"] and i < len(words) - 1:
                 # Merge with the succeeding word
                 merged_word = words[i] + words[i + 1]
                 modified_words.append(merged_word)
