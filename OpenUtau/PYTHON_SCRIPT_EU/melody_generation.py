@@ -2243,6 +2243,31 @@ def add_plus_signs(lyrics: str) -> str:
     return '\n'.join(modified_lines)
 
 
+def slavic_lang_edge_case_handler(lyrics: str) -> str:
+    lines = lyrics.strip().split("\n")
+    modified_lines = []
+
+    for line in lines:
+        words = line.split()
+        modified_words = []
+        i = 0
+
+        while i < len(words):
+            if words[i] in ["S", "V"] and i < len(words) - 1:
+                # Merge with the succeeding word
+                merged_word = words[i] + words[i + 1]
+                modified_words.append(merged_word)
+                i += 2  # Skip the next word as it's merged
+            else:
+                modified_words.append(words[i])
+                i += 1
+
+        modified_lines.append(' '.join(modified_words))
+    
+    return '\n'.join(modified_lines)
+
+
+
 def main_melody_generation(input_text, bpm, reference_backing_track, reference_vocal_track, trackId):
 
     # Process the input text

@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, analyze_lyrics_cs, analyze_lyrics_sk, analyze_lyrics_el, analyze_lyrics_es
 import time
-from melody_generation import main_melody_generation, lyrics_time_calculation, add_plus_signs
+from melody_generation import main_melody_generation, lyrics_time_calculation, add_plus_signs, slavic_lang_edge_case_handler
 from lyrics_el import process_ballad_lyrics
 from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections, lyrics_timing_for_track2
 import shutil
@@ -180,9 +180,11 @@ def process_message(body):
             elif region == "czechia":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
                 formatted_lyrics = add_plus_signs(formatted_lyrics)
+                formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
             elif region == "slovakia":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
                 formatted_lyrics = add_plus_signs(formatted_lyrics)
+                formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
             elif region == "greece":
                 if trackId == 2:
                     # Define the folder paths relative to the script's location
