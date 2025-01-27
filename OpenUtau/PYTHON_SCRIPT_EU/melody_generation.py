@@ -2242,8 +2242,8 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
 
     # Process the input text
     # bpm = 115
-    if os.getenv("REGION_PROD") == "czechia":
-        input_text = add_plus_signs(input_text)
+    # if os.getenv("REGION_PROD") == "czechia" or os.getenv("REGION_PROD") == "slovakia":
+    #     input_text = add_plus_signs(input_text)
         
     syllable_counts, total_syllables, line_level_total_syllables = calculate_syllable_counts(input_text)
     gap_positions = [line_level_total_syllables[0]]
@@ -2356,7 +2356,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                 
             # octave_normalization(quantized_output_path, 4, octave_correction_output_path)
             octave_normalization_with_two_octaves(quantized_output_path, 5, 4, octave_correction_output_path)
-            if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece" or os.getenv("REGION_PROD") == "czechia":
+            if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece" or os.getenv("REGION_PROD") == "czechia" or os.getenv("REGION_PROD") == "slovakia":
                             octave_normalization_with_two_octaves(quantized_output_path, 4, 4, octave_correction_output_path)
             correct_midi(
             midi_file=octave_correction_output_path,
@@ -2470,7 +2470,7 @@ def main_melody_generation(input_text, bpm, reference_backing_track, reference_v
                         
                         # octave_normalization(repeating_quantized_output_path, 4, repeating_octave_correction_output_path)
                         octave_normalization_with_two_octaves(repeating_quantized_output_path, 5, 4, repeating_octave_correction_output_path)
-                        if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece" or os.getenv("REGION_PROD") == "czechia":
+                        if os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "greece" or os.getenv("REGION_PROD") == "czechia" or os.getenv("REGION_PROD") == "slovakia":
                             octave_normalization_with_two_octaves(repeating_quantized_output_path, 4, 4, repeating_octave_correction_output_path)
                         correct_midi(
                         midi_file=repeating_octave_correction_output_path,
