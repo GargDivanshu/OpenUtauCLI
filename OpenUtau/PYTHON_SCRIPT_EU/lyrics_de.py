@@ -57,20 +57,16 @@ def analyze_lyrics(lyrics):
     return '\n'.join(formatted_lines), all_breakdowns, total_syllables
 
 # # # German lyrics
-# lyrics = """
-# An deiner Seite fühl ich mich frei,
-# Du bist die Sonne in meinem Mai.
-# Deine Liebe gibt mir so viel Kraft,
-# Mama, du bist, was das Leben schafft.
-# Danke, liebe Mama, für jedes Jahr,
-# Für jeden Moment, der so besonders war.
-# Mit dir ist das Leben ein heller Tag,
-# Deine Wärme bleibt, egal was kommt, stark.
-# Im Garten, wo wir die Zeit oft teilen,
-# Lass mich dir danken für all dein Heilen.
-# Dein Lächeln gibt mir so viel Mut,
-# Mama, bei dir ist alles gut.
-# """
+lyrics = """
+In jeder Stunde, da bist du hier,
+    Beste Freunde, das sind wir.
+    Dein Lachen bringt die Sonne hervor,
+    Mit dir fühl ich mich nie verloren.
+    Danke, mein Freund, für die schöne Zeit,
+    Du gibst mir Halt, bist immer bereit.
+    Mit dir zu lachen, das macht mich froh,
+    Egal wo wir sind, das bleibt immer so.
+"""
 
 # lyrics="""
 # In jeder Stunde, da bist du hier,

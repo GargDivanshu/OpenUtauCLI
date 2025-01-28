@@ -34,8 +34,8 @@ def call_gpt_for_syllables(lyrics):
     )
 
 
-    client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
-    # client = openai.Client(api_key="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")
+    # client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
+    client = openai.Client(api_key="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")
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -342,9 +342,11 @@ lyrics = """
 Πιο μακριά σε παρασέρνει, την αγάπη μας σκορπάει
 Και φωνάζω στις πλατείες, το όνομα σου μα κενό,
 Χάνομαι μέσα στις μνήμες που ακόμη αγαπώ,
-Ένα χάδι, ένα φιλί σου, ένα βλέμμα είν' αρκετό, 
-Για να αφήσω ότι έχω...και να έρθω να σε βρω
+Ένα χάδι, ένα φιλί σου, ένα βλέμμα είν' αρκετό, Για να αφήσω ότι έχω 
+και να έρθω να σε βρω
 """
+print(analyze_lyrics(lyrics, "OPENAI"))
+
 
 lyrics = """
 Είσαι εκεί,
@@ -411,7 +413,6 @@ lyrics = """
 Μέσα στο χάος θα βρω τη φωνή + σου
 Θα’μαι + μαζί + σου για πάντα μαζί + σου
 """
-# print(analyze_lyrics(lyrics))
 
 
 """
