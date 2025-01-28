@@ -19,7 +19,7 @@ from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, anal
 import time
 from melody_generation import main_melody_generation, lyrics_time_calculation, add_plus_signs, slavic_lang_edge_case_handler, german_lang_edge_case_handler
 from lyrics_el import process_ballad_lyrics
-from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections, lyrics_timing_for_track2
+from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections, lyrics_timing_for_track2, adjust_lyrics_to_midi_with_track
 import shutil
     
     
@@ -196,7 +196,8 @@ def process_message(body):
                     
                     # lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
                     formatted_lyrics = analyze_lyrics_el(lyrics)
-                    formatted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, midi_folder, output_folder)
+                    ballad_track2 = [9, 9, 9, 19, 19, 18, 27, 9]
+                    formatted_lyrics = adjust_lyrics_to_midi_with_track(formatted_lyrics, midi_folder, output_folder, ballad_track2)
                     output_file = "/tmp/lyrics.txt"
                     with open(output_file, "w", encoding="utf-8") as file:
                                 file.write(formatted_lyrics)
