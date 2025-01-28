@@ -413,8 +413,33 @@ def adjust_lyrics_to_midi_with_track(lyrics_input, midi_folder, output_folder="g
         if num_syllables < intended_notes:
             print(f"Line {index} has {num_syllables} syllables but needs {intended_notes}. Adding {intended_notes - num_syllables} '+' signs.")
             difference = intended_notes - num_syllables
-            line += " +" * difference
+
+            # Split the line into words
+            words = line.split()
+
+            # Find the positions of the existing "+" signs
+            plus_positions = []
+            for i, word in enumerate(words):
+                if "+" in word:
+                    plus_positions.append(i)
+
+            # If there are no "+" signs, treat the first word as the starting point
+            if not plus_positions:
+                # If there are no existing "+" signs, add "+" signs at the end
+                for _ in range(difference):
+                    words.append("+")
+
+            # Distribute the "+" signs after existing "+" positions
+            for i in range(difference):
+                # Calculate the position to insert the new "+"
+                insert_pos = plus_positions[i % len(plus_positions)]
+                # Add a "+" to the appropriate word
+                words[insert_pos] += " +"
+
+            # Reconstruct the line
+            line = " ".join(words)
             print(f"Updated line: {line}")
+
 
         # Load corresponding MIDI file
         midi_filename = f"section_{index}.mid"
