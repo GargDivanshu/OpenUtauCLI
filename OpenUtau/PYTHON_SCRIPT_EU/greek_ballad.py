@@ -297,7 +297,7 @@ def adjust_lyrics_to_midi(lyrics_input, midi_folder, output_folder="generations"
 
         print(f"Processing {midi_filename}: Lyrics syllables: {num_syllables}, MIDI notes: {num_notes}")
 
-        if num_syllables < num_notes:
+        if num_syllables <= num_notes:
             # Add "+" to words evenly across the line to match note count
             difference = num_notes - num_syllables
             words = line.split()
