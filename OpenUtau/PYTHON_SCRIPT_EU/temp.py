@@ -1,30 +1,24 @@
 import shutil
-from lyrics_el import process_ballad_lyrics
-from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections, lyrics_timing_for_track2
-from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, analyze_lyrics_cs, analyze_lyrics_sk, analyze_lyrics_el, analyze_lyrics_es
+from greek_ballad import combine_sectional_midis, adjust_lyrics_to_midi_with_track
 
 
 lyrics = """
-Η καφέ σου μυρωδιά 
-Μέσα στο γραφείο γλυκιά, 
-Και το βλέμμα σου γελάει, 
-Μια κουβέντα σου μ’ αγγίζει, την καρδιά μου ζεσταίνει ξανά. 
-Και σε βλέπω στο πρωί, Γιώργο, πάντα μ’ ένα χαμόγελο, 
-Ο καφές που μου προσφέρεις, δείχνει πόσο σ’ αγαπώ. 
-Ένα βλέμμα, ευγένεια σου, μου αρκεί καθε μερά, Στην δουλειά μας φωτίζεις
-και είναι όλα μαγικά!
+Καθισμένος + + + στο γραφείο + +
+Η καρδιά + μου δε χτυπά +
+Μα είναι + κάτι + μαγικό + +
+Γύρω + τις ματιές + σου πάντα + η αγάπη + + με καλεί +
+Το χαμόγελο + + + σου φεύγει + σαν το τρέχω + να το πω
+Είσαι + εσύ + αγαπημένε + + + + άνοιξα + + σαν με κοιτώ +
+Με ένα + γέλιο + μια αγκαλιά + + σου ξεχνώ + κάθε + καημό + να σου λέω + μυστικά + + που
+Πάντα + σε αγαπώ + +
 """
-
-# lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
-formatted_lyrics = analyze_lyrics_el(lyrics)
-print(lyrics)
-print(formatted_lyrics)
-print(type(formatted_lyrics))
 
 
 midi_folder = "greek_track2_sections"
 output_folder = "greek_track2_sections/generations"
-formatted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, midi_folder, output_folder)
+formatted_lyrics = adjust_lyrics_to_midi_with_track(lyrics, midi_folder, output_folder, [9, 9, 9, 19, 19, 18, 27, 9])
+print("received back -->")
+print(formatted_lyrics)
 output_file = "lyrics.txt"
 with open(output_file, "w", encoding="utf-8") as file:
             file.write(formatted_lyrics)

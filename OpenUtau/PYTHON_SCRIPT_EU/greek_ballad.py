@@ -256,8 +256,31 @@ import re
 
 
 def count_syllables(line):
-    """ Count the total number of syllables in a line. """
-    return sum(len(word.split('+')) for word in line.split())
+    """
+    Count the number of syllables in a line.
+
+    Syllables are defined as:
+    - One per word.
+    - One for each '+' sign.
+
+    Parameters:
+    - line: A single line of lyrics.
+
+    Returns:
+    - Integer count of syllables in the line.
+    """
+    words = line.split()  # Split into words
+    syllable_count = 0
+
+    for word in words:
+        # Count the base word as one syllable
+        syllable_count += 1
+        # Count '+' signs in the word as additional syllables
+        # syllable_count += word.count('+')
+
+    return syllable_count
+
+
 
 
 def adjust_lyrics_to_midi(lyrics_input, midi_folder, output_folder="generations", bpm=120):
@@ -346,20 +369,6 @@ def adjust_lyrics_to_midi(lyrics_input, midi_folder, output_folder="generations"
 
 
 def adjust_lyrics_to_midi_with_track(lyrics_input, midi_folder, output_folder="generations", track_notes=None, bpm=120):
-    """
-    Adjust lyrics based on a predefined number of intended notes per line and save adjusted versions
-    to a separate folder.
-
-    Parameters:
-    - lyrics_input: Multiline string containing formatted lyric lines.
-    - midi_folder: Path to the folder containing section MIDI files.
-    - output_folder: Path to save the modified MIDI files.
-    - bpm: Beats per minute for calculating note durations.
-    - track_notes: List of integers specifying the intended number of notes for each line.
-
-    Returns:
-    - Adjusted lyrics as a single formatted string with newlines.
-    """
     if isinstance(lyrics_input, tuple):
         lyrics_str = lyrics_input[0]  # Extract the string part
     else:
@@ -368,11 +377,19 @@ def adjust_lyrics_to_midi_with_track(lyrics_input, midi_folder, output_folder="g
     if track_notes is None:
         raise ValueError("The track_notes array must be provided.")
 
+    # Print input data
+    print(f"Input lyrics:\n{lyrics_str}")
+    print(f"Track notes: {track_notes}")
+
     # Ensure the output folder exists
     os.makedirs(output_folder, exist_ok=True)
 
     # Split lyrics into lines
     lyrics = lyrics_str.strip().split("\n")
+
+    # Print number of lines and notes alignment
+    print(f"Number of lyric lines: {len(lyrics)}")
+    print(f"Number of track notes: {len(track_notes)}")
 
     if len(lyrics) != len(track_notes):
         raise ValueError(f"The number of lines in lyrics ({len(lyrics)}) does not match the length of track_notes ({len(track_notes)}).")
@@ -384,23 +401,32 @@ def adjust_lyrics_to_midi_with_track(lyrics_input, midi_folder, output_folder="g
 
     for index, (line, intended_notes) in enumerate(zip(lyrics, track_notes), start=1):
         # Count syllables in the line (words + '+' signs)
-        num_syllables = sum(len(word.split('+')) for word in line.split())
+        # num_syllables = sum(len(word.split('+')) for word in line.split())
+        num_syllables = count_syllables(line)
 
-        print(f"Processing line {index}: Lyrics syllables: {num_syllables}, Intended notes: {intended_notes}")
+        # Print line details
+        print(f"Processing line {index}:")
+        print(f"Original line: {line}")
+        print(f"Number of syllables in line: {num_syllables}")
+        print(f"Intended notes: {intended_notes}")
 
         if num_syllables < intended_notes:
-            # Add "+" to the end of the line to match the intended number of notes
+            print(f"Line {index} has {num_syllables} syllables but needs {intended_notes}. Adding {intended_notes - num_syllables} '+' signs.")
             difference = intended_notes - num_syllables
             line += " +" * difference
-            print(f"Updated lyrics (added +): {line}")
+            print(f"Updated line: {line}")
 
         # Load corresponding MIDI file
         midi_filename = f"section_{index}.mid"
         midi_path = os.path.join(midi_folder, midi_filename)
         output_midi_path = os.path.join(output_folder, midi_filename)
 
+        print(f"Loading MIDI file: {midi_filename} from {midi_path}")
         if not os.path.exists(midi_path):
+            print(f"Error: MIDI file {midi_filename} does not exist!")
             raise FileNotFoundError(f"MIDI file {midi_path} not found.")
+        else:
+            print(f"MIDI file {midi_filename} loaded successfully.")
 
         midi_data = pretty_midi.PrettyMIDI(midi_path)
 
@@ -409,6 +435,7 @@ def adjust_lyrics_to_midi_with_track(lyrics_input, midi_folder, output_folder="g
         print(f"No MIDI changes. Copied original to: {output_midi_path}")
 
         adjusted_lyrics.append(line)
+        print(f"Final adjusted line {index}: {line}")
 
     # Convert adjusted lyrics back to a multiline string
     adjusted_lyrics_str = "\n".join(adjusted_lyrics)
@@ -417,28 +444,3 @@ def adjust_lyrics_to_midi_with_track(lyrics_input, midi_folder, output_folder="g
     print(adjusted_lyrics_str)
 
     return adjusted_lyrics_str
-
-
-
-
-# if __name__ == "__main__":
-#     input_lyrics = """
-#     Η σιωπή + σου με ξυπνάει +
-#     Μες της νύχτας + το κενό +
-#     Και ο χρόνος που κυλάει +
-#     Πιο μακριά + σε παρασέρνει + + + την αγάπη μας σκορπάει +
-#     Και φωνάζω + στις πλατείες + + το όνομα + σου μα κενό +
-#     Χάνομαι + μέσα στις μνήμες + που ακόμη αγαπώ +
-#     Ένα χάδι ένα φιλί + σου ένα βλέμμα + είν' + αρκετό + + Για να αφήσω + ότι έχω
-#     και να έρθω + να σε βρω
-#     """
-
-#     print("\nProcessing initial lyrics...\n")
-#     formatted_lyrics = process_ballad_lyrics(input_lyrics)
-#     adjusted_lyrics = adjust_lyrics_to_midi(formatted_lyrics, "outputs/greek_track1_sections", "outputs/greek_track1_sections/generations")
-
-#     input_folder = "outputs/greek_track1_sections"
-#     output_folder = "outputs"
-#     final_midi_path = combine_sectional_midis(input_folder, output_folder)
-
-#     print(f"\nGenerated final MIDI: {final_midi_path}")
