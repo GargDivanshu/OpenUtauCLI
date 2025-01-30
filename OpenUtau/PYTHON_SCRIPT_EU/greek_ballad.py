@@ -218,13 +218,13 @@ def lyrics_timing_for_track3(
 
     # Predefined start times and durations
     fixed_timings = [
-        (9.1, 3.4),
-        (13.1, 3.0),
-        (18.1, 6.0),
-        (25.17, 7.8),
-        (30.0, 5.4),
-        (36.8, 6.1),
-        (44, 10.0),
+        (9.1, 2.6),
+        (12.6, 2.8),
+        (17.2, 7.2),
+        (25.5, 7.5),
+        (33.8, 7.4),
+        (42.1, 7.4),
+        (50.4, 7.0),
     ]
 
     # Check if provided lyrics match the number of fixed timings
