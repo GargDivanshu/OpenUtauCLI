@@ -135,6 +135,16 @@ lambda_client = boto3.client('lambda', region_name=REGION_NAME)
 
 # os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, OU_FINAL_FILENAME + ".wav")
 
+def club_lines(lyrics):
+                lines = lyrics.strip().split("\n")
+                new_lines = lines[:2]  # Keep the first two lines as they are
+                for i in range(2, len(lines) - 1, 2):
+                    new_lines.append(lines[i] + " " + lines[i + 1])  # Combine pairs
+                if len(lines) % 2 == 1:  # If there's an odd line at the end, keep it as is
+                    new_lines.append(lines[-1])
+                return "\n".join(new_lines)
+            
+            
 def process_message(body):
     """Process a single message body from SQS."""
     global OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, OU_SINGER_NUMBER, OU_INFERENCE_LOCAL_USTX_PATH, OU_LYRICS_JSON_PATH
@@ -212,6 +222,7 @@ def process_message(body):
                     midi_folder = os.path.join("/tmp/greece/", "greek_track3_sections")
                     output_folder = os.path.join("/tmp/greece/", "greek_track3_sections", "generations")
                     # lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
+                    formatted_lyrics = club_lines(lyrics)
                     formatted_lyrics = analyze_lyrics_el(lyrics)
                     formatted_lyrics = adjust_lyrics_to_midi_with_track(formatted_lyrics, midi_folder, output_folder, ballad_track3)
                     output_file = "/tmp/lyrics.txt"
@@ -361,7 +372,7 @@ def process_message(body):
             bpm = bpm_data[region][trackId]
             
             try: 
-                if trackId == 2:
+                if trackId == 3:
                     lyrics_timing_for_track3(
                     output_folder=os.path.join(script_dir, "greek_track3_sections"),
                     # bpm=bpm,
