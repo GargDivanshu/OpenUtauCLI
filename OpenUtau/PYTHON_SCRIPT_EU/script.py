@@ -373,6 +373,7 @@ def process_message(body):
             
             try: 
                 if trackId == 3:
+                    greece_lyrics = club_lines(lyrics)
                     lyrics_timing_for_track3(
                     output_folder=os.path.join(script_dir, "greek_track3_sections"),
                     # bpm=bpm,
@@ -403,7 +404,6 @@ def process_message(body):
             
             try: 
                 if trackId == 2:
-                    greece_lyrics = club_lines(lyrics)
                     lyrics_timing_for_track2(
                     output_folder=os.path.join(script_dir, "greek_track2_sections"),
                     # bpm=bpm,
