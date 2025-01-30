@@ -19,7 +19,7 @@ from lyrics import analyze_lyrics_de, analyze_lyrics_ro, analyze_lyrics_hu, anal
 import time
 from melody_generation import main_melody_generation, lyrics_time_calculation, add_plus_signs, slavic_lang_edge_case_handler, german_lang_edge_case_handler
 from lyrics_el import process_ballad_lyrics
-from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections, lyrics_timing_for_track2, adjust_lyrics_to_midi_with_track
+from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections, lyrics_timing_for_track2, adjust_lyrics_to_midi_with_track, lyrics_timing_for_track3
 import shutil
     
     
@@ -327,29 +327,57 @@ def process_message(body):
             
             
         elif os.getenv("REGION_PROD") == "greece" and trackId == 3:
+            # start_time = time.monotonic()
+            # region_name = region.capitalize()
+            # vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
+            # backing_midi_file_path = f"/tmp/{region}/backing_track/{region_name}Track{trackId}ChordMIDI.mid"
+            # bpm = bpm_data[region][trackId]
+            # main_melody_generation(formatted_lyrics, bpm, backing_midi_file_path, vocal_midi_file_path, trackId)
+            # try: 
+            #         lyrics_time_calculation(
+            #         output_folder="/tmp/outputs/sections",
+            #         bpm=bpm,
+            #         input_text=lyrics,
+            #         initial_gap_bars=0,
+            #         output_json_path=OU_LYRICS_JSON_PATH
+            #         )
+            #         lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
+            #         upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
+            #         notify_system_api(song_id, "lyrics-json", "end", f"{song_id}_lyrics.json", None)
+            # except Exception as e:
+            #         notify_system_api(song_id, "lyrics-json", "error", None, str(e), None)
+            #         print(f"An error occurred during lyrics timing calculation or upload: {e}")
+
+            #         # Optionally re-raise the exception if it needs to be handled elsewhere
+            #         raise
+            # end_time = time.monotonic()
+            # duration = (end_time - start_time)  
+            # logger.info("melody generation stats")
+            # logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
+            # logger.info("============================================================")
+            
             start_time = time.monotonic()
             region_name = region.capitalize()
-            vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
-            backing_midi_file_path = f"/tmp/{region}/backing_track/{region_name}Track{trackId}ChordMIDI.mid"
             bpm = bpm_data[region][trackId]
-            main_melody_generation(formatted_lyrics, bpm, backing_midi_file_path, vocal_midi_file_path, trackId)
+            
             try: 
-                    lyrics_time_calculation(
-                    output_folder="/tmp/outputs/sections",
-                    bpm=bpm,
-                    input_text=lyrics,
-                    initial_gap_bars=0,
+                if trackId == 2:
+                    lyrics_timing_for_track3(
+                    output_folder=os.path.join(script_dir, "greek_track3_sections"),
+                    # bpm=bpm,
+                    input_text=greece_lyrics,
+                    # initial_gap_bars=0,
                     output_json_path=OU_LYRICS_JSON_PATH
                     )
-                    lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
-                    upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
-                    notify_system_api(song_id, "lyrics-json", "end", f"{song_id}_lyrics.json", None)
+                lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
+                upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
+                notify_system_api(song_id, "lyrics-json", "end", f"{song_id}_lyrics.json", None)
             except Exception as e:
-                    notify_system_api(song_id, "lyrics-json", "error", None, str(e), None)
-                    print(f"An error occurred during lyrics timing calculation or upload: {e}")
+                notify_system_api(song_id, "lyrics-json", "error", None, str(e), None)
+                print(f"An error occurred during lyrics timing calculation or upload: {e}")
 
-                    # Optionally re-raise the exception if it needs to be handled elsewhere
-                    raise
+                # Optionally re-raise the exception if it needs to be handled elsewhere
+                raise
             end_time = time.monotonic()
             duration = (end_time - start_time)  
             logger.info("melody generation stats")
