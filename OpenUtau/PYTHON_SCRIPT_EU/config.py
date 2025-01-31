@@ -75,6 +75,27 @@ bpm_data['hungary'][8] = 88
 bpm_data['hungary'][9] = 98
 bpm_data['hungary'][10] = 96
 
+note_count = {}
+note_count['slovakia']= {}
+note_count['slovakia'][4] = [11, 11, 11, 11, 12, 12, 9, 13, 14, 12]
+
+# legato, arpeggios, falcetto 
+
+lyrics_timing_map = {}
+lyrics_timing_map["slovakia"] = {}
+lyrics_timing_map["slovakia"][4] = [
+        (4.9, 4.3),
+        (9.5, 4.6),
+        (14.4, 5.1),
+        (19.7, 4.7),
+        (24.7, 4.3),
+        (29.3, 34.2-29.3),
+        (34.6, 38.9-34.6),
+        (39.2, 43.9-39.2),
+        (44.4, 48.9 - 44.4),
+        (49.1, 54.4-49.1)
+    ]
+
 
 @dataclass
 class Config:
