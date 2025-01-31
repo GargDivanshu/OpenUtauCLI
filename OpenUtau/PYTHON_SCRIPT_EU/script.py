@@ -193,7 +193,7 @@ def process_message(body):
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
                 formatted_lyrics = add_plus_signs(formatted_lyrics)
                 formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
-            elif region == "slovakia" and trackId == 4:
+            elif region == "slovakia":
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
                 formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
                 formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
@@ -211,10 +211,10 @@ def process_message(body):
                 final_midi_path = combine_sectional_midis(input_folder, output_folder)
                 shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
              
-            elif region == "slovakia": 
-                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
-                formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
-                formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
+            # elif region == "slovakia": 
+            #     formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
+            #     formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
+            #     formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
                     
             elif region == "greece":
                 if trackId == 2:
@@ -295,7 +295,7 @@ def process_message(body):
         # upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
         # notify_lyrics_json_upload(song_id, f"{song_id}_lyrics.json") 
         bpm = bpm_data[region][trackId]
-        if os.getenv("REGION_PROD") != "greece" or (os.getenv("REGION_PROD") == "slovakia" and trackId != 4):
+        if os.getenv("REGION_PROD") != "greece":
             start_time = time.monotonic()
             region_name = region.capitalize()
             vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
