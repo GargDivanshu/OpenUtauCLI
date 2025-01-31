@@ -418,7 +418,7 @@ def process_message(body):
             logger.info("============================================================")
             
             
-        elif os.getenv("REGION_PROD")=="slovakia" and trackId == 4:
+        elif os.getenv("REGION_PROD")=="slovakia":
             start_time = time.monotonic()
             region_name = region.capitalize()
             bpm = bpm_data[region][trackId]
