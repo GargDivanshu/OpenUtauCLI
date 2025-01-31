@@ -295,6 +295,38 @@ def process_message(body):
         # upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
         # notify_lyrics_json_upload(song_id, f"{song_id}_lyrics.json") 
         bpm = bpm_data[region][trackId]
+        
+        if os.getenv("REGION_PROD")=="slovakia":
+            print("slovakia code working")
+            start_time = time.monotonic()
+            region_name = region.capitalize()
+            bpm = bpm_data[region][trackId]
+            
+            try:    
+                lyrics_timing(
+                    output_folder=os.path.join(script_dir, f"{region}_track{trackId}_sections"),
+                    # bpm=bpm,
+                    input_text=lyrics,
+                    # initial_gap_bars=0,
+                    output_json_path=OU_LYRICS_JSON_PATH,
+                    fixed_timings=lyrics_timing_map[region][trackId]
+                    )
+                lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
+                upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
+                notify_system_api(song_id, "lyrics-json", "end", f"{song_id}_lyrics.json", None)
+            except Exception as e:
+                notify_system_api(song_id, "lyrics-json", "error", None, str(e), None)
+                print(f"An error occurred during lyrics timing calculation or upload: {e}")
+
+                # Optionally re-raise the exception if it needs to be handled elsewhere
+                raise
+            end_time = time.monotonic()
+            duration = (end_time - start_time)  
+            logger.info("melody generation stats")
+            logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
+            logger.info("============================================================")
+            
+            
         if os.getenv("REGION_PROD") != "greece" or os.getenv("REGION_PROD") != "slovakia":
             start_time = time.monotonic()
             region_name = region.capitalize()
