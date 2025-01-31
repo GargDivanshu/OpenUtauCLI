@@ -192,8 +192,22 @@ lyrics = """
 Για να αφήσω ότι έχω...και να έρθω να σε βρω
 """
 
-# print("\nFinal OpenUTAU Formatted Lyrics:\n")
-# print(analyze_lyrics(lyrics))
+lyrics = """
+Κάθε στιγμή,
+μαμά εσύ
+στο τηλέφωνό με παίρνεις
+για καθετί.
+Κι αν με παίρνεις όλη μέρα
+και δεν απαντά,
+ξέρεις πως σε αγαπάω
+μα έχω και δουλειά.
+Κι αν εγώ δεν το σηκώσω
+πάλι θα στο πω
+Στην καρδιά μου σ’ εχω όμως
+δεν έχω ρεπό.
+"""
+print("\nFinal OpenUTAU Formatted Lyrics:\n")
+print(analyze_lyrics(lyrics, "OPEN_AI"))
 
 
 
