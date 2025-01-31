@@ -419,6 +419,7 @@ def process_message(body):
             
             
         elif os.getenv("REGION_PROD")=="slovakia":
+            print("slovakia code working")
             start_time = time.monotonic()
             region_name = region.capitalize()
             bpm = bpm_data[region][trackId]
