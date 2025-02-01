@@ -225,8 +225,8 @@ lyrics = """
 Γιατί ποτέ σου κάτω δεν το βάζεις
 Κι έτσι καλύτερες λήψεις βγάζεις.
 """
-print("\nFinal OpenUTAU Formatted Lyrics:\n")
-print(analyze_lyrics(lyrics, "OPEN_AI"))
+# print("\nFinal OpenUTAU Formatted Lyrics:\n")
+# print(analyze_lyrics(lyrics, "OPEN_AI"))
 
 
 
@@ -378,7 +378,7 @@ lyrics = """
 Ένα χάδι, ένα φιλί σου, ένα βλέμμα είν' αρκετό, Για να αφήσω ότι έχω 
 και να έρθω να σε βρω
 """
-print(analyze_lyrics(lyrics, "OPENAI"))
+# print(analyze_lyrics(lyrics, "OPENAI"))
 
 
 lyrics = """
