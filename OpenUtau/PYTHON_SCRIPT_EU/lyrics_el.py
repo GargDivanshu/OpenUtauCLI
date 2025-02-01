@@ -34,8 +34,8 @@ def call_gpt_for_syllables(lyrics):
     )
 
 
-    # client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
-    client = openai.Client(api_key="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")
+    client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
+    # client = openai.Client(api_key="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")
 
     response = client.chat.completions.create(
         model="gpt-4o",
