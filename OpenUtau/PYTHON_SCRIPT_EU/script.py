@@ -194,7 +194,7 @@ def process_message(body):
                 formatted_lyrics = add_plus_signs(formatted_lyrics)
                 formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
             elif region == "slovakia":
-                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
+                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics, "OPENAI")
                 # formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
                 formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
                 
