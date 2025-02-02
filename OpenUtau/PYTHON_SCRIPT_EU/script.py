@@ -212,7 +212,7 @@ def process_message(body):
                 shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
                 
             elif region == "czechia":
-                formatted_lyrics = analyze_lyrics_cs(lyrics, "PYPHEN")
+                formatted_lyrics = analyze_lyrics_cs(lyrics, "OPENAI")
                 formatted_lyrics = add_plus_signs(formatted_lyrics)
                 formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
                 
