@@ -278,7 +278,7 @@ def process_message(body):
                     output_folder = os.path.join("/tmp/greece/", "greek_track1_sections", "generations")
                     # lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
                     # formatted_lyrics = club_lines(lyrics)
-                    formatted_lyrics = analyze_lyrics_el(formatted_lyrics, "OPENAI")
+                    formatted_lyrics = analyze_lyrics_el(lyrics, "OPENAI")
                     formatted_lyrics = adjust_lyrics_to_midi_with_track(formatted_lyrics, midi_folder, output_folder, ballad_track1)
                     output_file = "/tmp/lyrics.txt"
                     with open(output_file, "w", encoding="utf-8") as file:
