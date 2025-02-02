@@ -213,7 +213,7 @@ def process_message(body):
                 
             elif region == "czechia":
                 formatted_lyrics = analyze_lyrics_cs(lyrics, "OPENAI")
-                formatted_lyrics = add_plus_signs(formatted_lyrics)
+                # formatted_lyrics = add_plus_signs(formatted_lyrics)
                 formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
                 
                 # Define the folder paths relative to the script's location
