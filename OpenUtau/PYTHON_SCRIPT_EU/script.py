@@ -208,7 +208,7 @@ def process_message(body):
                     file.write(formatted_lyrics)
                 input_folder = f"{region}_track{trackId}_sections"
                 output_folder = config.OUTPUT_FOLDER
-                final_midi_path = combine_sectional_midis(input_folder, output_folder)
+                final_midi_path = combine_sectional_midis(midi_folder, output_folder)
                 shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
              
             # elif region == "slovakia": 
