@@ -271,7 +271,22 @@ def process_message(body):
                     shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
                     
                 elif trackId == 1:
-                    formatted_lyrics = analyze_lyrics_el(lyrics, "PYPHEN")
+                    # formatted_lyrics = analyze_lyrics_el(lyrics, "PYPHEN")
+                    ballad_track1 = [12, 7, 10, 10, 11, 7, 10, 10, 9, 9, 13, 5, 9, 10, 11, 12]
+                    # Define the folder paths relative to the script's location
+                    midi_folder = os.path.join("/tmp/greece/", "greek_track1_sections")
+                    output_folder = os.path.join("/tmp/greece/", "greek_track1_sections", "generations")
+                    # lyrics, lyrics_as_list = process_ballad_lyrics(lyrics)
+                    # formatted_lyrics = club_lines(lyrics)
+                    formatted_lyrics = analyze_lyrics_el(formatted_lyrics)
+                    formatted_lyrics = adjust_lyrics_to_midi_with_track(formatted_lyrics, midi_folder, output_folder, ballad_track1)
+                    output_file = "/tmp/lyrics.txt"
+                    with open(output_file, "w", encoding="utf-8") as file:
+                                file.write(formatted_lyrics)
+                    input_folder = "greek_track1_sections"
+                    output_folder = config.OUTPUT_FOLDER
+                    final_midi_path = combine_sectional_midis(midi_folder, output_folder)
+                    shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
                     
                     
             elif region == "mexico":
@@ -348,27 +363,44 @@ def process_message(body):
         elif os.getenv("REGION_PROD") == "greece" and trackId == 1:
             start_time = time.monotonic()
             region_name = region.capitalize()
-            vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
-            backing_midi_file_path = f"/tmp/{region}/backing_track/{region_name}Track{trackId}ChordMIDI.mid"
             bpm = bpm_data[region][trackId]
-            main_melody_generation(formatted_lyrics, bpm, backing_midi_file_path, vocal_midi_file_path, trackId)
+            # greece_lyrics = club_lines(lyrics)
+            
             try: 
-                    lyrics_time_calculation(
-                    output_folder="/tmp/outputs/sections",
-                    bpm=bpm,
+                lyrics_timing(
+                    output_folder=os.path.join("/tmp/greece/", "greek_track1_sections"),
+                    # bpm=bpm,
                     input_text=lyrics,
-                    initial_gap_bars=0,
-                    output_json_path=OU_LYRICS_JSON_PATH
+                    # initial_gap_bars=0,
+                    output_json_path=OU_LYRICS_JSON_PATH,
+                    fixed_timings = [
+                        (0.92, 4.84 - 0.92),
+                        (5.53, 8.30 - 5.53),
+                        (9.00, 12.23 - 9.00),
+                        (12.69, 15.80 - 12.69),
+                        (16.38, 19.73 - 16.38),
+                        (20.30, 23.07 - 20.30),
+                        (23.76, 27.23 - 23.76),
+                        (27.46, 30.46 - 27.46),
+                        (30.92, 33.92 - 30.92),
+                        (34.61, 37.55 - 34.61),
+                        (38.30, 42.57 - 38.30),
+                        (43.15, 45.00 - 43.15),
+                        (45.69, 48.57 - 45.69),
+                        (49.15, 52.38 - 49.15),
+                        (52.84, 55.96 - 52.84),
+                        (56.30, 59.88 - 56.30)
+                    ]
                     )
-                    lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
-                    upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
-                    notify_system_api(song_id, "lyrics-json", "end", f"{song_id}_lyrics.json", None)
+                lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
+                upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
+                notify_system_api(song_id, "lyrics-json", "end", f"{song_id}_lyrics.json", None)
             except Exception as e:
-                    notify_system_api(song_id, "lyrics-json", "error", None, str(e), None)
-                    print(f"An error occurred during lyrics timing calculation or upload: {e}")
+                notify_system_api(song_id, "lyrics-json", "error", None, str(e), None)
+                print(f"An error occurred during lyrics timing calculation or upload: {e}")
 
-                    # Optionally re-raise the exception if it needs to be handled elsewhere
-                    raise
+                # Optionally re-raise the exception if it needs to be handled elsewhere
+                raise
             end_time = time.monotonic()
             duration = (end_time - start_time)  
             logger.info("melody generation stats")
