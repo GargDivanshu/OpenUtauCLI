@@ -188,7 +188,7 @@ def process_message(body):
                 formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_ro(lyrics)
             elif region == "hungary":
                 formatted_lyrics = add_plus_signs(formatted_lyrics)
-                formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_hu(lyrics)
+                formatted_lyrics = analyze_lyrics_hu(lyrics, "OPENAI")
             # elif region == "czechia":
             #     formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
             #     formatted_lyrics = add_plus_signs(formatted_lyrics)
