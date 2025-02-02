@@ -96,7 +96,7 @@ def format_line_in_utau(lyrics, syllable_method="OPENAI"):
 
     return ' '.join(formatted_words)
 
-def analyze_lyrics(lyrics, syllable_method):
+def analyze_lyrics(lyrics, syllable_method="OPEANI"):
     """
     Analyze lyrics for syllable breakdown and OpenUTAU formatting.
 
