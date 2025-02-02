@@ -438,15 +438,15 @@ def process_message(body):
             logger.info("============================================================")
             
             
-        elif os.getenv("REGION_PROD")=="slovakia":
-            print("slovakia code working")
+        elif os.getenv("REGION_PROD")=="slovakia" or os.getenv("REGION_PROD") == "czechia":
             start_time = time.monotonic()
             region_name = region.capitalize()
             bpm = bpm_data[region][trackId]
             
             try:    
                 lyrics_timing(
-                    output_folder=os.path.join(script_dir, f"{region}_track{trackId}_sections"),
+                    # output_folder=os.path.join(script_dir, f"{region}_track{trackId}_sections"),
+                    output_folder=os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections"),
                     # bpm=bpm,
                     input_text=lyrics,
                     # initial_gap_bars=0,
