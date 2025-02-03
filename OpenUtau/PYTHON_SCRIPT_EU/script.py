@@ -193,23 +193,23 @@ def process_message(body):
             #     formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_cs(lyrics)
             #     formatted_lyrics = add_plus_signs(formatted_lyrics)
             #     formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
-            elif region == "slovakia":
-                formatted_lyrics = analyze_lyrics_sk(lyrics, "OPENAI")
-                # formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
-                formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
+            # elif region == "slovakia":
+            #     formatted_lyrics = analyze_lyrics_sk(lyrics, "OPENAI")
+            #     # formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
+            #     formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
                 
-                # Define the folder paths relative to the script's location
-                midi_folder = os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections")
-                output_folder = os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections", "generations")
-                slovakia_note_count = note_count[region][trackId]
-                formatted_lyrics = adjust_lyrics_to_midi_with_track(formatted_lyrics, midi_folder, output_folder, slovakia_note_count)
-                output_file = "/tmp/lyrics.txt"
-                with open(output_file, "w", encoding="utf-8") as file:
-                    file.write(formatted_lyrics)
-                input_folder = f"{region}_track{trackId}_sections"
-                output_folder = config.OUTPUT_FOLDER
-                final_midi_path = combine_sectional_midis(midi_folder, output_folder)
-                shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
+            #     # Define the folder paths relative to the script's location
+            #     midi_folder = os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections")
+            #     output_folder = os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections", "generations")
+            #     slovakia_note_count = note_count[region][trackId]
+            #     formatted_lyrics = adjust_lyrics_to_midi_with_track(formatted_lyrics, midi_folder, output_folder, slovakia_note_count)
+            #     output_file = "/tmp/lyrics.txt"
+            #     with open(output_file, "w", encoding="utf-8") as file:
+            #         file.write(formatted_lyrics)
+            #     input_folder = f"{region}_track{trackId}_sections"
+            #     output_folder = config.OUTPUT_FOLDER
+            #     final_midi_path = combine_sectional_midis(midi_folder, output_folder)
+            #     shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
                 
             elif region == "czechia":
                 formatted_lyrics = analyze_lyrics_cs(lyrics, "OPENAI")
@@ -229,10 +229,10 @@ def process_message(body):
                 final_midi_path = combine_sectional_midis(midi_folder, output_folder)
                 shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
              
-            # elif region == "slovakia": 
-            #     formatted_lyrics, syllable_breakdown, total_syllables = analyze_lyrics_sk(lyrics)
-            #     formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
-            #     formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
+            elif region == "slovakia": 
+                formatted_lyrics = analyze_lyrics_sk(lyrics)
+                formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
+                formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
                     
             elif region == "greece":
                 if trackId == 2:
@@ -330,7 +330,7 @@ def process_message(body):
         bpm = bpm_data[region][trackId]
             
         
-        if os.getenv("REGION_PROD") == "germany" or os.getenv("REGION_PROD") == "romania" or os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "hungary":
+        if os.getenv("REGION_PROD") == "germany" or os.getenv("REGION_PROD") == "romania" or os.getenv("REGION_PROD") == "mexico" or os.getenv("REGION_PROD") == "hungary" or os.getenv("REGION_PROD") == "slovakia":
             start_time = time.monotonic()
             region_name = region.capitalize()
             vocal_midi_file_path = f"/tmp/{region}/vocal_track/{region_name}Track{trackId}MIDI.mid"
@@ -470,7 +470,7 @@ def process_message(body):
             logger.info("============================================================")
             
             
-        elif os.getenv("REGION_PROD")=="slovakia" or os.getenv("REGION_PROD") == "czechia":
+        elif os.getenv("REGION_PROD") == "czechia":
             start_time = time.monotonic()
             region_name = region.capitalize()
             bpm = bpm_data[region][trackId]
