@@ -230,7 +230,7 @@ def process_message(body):
                 shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
              
             elif region == "slovakia": 
-                formatted_lyrics = analyze_lyrics_sk(lyrics)
+                formatted_lyrics = analyze_lyrics_sk(lyrics, "OPENAI")
                 formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
                 formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
                     
