@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 region = os.getenv("REGION_PROD")
 IS_LAMBDA_ENV = os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+VOICE_COLOR_OPTIONS = ""
 if IS_LAMBDA_ENV != None:
     IS_LAMBDA_ENV = True
 else:
@@ -161,10 +162,29 @@ class Config:
     ADJUSTED_SECTIONAL_MIDI_FOLDER: str
     OUTPUT_FOLDER: str
     GREECE_TRACK2_SECTIONS: str
+    VOICE_COLOR_OPTIONS: str
 
 def initialize_config():
     is_lambda_env = IS_LAMBDA_ENV  # Modify this as needed for your environment check
     ou_singer_num = "1"
+    
+    if region == "australia":
+        VOICE_COLOR_OPTIONS = "1"
+    elif region == "czechia":
+        VOICE_COLOR_OPTIONS = "0"
+    elif region == "germany":
+        VOICE_COLOR_OPTIONS = "2"
+    elif region == "greece":
+        VOICE_COLOR_OPTIONS = "3"
+    elif region == "hungary":
+        VOICE_COLOR_OPTIONS = "4"
+    elif region == "romania":
+        VOICE_COLOR_OPTIONS = "5"
+    elif region == "mexico":
+        VOICE_COLOR_OPTIONS = "7"
+    elif region == "slovakia":
+        VOICE_COLOR_OPTIONS = "6"
+    
     
     # UNCOMMENT WHEN ALL MODELS ARE 
     # PLACED IN SINGLE LAMBDA
@@ -183,6 +203,7 @@ def initialize_config():
     #     ou_singer_num = "6"
     
     config = Config(
+        VOICE_COLOR_OPTIONS,
         BUCKET_NAME=os.getenv("BUCKET_NAME"),
         REGION_NAME=os.getenv("REGION_NAME"),
         is_lambda_env=IS_LAMBDA_ENV,
@@ -199,7 +220,7 @@ def initialize_config():
         SECTIONAL_MIDI_FOLDER="/tmp/outputs/sections" if is_lambda_env else "tmp/outputs/sections",
         ADJUSTED_SECTIONAL_MIDI_FOLDER="/tmp/outputs/adjusted_sections" if is_lambda_env else "tmp/outputs/adjusted_sections",
         OUTPUT_FOLDER="/tmp/outputs" if is_lambda_env else "tmp/outputs",
-        GREECE_TRACK2_SECTIONS="greek_track1_sections"
+        GREECE_TRACK2_SECTIONS="greek_track1_sections",
     )
     
     # Return initialized config

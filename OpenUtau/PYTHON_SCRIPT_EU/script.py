@@ -841,6 +841,7 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
         not_saved = True           # Flag to track if project has been saved
         export_fully_completed = False
         pitch_processing = False
+        voice_color_change = False
         while True:
             output = process.stdout.read(1)  # Read one character at a time
                     
@@ -951,6 +952,40 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
                     time.sleep(2)
                     process.stdin.flush()
                     pitch_processing = True
+                    accumulated_output = ""
+                
+                elif "Select a part to process:" in accumulated_output and not pitch_processing:
+                    print("Detected Part selection prompt; entering '1'")
+                    time.sleep(3)
+                    process.stdin.write("1\n")
+                    time.sleep(2)
+                    process.stdin.flush()
+                    pitch_processing = True
+                    accumulated_output = ""
+                    
+                elif "> " in accumulated_output and pitch_processing and not voice_color_change:
+                    print("Detected '> ' prompt; Sending '--process --vcolor'")
+                    time.sleep(2)
+                    process.stdin.write("--process --vcolor\n")
+                    process.stdin.flush()
+                    time.sleep(2)
+                    accumulated_output = ""
+                    
+                elif "Select a part to change voice color:" in accumulated_output and not voice_color_change:
+                    print("Detected voice color change prompt; entering '1'")
+                    time.sleep(2)
+                    process.stdin.write("1\n")
+                    process.stdin.flush()
+                    time.sleep(2)
+                    accumulated_output = ""
+                    
+                elif "No discrepancies in voice color mappings. No need to update." in accumulated_output and not voice_color_change:
+                    print(f"Detected voice color options prompt; entering {config.VOICE_COLOR_OPTIONS}")
+                    time.sleep(2)
+                    process.stdin.write(f"{config.VOICE_COLOR_OPTIONS}\n")
+                    process.stdin.flush()
+                    voice_color_change = True
+                    time.sleep(2)
                     accumulated_output = ""
                 # # SAVING
                 # # Send save command after export is complete
