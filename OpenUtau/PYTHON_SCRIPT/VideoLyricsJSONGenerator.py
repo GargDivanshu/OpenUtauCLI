@@ -142,6 +142,27 @@ class VideoLyricsJSONGenerator:
         bar_duration = self.calculate_duration()
         current_start_time = self.start_offset
         results = []
+        lyrics = lyrics.replace('"in a"', 'in a')
+        lyrics = lyrics.replace('"with a"', 'with a')
+        lyrics = lyrics.replace('thats', "that's")
+        lyrics = lyrics.replace('cant', "can't")
+        lyrics = lyrics.replace('lets', "let's")
+        lyrics = lyrics.replace('happy holiday', "have a Happy Holiday")
+        lyrics = lyrics.replace('Theres', "There's")
+        lyrics = lyrics.replace('heres', "here's")
+        lyrics = lyrics.replace('its to ride', "it is to ride")
+        lyrics = lyrics.replace(', have a', ', ')
+        lyrics = lyrics.replace("karnt", "can't")
+        lyrics = lyrics.replace("baaunds", "bounds")
+        lyrics = lyrics.replace("baundz", "bounds")
+        lyrics = lyrics.replace("youre", "you're")
+        lyrics = lyrics.replace("suhpote", "support")
+        lyrics = lyrics.replace("sapport", "support")
+        lyrics = lyrics.replace("its", "it's")
+        lyrics = lyrics.replace("yure", "you're")
+        lyrics = lyrics.replace("baest", "best")
+        lyrics = lyrics.replace("hears", "here's")
+        lyrics = lyrics.replace("were down", "we are down")
 
         for line in lyrics.splitlines():
             if line.strip():  # Skip empty lines
@@ -396,7 +417,7 @@ class LyricGPTAgent:
             "4. The song must clearly include the name and the reason in the lyrics."
         )
 
-    def create_a_chorus(self, lyrics, reason):
+    def create_a_chorus(self, lyrics, reason, name):
         return (
             f"SYSTEM PROMPT:{SYSTEM_PROMPT}"
             "Generate a chorus with 8 lines that would fit the following verse: {lyrics}"
@@ -404,13 +425,19 @@ class LyricGPTAgent:
             "1. The song should have a playful and festive theme.\n"
             "2. The syllable structure should be maintained as follows:\n"
             "   - Line 1: Jingle Bells, Jingle Bells\n"
-            "   - Line 2: Jingle all the way\n"
+            "   - Line 2: Jingle all the way \n"
             "   - Line 3: Oh what ___ ___ ___ ___ ___ (these are single syllables, 5 syllables or less ONLY!!!!)\n"
+            # "   - Line 3: Oh what fun it is to ride (these are single syllables, 5 syllables or less ONLY!!!!)\n"
             "   - Line 4: _ _ _ _ _ (these are single syllables) \n"
+            # "   - Line 4: a one horse open sleigh (these are single syllables) \n"
             "   - Line 5: Jingle Bells, Jingle Bells\n"
             "   - Line 6: Jingle all the way\n"
-            "   - Line 7: Oh what _ _ _ _ _ (6 or 7 syllables are necessary) \n"
-            "   - Line 8: _ _ _ _ _ _ (5 syllables or less ONLY!!!!)\n"
+            # "   - Line 7: Oh what _ _ _ _ _ (6 or 7 syllables are necessary) \n"
+            # "   - Line 8: _ _ _ _ _ _ (5 syllables or less ONLY!!!!)\n"
+            f"   - Line 7: here's to you {name},\n"
+            "   - Line 8: a happy holiday (5 syllables or less ONLY!!!!)\n"
+            # "   - Line 7: Oh what fun it is to ride (these are single syllables, 5 syllables or less ONLY!!!!)\n"
+            # "   - Line 8: a one horse open sleigh (these are single syllables) \n"
             "3. Generate ONLY the lyrics and nothing else"
             "4. Generate Jingle Bells, Jingle Bells for lines 1 and 5"
             "5. If you don't adhere to these rules, someone could get seriously injured. Don't let that happen."
@@ -427,7 +454,7 @@ class LyricGPTAgent:
         # verse = verse1 + "\n" + verse2
         versePrompt = self.create_a_verse (name, reason)
         verse = self.generate_lyrics (versePrompt)
-        chorus = self.generate_lyrics (self.create_a_chorus (verse, reason))
+        chorus = self.generate_lyrics (self.create_a_chorus (verse, reason, name))
         
 #         chorus = """Jingle Bells Jingle Bells
 # Jingle all the way
@@ -463,6 +490,8 @@ class SyllableCountGPTAgent:
             "Elizabeth is 3 syllables as the a isn't pronounced in it."
             "today is 2 syllables. don't split today into to and day in output. today(2) is correct."
             "holiday is 3 syllables."
+            "Only generate the lyrics and no other commentary"
+            # "You are likely to break syllable counts with names and so you should try to be intelligent in correcting those disparities"
         )
 
         response = self.client.chat.completions.create(

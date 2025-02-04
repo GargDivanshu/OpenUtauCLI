@@ -199,6 +199,8 @@ namespace OpenUtauCLI {
                             HandleLoadRenderedPitch();
                         } else if(parts.Length > 1 && parts[1].ToLower() == "--transpose") {
                             HandleTranspose(Int32.Parse(parts[2]));
+                        } else if(parts.Length > 1 && parts[1].ToLower() == "--bpm") {
+                            ChangeBPM(Int32.Parse(parts[2]));
                         } else { 
                             Console.WriteLine("Invalid subcommand for '--process'.");
                         }
@@ -1009,6 +1011,14 @@ namespace OpenUtauCLI {
             Console.WriteLine($"Renamed part to: {newName}");
         }
 
+        static void ChangeBPM(int num) {
+            if (project == null) {
+                Console.WriteLine("No project is currently loaded.");
+                return;
+            }
+            project.tempos[0].bpm = num;
+        }
+
 
         static void HandleImportMidi(string filePath) {
             if (project == null) {
@@ -1029,7 +1039,7 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"File does not exist at {filePath}."); // More detailed error message
                 return;
             }
-            project.tempos[0].bpm = 94;
+            // project.tempos[0].bpm = 94;
             try {
                 var parts = OpenUtau.Core.Format.MidiWriter.Load(filePath, project);
                 DocManager.Inst.StartUndoGroup();
