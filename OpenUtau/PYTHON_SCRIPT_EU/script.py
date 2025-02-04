@@ -626,6 +626,16 @@ def lambda_handler(event, context):
         "greece": "Singers/el_singer/",
         "slovakia": "Singers/sk_singer/"
     }
+        region_singer_mapping = {
+            "australia": "Singers/global_model/",
+            "romania": "Singers/global_model/",
+            "germany": "Singers/global_model/",
+            "mexico": "Singers/global_model/",
+            "hungary": "Singers/global_model/",
+            "czechia": "Singers/global_model/",
+            "greece": "Singers/global_model/",
+            "slovakia": "Singers/global_model/"
+        }
 
         # Define folder mappings
         folders_to_download = {
