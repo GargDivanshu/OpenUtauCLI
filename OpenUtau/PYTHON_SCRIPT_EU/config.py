@@ -203,7 +203,6 @@ def initialize_config():
     #     ou_singer_num = "6"
     
     config = Config(
-        VOICE_COLOR_OPTIONS,
         BUCKET_NAME=os.getenv("BUCKET_NAME"),
         REGION_NAME=os.getenv("REGION_NAME"),
         is_lambda_env=IS_LAMBDA_ENV,
@@ -221,6 +220,7 @@ def initialize_config():
         ADJUSTED_SECTIONAL_MIDI_FOLDER="/tmp/outputs/adjusted_sections" if is_lambda_env else "tmp/outputs/adjusted_sections",
         OUTPUT_FOLDER="/tmp/outputs" if is_lambda_env else "tmp/outputs",
         GREECE_TRACK2_SECTIONS="greek_track1_sections",
+        VOICE_COLOR_OPTIONS=VOICE_COLOR_OPTIONS
     )
     
     # Return initialized config
