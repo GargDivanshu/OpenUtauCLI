@@ -66,14 +66,80 @@ bpm_data['czechia'][10] = 105
 bpm_data['hungary'] = {}
 bpm_data['hungary'][1] = 80
 bpm_data['hungary'][2] = 116
-bpm_data['hungary'][3] = 170
+bpm_data['hungary'][3] = 85
 bpm_data['hungary'][4] = 90
 bpm_data['hungary'][5] = 120
-bpm_data['hungary'][6] = 92
+bpm_data['hungary'][6] = 84
 bpm_data['hungary'][7] = 120
 bpm_data['hungary'][8] = 88
 bpm_data['hungary'][9] = 98
 bpm_data['hungary'][10] = 96
+
+note_count = {}
+note_count['slovakia']= {}
+note_count['slovakia'][4] = [11, 11, 11, 11, 12, 12, 9, 13, 14, 12]
+note_count['slovakia'][5] = [11, 11, 12, 11, 12, 15, 11, 10, 14, 10]
+
+
+note_count['czechia']= {}
+note_count['czechia'][4] = [11, 11, 11, 11, 12, 12, 9, 13, 14, 12]
+note_count['czechia'][5] = [11, 11, 12, 11, 12, 15, 11, 10, 14, 10]
+
+# legato, arpeggios, falcetto 
+
+lyrics_timing_map = {}
+lyrics_timing_map["slovakia"] = {}
+lyrics_timing_map["slovakia"][4] = [
+        (4.9, 4.3),
+        (9.5, 4.6),
+        (14.4, 5.1),
+        (19.7, 4.7),
+        (24.7, 4.3),
+        (29.3, 34.2-29.3),
+        (34.6, 38.9-34.6),
+        (39.2, 43.9-39.2),
+        (44.4, 48.9 - 44.4),
+        (49.1, 54.4-49.1)
+    ]
+lyrics_timing_map["slovakia"][5] = [
+        (10.5, 15.0-10.5),
+        (15.6, 19.8-15.6),
+        (20.1, 24.6-20.1),
+        (25.2, 29.4-25.2),
+        (30.0, 4.3),
+        (34.5, 39.0-34.5),
+        (39.6, 43.5-39.6),
+        (44.1, 48.9-44.1),
+        (49.2, 53.5 - 49.2),
+        (54.0, 58.8-54.0)
+    ]
+
+
+lyrics_timing_map["czechia"] = {}
+lyrics_timing_map["czechia"][4] = [
+        (4.9, 4.3),
+        (9.5, 4.6),
+        (14.4, 5.1),
+        (19.7, 4.7),
+        (24.7, 4.3),
+        (29.3, 34.2-29.3),
+        (34.6, 38.9-34.6),
+        (39.2, 43.9-39.2),
+        (44.4, 48.9 - 44.4),
+        (49.1, 54.4-49.1)
+    ]
+lyrics_timing_map["czechia"][5] = [
+        (10.5, 15.0-10.5),
+        (15.6, 19.8-15.6),
+        (20.1, 24.6-20.1),
+        (25.2, 29.4-25.2),
+        (30.0, 4.3),
+        (34.5, 39.0-34.5),
+        (39.6, 43.5-39.6),
+        (44.1, 48.9-44.1),
+        (49.2, 53.5 - 49.2),
+        (54.0, 58.8-54.0)
+    ]
 
 
 @dataclass

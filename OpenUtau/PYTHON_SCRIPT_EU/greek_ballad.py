@@ -189,6 +189,91 @@ def lyrics_timing_for_track2(
     return result
 
 
+def lyrics_timing_for_track3(
+    output_folder="outputs/sections",
+    input_text=None,
+    output_json_path="output_timing_fixed.json"
+):
+    """
+    Associate fixed start times and durations with the parsed lyrics.
+
+    Parameters:
+    - output_folder: Folder containing the sectional MIDI files.
+    - input_text: String containing lyrics in the specified format.
+    - output_json_path: Path to save the final JSON output.
+
+    Returns:
+    - A JSON-like list of dictionaries with fixed timing and lyric line associations.
+    """
+    if not input_text:
+        raise ValueError("Input text with lyrics is required.")
+
+    import os
+    import re
+    import json
+
+    # Parse lyrics from input_text
+    lyrics = [line.strip() for line in input_text.splitlines() if line.strip()]
+    print(f"Parsed {len(lyrics)} lyric lines from input text: {lyrics}")
+
+    # Predefined start times and durations
+    fixed_timings = [
+        (9.1, 2.6),
+        (12.6, 2.8),
+        (17.2, 7.2),
+        (25.5, 7.5),
+        (33.8, 7.4),
+        (42.1, 7.4),
+        (50.4, 7.0),
+    ]
+
+    # Check if provided lyrics match the number of fixed timings
+    if len(lyrics) > len(fixed_timings):
+        raise ValueError(f"More lyrics provided ({len(lyrics)}) than available fixed timings ({len(fixed_timings)})")
+
+    # Normalize paths
+    output_folder = os.path.normpath(output_folder)
+
+    # Find section files matching the pattern (e.g., section_1.mid, section_2.mid)
+    pattern = re.compile(r"section_(\d+)\.mid")
+    section_files = sorted(
+        [f for f in os.listdir(output_folder) if pattern.match(f)],
+        key=lambda x: int(pattern.match(x).group(1))
+    )
+
+    if not section_files:
+        raise FileNotFoundError(f"No section MIDI files found in {output_folder}")
+
+    result = []
+    for index, (start_time, duration) in enumerate(fixed_timings):
+        if index < len(lyrics):
+            result.append({
+                "line": lyrics[index],
+                "startTime": start_time,
+                "duration": duration,
+                "file": section_files[index] if index < len(section_files) else None
+            })
+        else:
+            print(f"Warning: No more lyrics left to assign for section {section_files[index]}. Skipping...")
+
+        print(
+            f"Section: {section_files[index]}, Start Time: {start_time:.2f}s, "
+            f"Duration: {duration:.2f}s"
+        )
+
+    # Save result to JSON file with UTF-8 encoding and ensure_ascii=False
+    with open(output_json_path, "w", encoding="utf-8") as json_file:
+        json.dump(result, json_file, indent=4, ensure_ascii=False)
+    print(f"Timing JSON saved to {output_json_path}.")
+
+    # Output result as JSON string for reference with correct encoding
+    json_output = json.dumps(result, indent=4, ensure_ascii=False)
+    print("Generated timing JSON:")
+    print(json_output)
+
+    return result
+
+
 
 def combine_sectional_midis(input_folder, output_folder):
     """

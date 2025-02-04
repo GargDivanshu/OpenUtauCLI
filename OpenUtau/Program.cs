@@ -18,11 +18,12 @@ using OpenUtau.Audio;
 using OpenUtau.Core.DiffSinger;
 using Serilog;
 
+
 namespace OpenUtauCLI {
     class Program {
 
         private static UProject? project;
-        private static MainWindowViewModel viewModel;
+        // private static MainWindowViewModel viewModel;
 
         static void Main(string[] args) {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -33,10 +34,10 @@ namespace OpenUtauCLI {
                 return;
             }
 
-            if (args.Length > 1 && args[0] == "--pipeline") {
-                Pipeline(args.Skip(1).ToArray());
-                return; // Exit after handling the pipeline, no need for interactive loop
-            }
+            // if (args.Length > 1 && args[0] == "--pipeline") {
+            //     Pipeline(args.Skip(1).ToArray());
+            //     return; // Exit after handling the pipeline, no need for interactive loop
+            // }
 
             //InitializeCoreComponents();
             
@@ -51,14 +52,14 @@ namespace OpenUtauCLI {
 
                 switch (command) {
 
-                    case "--pipeline":
-                        if(parts.Length > 1) {
-                            Pipeline(parts.Skip(1).ToArray());
-                        } else {
-                            Console.WriteLine("Error: '--pipeline' requires a series of subcommands for importing midi (--midi), adding lyrics (--lyrics), wav file path for exporting (--export)");
-                        }
+                    // case "--pipeline":
+                    //     if(parts.Length > 1) {
+                    //         Pipeline(parts.Skip(1).ToArray());
+                    //     } else {
+                    //         Console.WriteLine("Error: '--pipeline' requires a series of subcommands for importing midi (--midi), adding lyrics (--lyrics), wav file path for exporting (--export)");
+                    //     }
                         
-                        break;
+                    //     break;
 
 
                     case "--init":
@@ -89,6 +90,10 @@ namespace OpenUtauCLI {
                         } else {
                             Console.WriteLine("Error: The '--install' command requires a subcommand.");
                         }
+                        break;
+
+                    case "--info":
+                        HandlePartInfo();
                         break;
 
 
@@ -170,6 +175,10 @@ namespace OpenUtauCLI {
                         ListPhonemizers();
                         break;
 
+                    case "--phonemizers --update":
+                        HandleUpdatePhonemizer();
+                        break;
+
 
                     case "--export":
                         if (parts.Length > 1 && parts[1].ToLower() == "--wav") {
@@ -197,10 +206,12 @@ namespace OpenUtauCLI {
                     case "--process":
                         if (parts.Length > 1 && parts[1].ToLower() == "--pitch") {
                             HandleLoadRenderedPitch();
-                        } else if(parts.Length > 1 && parts[1].ToLower() == "--transpose") {
+                        } else if (parts.Length > 1 && parts[1].ToLower() == "--transpose") {
                             HandleTranspose(Int32.Parse(parts[2]));
-                        } else if(parts.Length > 1 && parts[1].ToLower() == "--bpm") {
+                        } else if (parts.Length > 1 && parts[1].ToLower() == "--bpm") {
                             ChangeBPM(Int32.Parse(parts[2]));
+                        } else if (parts.Length > 1 && parts[1].ToLower() == "--vcolor") {
+                            SetVoiceColor();
                         } else { 
                             Console.WriteLine("Invalid subcommand for '--process'.");
                         }
@@ -224,197 +235,197 @@ namespace OpenUtauCLI {
             }
         }
 
-        static void InitializeCLIViewModel() {
-            viewModel = new MainWindowViewModel();
+        //static void InitializeCLIViewModel() {
+        //    viewModel = new MainWindowViewModel();
 
-            // Initialize singer and project
-            TaskScheduler scheduler = TaskScheduler.Default;
-            viewModel.GetInitSingerTask()!.ContinueWith(_ => {
-                viewModel.InitProject();
-                Console.WriteLine("Initialized CLI ViewModel with project and commands.");
-            }, CancellationToken.None, TaskContinuationOptions.None, scheduler);
-
-            
-            project = DocManager.Inst.Project;
-            // Set up autosave timer if necessary
-            //var autosaveTimer = new Timer((e) => DocManager.Inst.AutoSave(), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
-        }
-
-        static async void Pipeline(string[] args) {
-            string midiPath = "";
-            string lyricsPath = "";
-            string exportPath = "";
-
-            // Parse the flags and their values
-            for (int i = 0; i < args.Length; i++) {
-                switch (args[i].ToLower()) {
-                    case "--midi":
-                        if (i + 1 < args.Length) {
-                            midiPath = args[i + 1]; // Capture MIDI path
-                            i++; // Skip the next argument since it's the value
-                        } else {
-                            Console.WriteLine("Error: Missing value for --midi.");
-                            return;
-                        }
-                        break;
-
-                    case "--lyrics":
-                        if (i + 1 < args.Length) {
-                            lyricsPath = args[i + 1]; // Capture lyrics string
-                            i++;
-                        } else {
-                            Console.WriteLine("Error: Missing value for --lyrics.");
-                            return;
-                        }
-                        break;
-
-                    case "--export":
-                        if (i + 1 < args.Length) {
-                            exportPath = args[i + 1]; // Capture export path
-                            i++;
-                        } else {
-                            Console.WriteLine("Error: Missing value for --export.");
-                            return;
-                        }
-                        break;
-
-                    default:
-                        Console.WriteLine($"Error: Unknown argument {args[i]}.");
-                        return;
-                }
-            }
-
-            // Validate that all required arguments are provided
-            if (string.IsNullOrEmpty(midiPath) || string.IsNullOrEmpty(lyricsPath) || string.IsNullOrEmpty(exportPath)) {
-                Console.WriteLine("Error: Missing required arguments. Make sure to include --midi, --lyrics, and --export.");
-                return;
-            }
+        //    // Initialize singer and project
+        //    TaskScheduler scheduler = TaskScheduler.Default;
+        //    viewModel.GetInitSingerTask()!.ContinueWith(_ => {
+        //        viewModel.InitProject();
+        //        Console.WriteLine("Initialized CLI ViewModel with project and commands.");
+        //    }, CancellationToken.None, TaskContinuationOptions.None, scheduler);
 
             
-            // Initialize the core components before proceeding with the pipeline
-            InitializeCoreComponentsViaPipeline();
+        //    project = DocManager.Inst.Project;
+        //    // Set up autosave timer if necessary
+        //    //var autosaveTimer = new Timer((e) => DocManager.Inst.AutoSave(), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+        //}
 
-            // Call the respective functions
-            Console.WriteLine($"Importing MIDI from: {midiPath}");
-            HandleImportMidi(midiPath);  // Assuming this method exists for importing MIDI
+        // static async void Pipeline(string[] args) {
+        //     string midiPath = "";
+        //     string lyricsPath = "";
+        //     string exportPath = "";
 
-            ListTracks();
-            int trackCount = DocManager.Inst.Project.tracks.Count;
-            var trackToRemove = DocManager.Inst.Project.tracks[0];
+        //     // Parse the flags and their values
+        //     for (int i = 0; i < args.Length; i++) {
+        //         switch (args[i].ToLower()) {
+        //             case "--midi":
+        //                 if (i + 1 < args.Length) {
+        //                     midiPath = args[i + 1]; // Capture MIDI path
+        //                     i++; // Skip the next argument since it's the value
+        //                 } else {
+        //                     Console.WriteLine("Error: Missing value for --midi.");
+        //                     return;
+        //                 }
+        //                 break;
 
-            DocManager.Inst.StartUndoGroup();
-            DocManager.Inst.ExecuteCmd(new RemoveTrackCommand(DocManager.Inst.Project, trackToRemove));
-            DocManager.Inst.EndUndoGroup();
+        //             case "--lyrics":
+        //                 if (i + 1 < args.Length) {
+        //                     lyricsPath = args[i + 1]; // Capture lyrics string
+        //                     i++;
+        //                 } else {
+        //                     Console.WriteLine("Error: Missing value for --lyrics.");
+        //                     return;
+        //                 }
+        //                 break;
 
-            Console.WriteLine($"Track '{trackToRemove.TrackName}' has been successfully removed.");
-            ListTracks();
+        //             case "--export":
+        //                 if (i + 1 < args.Length) {
+        //                     exportPath = args[i + 1]; // Capture export path
+        //                     i++;
+        //                 } else {
+        //                     Console.WriteLine("Error: Missing value for --export.");
+        //                     return;
+        //                 }
+        //                 break;
 
-            // Applying lyrics
-            Console.WriteLine($"Applying lyrics: {lyricsPath}");
+        //             default:
+        //                 Console.WriteLine($"Error: Unknown argument {args[i]}.");
+        //                 return;
+        //         }
+        //     }
 
-            if (!File.Exists(lyricsPath)) {
-                Console.WriteLine("Lyrics file does not exist.");
-                return;
-            }
-
-            string[] lyrics = File.ReadAllLines(lyricsPath)
-                                  .SelectMany(line => line.Split(new[] { ' ', '\t', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries))
-                                  .ToArray();
-
-            if (lyrics.Length == 0) {
-                Console.WriteLine("No lyrics found in the file.");
-                return;
-            }
-
-            
-            List<UVoicePart> voiceParts = project.parts.OfType<UVoicePart>().ToList();
-            if (voiceParts.Count == 0) {
-                Console.WriteLine("No voice parts available in the project.");
-                return;
-            }
-
-            AssignLyricsToNotes(voiceParts[0], lyrics);
-
-
-            // Add singer to our track
-            UTrack selectedTrack = project.tracks[0];
-            Console.WriteLine($"You selected: {selectedTrack.TrackName}");
-
-            // List available singers
-            SingerManager.Inst.SearchAllSingers();
-            var allSingers = SingerManager.Inst.SingerGroups.SelectMany(g => g.Value).ToList();
-            if (allSingers.Count == 0) {
-                Console.WriteLine("No singers available to update the track.");
-                return;
-            }
-
-            Console.WriteLine("Available singers:");
-            for (int i = 0; i < allSingers.Count; i++) {
-                Console.WriteLine($"{i + 1}. {allSingers[i].LocalizedName} ({allSingers[i].SingerType})");
-            }
-
-            USinger selectedSinger = allSingers[0];
-            Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
-
-            // Update track with new singer
-            DocManager.Inst.StartUndoGroup();
-            var singerCommand = new TrackChangeSingerCommand(project, selectedTrack, selectedSinger);
-            DocManager.Inst.ExecuteCmd(singerCommand);
-            Console.WriteLine($"Updated singer of track '{selectedTrack.TrackName}' to '{selectedSinger.LocalizedName}'.");
-
-            // You can extend this to update phonemizer and renderer here if needed
-
-            // Adding Phonemizer
-            Console.WriteLine("Available phonemizers:");
-            ListPhonemizers();
-
-            string phonemizerName = "OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer";
-
-            if (!TryChangePhonemizer(phonemizerName, selectedTrack)) {
-                Console.WriteLine("Failed to apply phonemizer. Check the name and try again.");
-            } else {
-                Console.WriteLine($"Phonemizer {phonemizerName} applied to track {selectedTrack.TrackName}.");
-            }
-
-            DocManager.Inst.EndUndoGroup();
-            DocManager.Inst.AutoSave();
-            Console.WriteLine("Track updated and project state saved.");
-
-
-            if (!project.Saved || string.IsNullOrEmpty(project.FilePath)) {
-                Console.WriteLine("Project is not saved or does not have an existing file path.");
-
-
-                if (string.IsNullOrEmpty(exportPath)) {
-                    Console.WriteLine("No directory path provided. Aborting save operation.");
-                    return;
-                }
-
-                // Combine directory path and project name to form full file path
-                string fullPath = Path.Combine(exportPath + ".ustx"); // Assuming .ustx as the file extension
-                project.FilePath = fullPath; // Update the project's file path
-                SaveProject();
-            } else {
-                // Save the project to its existing file path
-                SaveProject();
-            }
+        //     // Validate that all required arguments are provided
+        //     if (string.IsNullOrEmpty(midiPath) || string.IsNullOrEmpty(lyricsPath) || string.IsNullOrEmpty(exportPath)) {
+        //         Console.WriteLine("Error: Missing required arguments. Make sure to include --midi, --lyrics, and --export.");
+        //         return;
+        //     }
 
             
+        //     // Initialize the core components before proceeding with the pipeline
+        //     InitializeCoreComponentsViaPipeline();
 
-            string wavPath = Path.Combine(exportPath + ".wav");
-            HandleExportWavCommandViaPipeline(wavPath);  // Assuming this method exists for exporting WAV
-            //try {
-            //    Console.WriteLine($"Starting WAV export to {wavPath}");
-            //    if (project.tracks.Count == 0) {
-            //        Console.WriteLine("No tracks in the project.");
-            //    }
+        //     // Call the respective functions
+        //     Console.WriteLine($"Importing MIDI from: {midiPath}");
+        //     HandleImportMidi(midiPath);  // Assuming this method exists for importing MIDI
 
-            //    await PlaybackManager.Inst.RenderToFiles(project, wavPath);
-            //    Console.WriteLine($"Project has been successfully exported to WAV at {wavPath}.");
-            //} catch (Exception ex) {
-            //    Console.WriteLine($"An error occurred during the export: {ex.Message}");
-            //}
-        }
+        //     ListTracks();
+        //     int trackCount = DocManager.Inst.Project.tracks.Count;
+        //     var trackToRemove = DocManager.Inst.Project.tracks[0];
+
+        //     DocManager.Inst.StartUndoGroup();
+        //     DocManager.Inst.ExecuteCmd(new RemoveTrackCommand(DocManager.Inst.Project, trackToRemove));
+        //     DocManager.Inst.EndUndoGroup();
+
+        //     Console.WriteLine($"Track '{trackToRemove.TrackName}' has been successfully removed.");
+        //     ListTracks();
+
+        //     // Applying lyrics
+        //     Console.WriteLine($"Applying lyrics: {lyricsPath}");
+
+        //     if (!File.Exists(lyricsPath)) {
+        //         Console.WriteLine("Lyrics file does not exist.");
+        //         return;
+        //     }
+
+        //     string[] lyrics = File.ReadAllLines(lyricsPath)
+        //                           .SelectMany(line => line.Split(new[] { ' ', '\t', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries))
+        //                           .ToArray();
+
+        //     if (lyrics.Length == 0) {
+        //         Console.WriteLine("No lyrics found in the file.");
+        //         return;
+        //     }
+
+            
+        //     List<UVoicePart> voiceParts = project.parts.OfType<UVoicePart>().ToList();
+        //     if (voiceParts.Count == 0) {
+        //         Console.WriteLine("No voice parts available in the project.");
+        //         return;
+        //     }
+
+        //     AssignLyricsToNotes(voiceParts[0], lyrics);
+
+
+        //     // Add singer to our track
+        //     UTrack selectedTrack = project.tracks[0];
+        //     Console.WriteLine($"You selected: {selectedTrack.TrackName}");
+
+        //     // List available singers
+        //     SingerManager.Inst.SearchAllSingers();
+        //     var allSingers = SingerManager.Inst.SingerGroups.SelectMany(g => g.Value).ToList();
+        //     if (allSingers.Count == 0) {
+        //         Console.WriteLine("No singers available to update the track.");
+        //         return;
+        //     }
+
+        //     Console.WriteLine("Available singers:");
+        //     for (int i = 0; i < allSingers.Count; i++) {
+        //         Console.WriteLine($"{i + 1}. {allSingers[i].LocalizedName} ({allSingers[i].SingerType})");
+        //     }
+
+        //     USinger selectedSinger = allSingers[0];
+        //     Console.WriteLine($"You selected: {selectedSinger.LocalizedName}");
+
+        //     // Update track with new singer
+        //     DocManager.Inst.StartUndoGroup();
+        //     var singerCommand = new TrackChangeSingerCommand(project, selectedTrack, selectedSinger);
+        //     DocManager.Inst.ExecuteCmd(singerCommand);
+        //     Console.WriteLine($"Updated singer of track '{selectedTrack.TrackName}' to '{selectedSinger.LocalizedName}'.");
+
+        //     // You can extend this to update phonemizer and renderer here if needed
+
+        //     // Adding Phonemizer
+        //     Console.WriteLine("Available phonemizers:");
+        //     ListPhonemizers();
+
+        //     string phonemizerName = "OpenUtau.Core.DiffSinger.DiffSingerEnglishPhonemizer";
+
+        //     if (!TryChangePhonemizer(phonemizerName, selectedTrack)) {
+        //         Console.WriteLine("Failed to apply phonemizer. Check the name and try again.");
+        //     } else {
+        //         Console.WriteLine($"Phonemizer {phonemizerName} applied to track {selectedTrack.TrackName}.");
+        //     }
+
+        //     DocManager.Inst.EndUndoGroup();
+        //     DocManager.Inst.AutoSave();
+        //     Console.WriteLine("Track updated and project state saved.");
+
+
+        //     if (!project.Saved || string.IsNullOrEmpty(project.FilePath)) {
+        //         Console.WriteLine("Project is not saved or does not have an existing file path.");
+
+
+        //         if (string.IsNullOrEmpty(exportPath)) {
+        //             Console.WriteLine("No directory path provided. Aborting save operation.");
+        //             return;
+        //         }
+
+        //         // Combine directory path and project name to form full file path
+        //         string fullPath = Path.Combine(exportPath + ".ustx"); // Assuming .ustx as the file extension
+        //         project.FilePath = fullPath; // Update the project's file path
+        //         SaveProject();
+        //     } else {
+        //         // Save the project to its existing file path
+        //         SaveProject();
+        //     }
+
+            
+
+        //     string wavPath = Path.Combine(exportPath + ".wav");
+        //     HandleExportWavCommandViaPipeline(wavPath);  // Assuming this method exists for exporting WAV
+        //     //try {
+        //     //    Console.WriteLine($"Starting WAV export to {wavPath}");
+        //     //    if (project.tracks.Count == 0) {
+        //     //        Console.WriteLine("No tracks in the project.");
+        //     //    }
+
+        //     //    await PlaybackManager.Inst.RenderToFiles(project, wavPath);
+        //     //    Console.WriteLine($"Project has been successfully exported to WAV at {wavPath}.");
+        //     //} catch (Exception ex) {
+        //     //    Console.WriteLine($"An error occurred during the export: {ex.Message}");
+        //     //}
+        // }
 
 
 
@@ -614,6 +625,42 @@ namespace OpenUtauCLI {
                 Console.WriteLine($"Failed to list tracks: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
+        }
+
+
+        static void HandleUpdatePhonemizer() {
+            project = DocManager.Inst.Project;
+            if (project.tracks.Count == 0) {
+                Console.WriteLine("No project or tracks loaded. Cannot update a track.");
+                return;
+            }
+
+            Console.WriteLine("Select a track you want to update phonemizer for :");
+            for (int i = 0; i < project.tracks.Count; i++) {
+                Console.WriteLine($"{i + 1}. {project.tracks[i].TrackName}");
+            }
+
+            Console.Write("Choose track number: ");
+            if (!int.TryParse(Console.ReadLine(), out int trackIndex) || trackIndex < 1 || trackIndex > project.tracks.Count) {
+                Console.WriteLine("Invalid track number.");
+                return;
+            }
+
+            UTrack selectedTrack = project.tracks[trackIndex - 1];
+            Console.WriteLine($"You selected: {selectedTrack.TrackName}");
+
+            Console.WriteLine("Available phonemizers:");
+            ListPhonemizers();
+
+            Console.Write("Enter the phonemizer name to apply: ");
+            string phonemizerName = Console.ReadLine() ?? "";
+
+            if (!TryChangePhonemizer(phonemizerName, selectedTrack)) {
+                Console.WriteLine("Failed to apply phonemizer. Check the name and try again.");
+            } else {
+                Console.WriteLine($"Phonemizer {phonemizerName} applied to track {selectedTrack.TrackName}.");
+            }
+
         }
 
 
@@ -1260,34 +1307,279 @@ namespace OpenUtauCLI {
             }
         }
 
-        static async void HandleExportWavCommandViaPipeline(string exportPath) {
-            if (project == null) {
-                Console.WriteLine("No project is currently loaded.");
+        //static async void HandleExportWavCommandViaPipeline(string exportPath) {
+        //    if (project == null) {
+        //        Console.WriteLine("No project is currently loaded.");
+        //        return;
+        //    }
+
+        //    //Console.WriteLine($"Starting WAV export to {exportPath}");
+        //    //if (project.tracks.Count == 0) {
+        //    //    Console.WriteLine("No tracks in the project.");
+        //    //}
+
+        //    try {
+        //        Console.WriteLine($"Starting WAV export to {exportPath}");
+        //        if (project.tracks.Count == 0) {
+        //            Console.WriteLine("No tracks in the project.");
+        //        }
+
+        //        project = DocManager.Inst.Project;
+
+        //        await PlaybackManager.Inst.RenderToFiles(project, exportPath);
+        //        Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
+        //    } catch (Exception ex) {
+        //        Console.WriteLine($"An error occurred during the export: {ex.Message}");
+        //    }
+
+        //    //await PlaybackManager.Inst.RenderToFiles(project, exportPath);
+        //    Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
+        //}
+
+
+        //static void SetVoiceColor() {
+        //    if (project == null || project.parts.Count == 0) {
+        //        Console.WriteLine("No project or parts loaded. Cannot change voice color.");
+        //        return;
+        //    }
+
+        //    // List parts for user to choose
+        //    Console.WriteLine("Select a part to change voice color:");
+        //    for (int i = 0; i < project.parts.Count; i++) {
+        //        Console.WriteLine($"{i + 1}. {project.parts[i].name} (Track: {project.parts[i].trackNo + 1})");
+        //    }
+
+        //    Console.Write("Choose part number: ");
+        //    if (!int.TryParse(Console.ReadLine(), out int partIndex) || partIndex < 1 || partIndex > project.parts.Count) {
+        //        Console.WriteLine("Invalid part number.");
+        //        return;
+        //    }
+
+        //    UVoicePart selectedPart = project.parts[partIndex - 1] as UVoicePart;
+        //    if (selectedPart == null) {
+        //        Console.WriteLine("Selected part is not a voice part.");
+        //        return;
+        //    }
+
+        //    UTrack track = project.tracks[selectedPart.trackNo];
+
+        //    // Fetch all available voice color mappings in the project
+        //    var availableColors = project.colorGroups.Select(cg => cg.index).ToList();
+
+        //    if (!availableColors.Any()) {
+        //        Console.WriteLine("No available voice color mappings.");
+        //        return;
+        //    }
+
+
+        //    // Display voice color options
+        //    Console.WriteLine("\nAvailable Voice Color Options:");
+        //    foreach (var color in availableColors) {
+        //        Console.WriteLine($"  {color}");
+        //    }
+
+        //    // Ask user to select a voice color index
+        //    Console.Write("\nEnter the voice color index you want to apply (0 to remove voice color): ");
+        //    if (!int.TryParse(Console.ReadLine(), out int selectedColorIndex) || (!availableColors.Contains(selectedColorIndex) && selectedColorIndex != 0)) {
+        //        Console.WriteLine("Invalid voice color index.");
+        //        return;
+        //    }
+
+        //    Console.WriteLine($"Applying voice color index {selectedColorIndex} to all phonemes in {selectedPart.name}...");
+
+        //    // Apply the new voice color to all phonemes in the selected part
+        //    foreach (UPhoneme phoneme in selectedPart.phonemes) {
+        //        var currentExpression = phoneme.GetExpression(DocManager.Inst.Project, track, OpenUtau.Core.Format.Ustx.CLR);
+        //        int currentColor = currentExpression.Item1 != null ? (int)currentExpression.Item1 : -1;
+
+        //        // Only update if the color is different from the selected one
+        //        if (currentColor != selectedColorIndex) {
+        //            DocManager.Inst.ExecuteCmd(new SetPhonemeExpressionCommand(DocManager.Inst.Project, track, selectedPart, phoneme, OpenUtau.Core.Format.Ustx.CLR, selectedColorIndex == 0 ? null : selectedColorIndex));
+        //        }
+        //    }
+
+        //    Console.WriteLine("Voice color update complete.");
+        //}
+
+        //async void ValidateTracksVoiceColor() {
+        //    DocManager.Inst.StartUndoGroup();
+        //    foreach (var track in DocManager.Inst.Project.tracks) {
+        //        if (track.ValidateVoiceColor(out var oldColors, out var newColors)) {
+        //            await OpenUtau.App.Views.MainWindow.VoiceColorRemappingAsync(track, oldColors, newColors);
+        //        }
+        //    }
+        //    DocManager.Inst.EndUndoGroup();
+        //}
+
+
+        static void SetVoiceColor() {
+            if (project == null || project.parts.Count == 0) {
+                Console.WriteLine("No project or parts loaded. Cannot change voice color.");
                 return;
             }
 
-            //Console.WriteLine($"Starting WAV export to {exportPath}");
-            //if (project.tracks.Count == 0) {
-            //    Console.WriteLine("No tracks in the project.");
-            //}
-
-            try {
-                Console.WriteLine($"Starting WAV export to {exportPath}");
-                if (project.tracks.Count == 0) {
-                    Console.WriteLine("No tracks in the project.");
-                }
-
-                project = DocManager.Inst.Project;
-
-                await PlaybackManager.Inst.RenderToFiles(project, exportPath);
-                Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
-            } catch (Exception ex) {
-                Console.WriteLine($"An error occurred during the export: {ex.Message}");
+            // List parts for user to choose
+            Console.WriteLine("Select a part to change voice color:");
+            for (int i = 0; i < project.parts.Count; i++) {
+                Console.WriteLine($"{i + 1}. {project.parts[i].name} (Track: {project.parts[i].trackNo + 1})");
             }
 
-            //await PlaybackManager.Inst.RenderToFiles(project, exportPath);
-            Console.WriteLine($"Project has been successfully exported to WAV at {exportPath}.");
+            Console.Write("Choose part number: ");
+            if (!int.TryParse(Console.ReadLine(), out int partIndex) || partIndex < 1 || partIndex > project.parts.Count) {
+                Console.WriteLine("Invalid part number.");
+                return;
+            }
+
+            UVoicePart selectedPart = project.parts[partIndex - 1] as UVoicePart;
+            if (selectedPart == null) {
+                Console.WriteLine("Selected part is not a voice part.");
+                return;
+            }
+
+            UTrack track = project.tracks[selectedPart.trackNo];
+
+            // 🔹 Validate voice color and get old/new color mappings
+            if (!track.ValidateVoiceColor(out string[] oldColors, out string[] newColors)) {
+                Console.WriteLine("No discrepancies in voice color mappings. No need to update.");
+                Console.WriteLine("\nOld Voice Colors:");
+                foreach (var color in oldColors) {
+                    Console.WriteLine($"  {color}");
+                }
+
+                Console.WriteLine("\nNew Suggested Voice Colors:");
+                foreach (var color in newColors) {
+                    Console.WriteLine($"  {color}");
+                }
+            }
+
+            //// 🔹 Debug output of old and new voice colors
+            //Console.WriteLine("\nOld Voice Colors:");
+            //foreach (var color in oldColors) {
+            //    Console.WriteLine($"  {color}");
+            //}
+
+            //Console.WriteLine("\nNew Suggested Voice Colors:");
+            //foreach (var color in newColors) {
+            //    Console.WriteLine($"  {color}");
+            //}
+
+            if (newColors.Length == 0) {
+                Console.WriteLine("No valid new voice color mappings available.");
+                return;
+            }
+
+            // 🔹 Create mapping view model with validated colors
+            VoiceColorMappingViewModel vm = new VoiceColorMappingViewModel(oldColors, newColors, track.TrackName);
+
+            // 🔹 Display available color mappings
+            Console.WriteLine("\nAvailable Voice Color Options:");
+            for (int i = 0; i < vm.ColorMappings.Count; i++) {
+                Console.WriteLine($"  {i}: {vm.ColorMappings[i].OldIndex}");
+            }
+
+            // 🔹 Ask user for input
+            Console.Write("\nEnter the voice color index you want to apply (0 to remove voice color): ");
+            if (!int.TryParse(Console.ReadLine(), out int selectedColorIndex) || selectedColorIndex < 0 || selectedColorIndex >= vm.ColorMappings.Count) {
+                Console.WriteLine("Invalid voice color index.");
+                return;
+            }
+
+            Console.WriteLine($"Applying voice color index {selectedColorIndex} to all phonemes in {selectedPart.name}...");
+
+            // 🔹 Start an undo group for changes
+            DocManager.Inst.StartUndoGroup();
+
+            // 🔹 Iterate over phonemes and update voice color using `ValidateVoiceColor()`
+            //foreach (UNote note in selectedPart.notes) {
+                foreach (UPhoneme phoneme in selectedPart.phonemes) {
+                    var tuple = phoneme.GetExpression(project, track, OpenUtau.Core.Format.Ustx.CLR);
+                    float? currentColor = tuple.Item1;
+
+                    if (currentColor != selectedColorIndex) {
+                        DocManager.Inst.ExecuteCmd(new SetPhonemeExpressionCommand(
+                            project,
+                            track,
+                            selectedPart,
+                            phoneme,
+                            OpenUtau.Core.Format.Ustx.CLR,
+                            selectedColorIndex == 0 ? null : selectedColorIndex
+                        ));
+                    }
+                }
+            //}
+
+            // 🔹 End the undo group
+            DocManager.Inst.EndUndoGroup();
+
+            Console.WriteLine("Voice color update complete.");
         }
+
+
+
+
+
+
+        static void HandlePartInfo() {
+            if (project == null || project.parts.Count == 0) {
+                Console.WriteLine("No project or parts loaded. Cannot display part info.");
+                return;
+            }
+
+            // List parts for user to choose
+            Console.WriteLine("Select a part to view info:");
+            for (int i = 0; i < project.parts.Count; i++) {
+                Console.WriteLine($"{i + 1}. {project.parts[i].name} (Track: {project.parts[i].trackNo + 1})");
+            }
+
+            Console.Write("Choose part number: ");
+            if (!int.TryParse(Console.ReadLine(), out int partIndex) || partIndex < 1 || partIndex > project.parts.Count) {
+                Console.WriteLine("Invalid part number.");
+                return;
+            }
+
+            UVoicePart selectedPart = project.parts[partIndex - 1] as UVoicePart;
+            UTrack selectedTrack = project.tracks[selectedPart.trackNo - 1];
+            if (selectedPart == null) {
+                Console.WriteLine("Selected part is not a voice part.");
+                return;
+            }
+
+            Console.WriteLine($"\nDetails for part: {selectedPart.name}");
+            Console.WriteLine($"Track: {selectedPart.trackNo + 1}, Position: {selectedPart.position}, Duration: {selectedPart.Duration}");
+            Console.WriteLine($"Number of Notes: {selectedPart.notes.Count}\n");
+
+            foreach (UNote note in selectedPart.notes) {
+                Console.WriteLine($"Note - Position: {note.position}, Duration: {note.duration}, Tone: {note.tone}, Lyric: \"{note.lyric}\"");
+
+                // Display Phoneme Expressions
+                if (note.phonemeExpressions.Count > 0) {
+                    Console.WriteLine($"  Phoneme Expressions: {string.Join(", ", note.phonemeExpressions.Select(e => $"{e.abbr}:{e.value}"))}");
+                } else {
+                    Console.WriteLine("  Phoneme Expressions: None");
+                }
+
+                // Display Phoneme Overrides
+                if (note.phonemeOverrides.Count > 0) {
+                    Console.WriteLine($"  Phoneme Overrides: {string.Join(", ", note.phonemeOverrides.Select(o => $"Index: {o.index}, Phoneme: {o.phoneme}"))}");
+                } else {
+                    Console.WriteLine("  Phoneme Overrides: None");
+                }
+
+                Console.WriteLine();
+            }
+
+            foreach (UPhoneme phoneme in selectedPart.phonemes) {
+                var tuple = phoneme.GetExpression(DocManager.Inst.Project, selectedTrack, OpenUtau.Core.Format.Ustx.CLR);
+                if (tuple.Item1 != null) {
+                    Console.WriteLine($"  Phoneme: \"{phoneme.phoneme}\" -> Voice Color Index: {tuple.Item1}");
+                } else {
+                    Console.WriteLine($"  Phoneme: \"{phoneme.phoneme}\" -> No Voice Color Mapping");
+                }
+            }
+
+
+        }
+
 
 
         static void HandleLyricsCommand(string filePath) {

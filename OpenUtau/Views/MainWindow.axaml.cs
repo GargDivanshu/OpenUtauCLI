@@ -1235,7 +1235,7 @@ namespace OpenUtau.App.Views {
             }
         }
 
-        async void ValidateTracksVoiceColor() {
+        public async void ValidateTracksVoiceColor() {
             DocManager.Inst.StartUndoGroup();
             foreach (var track in DocManager.Inst.Project.tracks) {
                 if (track.ValidateVoiceColor(out var oldColors, out var newColors)) {
@@ -1244,7 +1244,7 @@ namespace OpenUtau.App.Views {
             }
             DocManager.Inst.EndUndoGroup();
         }
-        async Task VoiceColorRemappingAsync(UTrack track, string[] oldColors, string[] newColors) {
+        public async Task VoiceColorRemappingAsync(UTrack track, string[] oldColors, string[] newColors) {
             var parts = DocManager.Inst.Project.parts
                 .Where(part => part.trackNo == track.TrackNo && part is UVoicePart)
                 .Cast<UVoicePart>()

@@ -34,8 +34,8 @@ def call_gpt_for_syllables(lyrics):
     )
 
 
-    # client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
-    client = openai.Client(api_key="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")
+    client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
+    # client = openai.Client(api_key="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")
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -96,7 +96,7 @@ def format_line_in_utau(lyrics, syllable_method="OPENAI"):
 
     return ' '.join(formatted_words)
 
-def analyze_lyrics(lyrics, syllable_method):
+def analyze_lyrics(lyrics, syllable_method="OPEANI"):
     """
     Analyze lyrics for syllable breakdown and OpenUTAU formatting.
 
@@ -192,8 +192,41 @@ lyrics = """
 Για να αφήσω ότι έχω...και να έρθω να σε βρω
 """
 
+lyrics = """
+Κάθε στιγμή,
+μαμά εσύ
+στο τηλέφωνό με παίρνεις
+για καθετί.
+Κι αν με παίρνεις όλη μέρα
+και δεν απαντά,
+ξέρεις πως σε αγαπάω
+μα έχω και δουλειά.
+Κι αν εγώ δεν το σηκώσω
+πάλι θα στο πω
+Στην καρδιά μου σ’ εχω όμως
+δεν έχω ρεπό.
+"""
+
+lyrics = """
+Χριστίνα με φωτογραφίζεις,
+συνέχεια κι ανελλιπώς.
+Ακούραστα τραβάς τις λήψεις,
+ενώ ποζάρω διαρκώς.
+Τραβάς τρακόσιες φωτογραφίες,
+χωρίς να λες «πια δεν μπορώ».
+Βρίσκεις γωνίες που μου ταιριάζουν
+και ποιο προφίλ μου είναι καλό.
+Κι αν χίλια κλικ σου ζητήσω,
+πάνω σου εγώ θα βασίσω
+τις λήψεις που θ’ ανεβάσω,
+και έτσι δεν θα κάτσω να σκάσω .
+Κι αν φωτογένεια δεν έχω,
+την κολλητή μου πάντα προσέχω.
+Γιατί ποτέ σου κάτω δεν το βάζεις
+Κι έτσι καλύτερες λήψεις βγάζεις.
+"""
 # print("\nFinal OpenUTAU Formatted Lyrics:\n")
-# print(analyze_lyrics(lyrics))
+# print(analyze_lyrics(lyrics, "OPEN_AI"))
 
 
 
@@ -345,7 +378,7 @@ lyrics = """
 Ένα χάδι, ένα φιλί σου, ένα βλέμμα είν' αρκετό, Για να αφήσω ότι έχω 
 και να έρθω να σε βρω
 """
-print(analyze_lyrics(lyrics, "OPENAI"))
+# print(analyze_lyrics(lyrics, "OPENAI"))
 
 
 lyrics = """

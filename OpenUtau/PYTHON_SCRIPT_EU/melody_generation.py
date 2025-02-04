@@ -2242,6 +2242,39 @@ def add_plus_signs(lyrics: str) -> str:
     
     return '\n'.join(modified_lines)
 
+def add_plus_signs_slovak(lyrics: str) -> str:
+    slovak_vowels = {"é", "e", "á", "ú", "u", "o", "í", "ý"}
+    lines = lyrics.strip().split("\n")
+    modified_lines = []
+    
+    for line in lines:
+        words = line.split()
+        modified_words = []
+        i = 0
+
+        while i < len(words):
+            word = words[i]
+            
+            # Check if the word is a control symbol (+, V, v, S, s)
+            if word in ["+", "V", "v", "S", "s"]:
+                modified_words.append(word)
+            
+            # If the word ends with a Slovak vowel, do NOT add "+"
+            elif word[-1] in slovak_vowels:
+                modified_words.append(word)
+            
+            # Otherwise, apply the same logic as before
+            elif i < len(words) - 1 and words[i + 1] == "+":
+                modified_words.append(word)
+            else:
+                modified_words.append(word + ' +')
+            
+            i += 1
+        
+        modified_lines.append(' '.join(modified_words))
+    
+    return '\n'.join(modified_lines)
+
 
 def slavic_lang_edge_case_handler(lyrics: str) -> str:
     lines = lyrics.strip().split("\n")

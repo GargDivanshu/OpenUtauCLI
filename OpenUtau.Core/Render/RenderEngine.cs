@@ -228,6 +228,8 @@ namespace OpenUtau.Core.Render {
                 Console.WriteLine("Renderer is null, skipping phrase.");
                 continue;
             }
+            var firstPhone = phrase.phones.First();
+            var lastPhone = phrase.phones.Last();
             var layout = phrase.renderer.Layout(phrase);
             double posMs = layout.positionMs - layout.leadingMs;
             double durMs = layout.estimatedLengthMs;
