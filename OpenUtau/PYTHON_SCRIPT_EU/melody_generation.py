@@ -816,38 +816,6 @@ def distance_based_octave_normalization(midi_file, output_file):
     # Save the normalized MIDI file
     midi_data.write('midi', fp=output_file)
     print(f"Final normalized MIDI saved to {output_file}.")
-    
-    
-# # Example usage
-# chord_map = {
-#     # Major chords
-#     "Cmajor": ['C', 'E', 'G'],
-#     "C#major": ['C#', 'F', 'G#'],
-#     "Dmajor": ['D', 'F#', 'A'],
-#     "D#major": ['D#', 'G', 'A#'],
-#     "Emajor": ['E', 'G#', 'B'],
-#     "Fmajor": ['F', 'A', 'C'],
-#     "F#major": ['F#', 'A#', 'C#'],
-#     "Gmajor": ['G', 'B', 'D'],
-#     "G#major": ['G#', 'C', 'D#'],
-#     "Amajor": ['A', 'C#', 'E'],
-#     "A#major": ['A#', 'D', 'F'],
-#     "Bmajor": ['B', 'D#', 'F#'],
-
-#     # Minor chords
-#     "Cminor": ['C', 'D#', 'G'],
-#     "C#minor": ['C#', 'E', 'G#'],
-#     "Dminor": ['D', 'F', 'A'],
-#     "D#minor": ['D#', 'F#', 'A#'],
-#     "Eminor": ['E', 'G', 'B'],
-#     "Fminor": ['F', 'G#', 'C'],
-#     "F#minor": ['F#', 'A', 'C#'],
-#     "Gminor": ['G', 'A#', 'D'],
-#     "G#minor": ['G#', 'B', 'D#'],
-#     "Aminor": ['A', 'C', 'E'],
-#     "A#minor": ['A#', 'C#', 'F'],
-#     "Bminor": ['B', 'D', 'F#'],
-# }
 
     
     

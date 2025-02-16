@@ -21,6 +21,8 @@ from melody_generation import main_melody_generation, lyrics_time_calculation, a
 from lyrics_el import process_ballad_lyrics
 from greek_ballad import adjust_lyrics_to_midi, combine_sectional_midis, lyrics_timing_for_sections, lyrics_timing_for_track2, adjust_lyrics_to_midi_with_track, lyrics_timing_for_track3
 import shutil
+from carol_lyrics import lyrics_process
+from carol_midi_lyrics_service import midimain
     
     
 import os
@@ -193,41 +195,6 @@ def process_message(body):
                 formatted_lyrics = analyze_lyrics_cs(lyrics, "OPENAI")
                 formatted_lyrics = add_plus_signs(formatted_lyrics)
                 formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
-            # elif region == "slovakia":
-            #     formatted_lyrics = analyze_lyrics_sk(lyrics, "OPENAI")
-            #     # formatted_lyrics = add_plus_signs_slovak(formatted_lyrics)
-            #     formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
-                
-            #     # Define the folder paths relative to the script's location
-            #     midi_folder = os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections")
-            #     output_folder = os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections", "generations")
-            #     slovakia_note_count = note_count[region][trackId]
-            #     formatted_lyrics = adjust_lyrics_to_midi_with_track(formatted_lyrics, midi_folder, output_folder, slovakia_note_count)
-            #     output_file = "/tmp/lyrics.txt"
-            #     with open(output_file, "w", encoding="utf-8") as file:
-            #         file.write(formatted_lyrics)
-            #     input_folder = f"{region}_track{trackId}_sections"
-            #     output_folder = config.OUTPUT_FOLDER
-            #     final_midi_path = combine_sectional_midis(midi_folder, output_folder)
-            #     shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
-                
-            # elif region == "czechia":
-            #     formatted_lyrics = analyze_lyrics_cs(lyrics, "OPENAI")
-            #     # formatted_lyrics = add_plus_signs(formatted_lyrics)
-            #     formatted_lyrics = slavic_lang_edge_case_handler(formatted_lyrics)
-                
-            #     # Define the folder paths relative to the script's location
-            #     midi_folder = os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections")
-            #     output_folder = os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections", "generations")
-            #     czechia_note_count = note_count[region][trackId]
-            #     formatted_lyrics = adjust_lyrics_to_midi_with_track(formatted_lyrics, midi_folder, output_folder, czechia_note_count)
-            #     output_file = "/tmp/lyrics.txt"
-            #     with open(output_file, "w", encoding="utf-8") as file:
-            #         file.write(formatted_lyrics)
-            #     input_folder = f"{region}_track{trackId}_sections"
-            #     output_folder = config.OUTPUT_FOLDER
-            #     final_midi_path = combine_sectional_midis(midi_folder, output_folder)
-            #     shutil.copy(final_midi_path, config.OU_INFERENCE_LOCAL_MIDI_PATH)
              
             elif region == "slovakia": 
                 formatted_lyrics = analyze_lyrics_sk(lyrics, "OPENAI")
@@ -299,11 +266,6 @@ def process_message(body):
 
                 formatted_lyrics = combine_lines(formatted_lyrics)
             print(f"Processed lyrics successfully for region: {region}")
-            # Validate return values
-            # if not formatted_lyrics or not syllable_breakdown or total_syllables is None:
-            #     logger.error(f"Invalid return values: {formatted_lyrics}, {syllable_breakdown}, {total_syllables}")
-            #     formatted_lyrics, syllable_breakdown, total_syllables = "", "", 0
-
             
         except Exception as e:
             # Handle exceptions and provide feedback
@@ -323,10 +285,6 @@ def process_message(body):
         logger.info("============================================================")
         print(f"Lyrics processing took {end_time - start_time:.2f} seconds")
         
-        # time.sleep(1)
-        # lyrics_api_filename = f"lyrics/{song_id}_lyrics.json"
-        # upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
-        # notify_lyrics_json_upload(song_id, f"{song_id}_lyrics.json") 
         bpm = bpm_data[region][trackId]
             
         
@@ -469,37 +427,6 @@ def process_message(body):
             logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
             logger.info("============================================================")
             
-            
-        # elif os.getenv("REGION_PROD") == "czechia":
-        #     start_time = time.monotonic()
-        #     region_name = region.capitalize()
-        #     bpm = bpm_data[region][trackId]
-            
-        #     try:    
-        #         lyrics_timing(
-        #             # output_folder=os.path.join(script_dir, f"{region}_track{trackId}_sections"),
-        #             output_folder=os.path.join(f"/tmp/{region}/", f"{region}_track{trackId}_sections"),
-        #             # bpm=bpm,
-        #             input_text=lyrics,
-        #             # initial_gap_bars=0,
-        #             output_json_path=OU_LYRICS_JSON_PATH,
-        #             fixed_timings=lyrics_timing_map[region][trackId]
-        #             )
-        #         lyrics_api_filename = f"lyrics/{region}/{song_id}_lyrics.json"
-        #         upload_file_to_s3(OU_LYRICS_JSON_PATH, BUCKET_NAME, lyrics_api_filename)
-        #         notify_system_api(song_id, "lyrics-json", "end", f"{song_id}_lyrics.json", None)
-        #     except Exception as e:
-        #         notify_system_api(song_id, "lyrics-json", "error", None, str(e), None)
-        #         print(f"An error occurred during lyrics timing calculation or upload: {e}")
-
-        #         # Optionally re-raise the exception if it needs to be handled elsewhere
-        #         raise
-        #     end_time = time.monotonic()
-        #     duration = (end_time - start_time)  
-        #     logger.info("melody generation stats")
-        #     logger.info(f"Start Time: {start_time:.2f}, End Time: {end_time:.2f}, Duration: {duration:.2f} seconds.")
-        #     logger.info("============================================================")
-    
         # Run processing
         start_time = time.monotonic()
         run_openutau(bpm, OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, song_id)
@@ -655,68 +582,17 @@ def lambda_handler(event, context):
                 local_base_path, region_singer_mapping[region]
             )
         
-        # if region == "germany":
-        #     folders_to_download["germany/"] = os.path.join(local_tmp_path, "germany")
-        # elif region == "romania":
-        #     folders_to_download["romania/"] = os.path.join(local_tmp_path, "romania")
-        
          # Download folders from S3
         for folder_key, local_output_dir in folders_to_download.items():
             print(f"Downloading {folder_key} to {local_output_dir}...")
             download_folder_from_s3(BUCKET_NAME, base_s3_path + folder_key, local_output_dir)
             print(f"Finished downloading {folder_key}")
             
-        # region_specific_s3_path = f"{base_s3_path}{region}/"
-        # region_specific_local_vocal_path = f"/tmp/{region}/"
-        # region_specific_local_backing_path = f"/tmp/{region}/"
-        # os.makedirs(region_specific_local_vocal_path, exist_ok=True)
-
-        # # List of region-specific files (example: RomaniaTrack1MIDI.MID, RomaniaTrack2MIDI.MID)
-        # region_vocal_files = [f"vocal_track/{region.capitalize()}Track1MIDI.mid", 
-        #                       f"vocal_track/{region.capitalize()}Track2MIDI.mid", 
-        #                       f"vocal_track/{region.capitalize()}Track3MIDI.mid", 
-        #                       f"vocal_track/{region.capitalize()}Track4MIDI.mid", 
-        #                       f"vocal_track/{region.capitalize()}Track5MIDI.mid",
-        #                       f"vocal_track/{region.capitalize()}Track6MIDI.mid",
-        #                       f"vocal_track/{region.capitalize()}Track7MIDI.mid",
-        #                       f"vocal_track/{region.capitalize()}Track8MIDI.mid",
-        #                       f"vocal_track/{region.capitalize()}Track9MIDI.mid",
-        #                       f"vocal_track/{region.capitalize()}Track10MIDI.mid"
-                              
-        #                       ]  # Add or dynamically fetch file names if needed
-        # region_backing_files = [f"backing_track/{region.capitalize()}Track1ChordMIDI.mid", 
-        #                         f"backing_track/{region.capitalize()}Track2ChordMIDI.mid", 
-        #                         f"backing_track/{region.capitalize()}Track3ChordMIDI.mid", 
-        #                         f"backing_track/{region.capitalize()}Track4ChordMIDI.mid", 
-        #                         f"backing_track/{region.capitalize()}Track5ChordMIDI.mid", 
-        #                         f"backing_track/{region.capitalize()}Track6ChordMIDI.mid",
-        #                         f"backing_track/{region.capitalize()}Track7ChordMIDI.mid", 
-        #                         f"backing_track/{region.capitalize()}Track8ChordMIDI.mid", 
-        #                         f"backing_track/{region.capitalize()}Track9ChordMIDI.mid",
-        #                         f"backing_track/{region.capitalize()}Track10ChordMIDI.mid"
-        #                        ]
-        # # Download region-specific files
-        # for file_name in region_vocal_files:
-        #     s3_file_path = f"{region_specific_s3_path}{file_name}"
-        #     local_file_path = os.path.join(region_specific_local_vocal_path, file_name)
-            
-        #     print(f"Downloading {s3_file_path} to {local_file_path}...")
-        #     download_file_from_s3(BUCKET_NAME, s3_file_path, local_file_path)  # Replace with your S3 file download function
-        #     print(f"Finished downloading {file_name}")
-            
-        # for file_name in region_backing_files:
-        #     s3_file_path = f"{region_specific_s3_path}{file_name}"
-        #     local_file_path = os.path.join(region_specific_local_backing_path, file_name)
-            
-        #     print(f"Downloading {s3_file_path} to {local_file_path}...")
-        #     download_file_from_s3(BUCKET_NAME, s3_file_path, local_file_path)  # Replace with your S3 file download function
-        #     print(f"Finished downloading {file_name}")
-        
-        # download_folder_from_s3(BUCKET_NAME, "Singers/", "/tmp/OpenUtau/Singers/", "")
-        # Process each record
+       
         for record in event['Records']:
             logger.info("Processing record: %s", record)
             body = json.loads(record['body'])
+            song_type = body.get("type")
             logger.info("Body: %s", body)
             receipt_handle = record['receiptHandle']
             song_id = body.get("songID")
@@ -728,8 +604,21 @@ def lambda_handler(event, context):
                 # OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, f"{OU_FINAL_FILENAME}.wav")
                 
                 notify_system_api(song_id, "utau_inference", "start", None, None)
-
-                process_message(body)
+                
+                if song_type == "christmas-carol":
+                    lyrics_process(body.get("name"), body.get("reason"))
+                   
+                    lyrics_with_syllable, utau_lyrics = midimain()
+                    output_file = "/tmp/lyrics.txt"
+                    with open(output_file, "w", encoding="utf-8") as file:
+                        file.write(utau_lyrics)
+                    run_openutau(OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, song_id)
+                    time.sleep(2)
+                    clean_tmp_wav_file()
+                    time.sleep(2)
+                    process_and_upload_to_s3(song_id)
+                else: 
+                    process_message(body)
                 
                 print("notifying system api end for file ", OU_FINAL_FILENAME)
                 notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
@@ -1057,14 +946,3 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
     total_time = end_time - start_time
     print(f"Total time taken: {total_time:.2f} seconds")
     logger.info(f"Total time taken: {total_time:.2f} seconds")
-            
-# LOCAL TESTING  
-# if IS_LAMBDA_ENV:
-    # response = lambda_handler(payload, None)
-    # print(response)
-# if __name__ == "__main__":
-        # logger.info("Starting SQS polling on EC2")
-        
-# response = lambda_handler(payload, None)
-# print(response)
-# poll_sqs() #poll_sqs(sqs_client, SQS_QUEUE_URL, process_message)
