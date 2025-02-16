@@ -612,7 +612,7 @@ def lambda_handler(event, context):
                     output_file = "/tmp/lyrics.txt"
                     with open(output_file, "w", encoding="utf-8") as file:
                         file.write(utau_lyrics)
-                    run_openutau(OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, song_id)
+                    run_openutau(OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, body.get("songID"))
                     time.sleep(2)
                     clean_tmp_wav_file()
                     time.sleep(2)
