@@ -18,8 +18,8 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("API key not found. Set the OPENAI_API_KEY environment variable.")
 
-from midi_lyrics_service import midimain
-from utau_lyrics_service import utau_lyrics_main
+from carol_midi_lyrics_service import midimain
+from carol_utau_lyrics_service import utau_lyrics_main
 LYRICS_API_URL = os.getenv("LYRICS_API_URL")
 
 def notify_lyrics_json_upload(song_id, file_name):
