@@ -612,7 +612,7 @@ def lambda_handler(event, context):
                     output_file = "/tmp/lyrics.txt"
                     with open(output_file, "w", encoding="utf-8") as file:
                         file.write(utau_lyrics)
-                    run_openutau(OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, body.get("songID"))
+                    run_openutau(OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, body.get("songID").replace("-", ""))
                     time.sleep(2)
                     clean_tmp_wav_file()
                     time.sleep(2)
@@ -936,7 +936,7 @@ def run_openutau(bpm, project_name, export_wav_path, song_id):
                 break
     except Exception as e:
         print("Error encountered:", e)
-        notify_system_api(song_id, "utau_inference", "error", None, str(e), None) 
+        # notify_system_api(song_id, "utau_inference", "error", None, str(e), None) 
     finally:
         if process:
             process.terminate()  # Ensure the process is terminated  
