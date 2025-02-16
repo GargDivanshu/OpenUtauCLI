@@ -10,7 +10,7 @@ import logging
 from rich import print
 import re
 import glob
-from helpers import upload_file_to_s3,download_folder_from_s3, download_file_from_s3, wait_for_file, clean_tmp_wav_file, notify_system_api, check_files_and_directories, lyrics_timing
+from helpers import upload_file_to_s3,download_folder_from_s3, download_file_from_s3, wait_for_file, clean_tmp_wav_file, notify_system_api, check_files_and_directories, lyrics_timing, notify_supabase
 from tqdm import tqdm
 import platform
 from dotenv import load_dotenv
@@ -604,16 +604,21 @@ def lambda_handler(event, context):
                 # OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, f"{OU_FINAL_FILENAME}.wav")
                 
                 # notify_system_api(song_id, "utau_inference", "start", None, None)
+                notify_supabase(song_id, type, body.get("language"), body.get("userID"), body.get("name"), body.get("reason"), "start", err_msg=None)
+                
                 
                 if song_type == "christmas-carol":
                     lyrics_process(body.get("name"), body.get("reason"))
+                    notify_supabase(song_id, type, body.get("language"), body.get("userID"), body.get("name"), body.get("reason"), "lyrics_generated", err_msg=None)
                    
                     lyrics_with_syllable, utau_lyrics = midimain()
+                    notify_supabase(song_id, type, body.get("language"), body.get("userID"), body.get("name"), body.get("reason"), "melody_generated", err_msg=None)
                     output_file = "/tmp/lyrics.txt"
                     with open(output_file, "w", encoding="utf-8") as file:
                         file.write(utau_lyrics)
                     bpm = 93
                     run_openutau(bpm, OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, body.get("songID"))
+                    notify_supabase(song_id, type, body.get("language"), body.get("userID"), body.get("name"), body.get("reason"), "song_generated", err_msg=None)
                     time.sleep(2)
                     clean_tmp_wav_file()
                     time.sleep(2)
@@ -623,6 +628,7 @@ def lambda_handler(event, context):
                 
                 print("notifying system api end for file ", OU_FINAL_FILENAME)
                 # notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
+                notify_supabase(song_id, type, body.get("language"), body.get("userID"), body.get("name"), body.get("reason"), "end", err_msg=None)
 
                 
 

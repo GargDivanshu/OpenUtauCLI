@@ -18,6 +18,7 @@ config = initialize_config()
 log_file_path = config.OU_PROCESS_LOGS
 SYSTEM_API_URL = os.getenv("SYSTEM_API_URL")
 region = os.getenv("REGION_PROD")
+from config import supabase
 # region = "romania"
 
 # IS_LAMBDA_ENV 
@@ -433,7 +434,49 @@ def notify_system_api(song_id, stage, action, file_name=None, err_msg=None, rece
     except requests.exceptions.RequestException as e:
         print(f"Failed to notify {action} status: {e}")
         
-        
+      
+# export const songs = pgTable("songs", {
+#   id: serial("id").primaryKey(),
+#   type: text("type").notNull(), // ("christmas-carol", "random")
+#   language: text("language").notNull(),
+#   userID: varchar("userID", { length: 36 }).notNull(), // FK to Users Table
+#   receiversname: text("receiversname").notNull(),
+#   reason: text("reason").notNull(),
+#   status: text("status").notNull().default("pending"), // pending -> processing -> completed
+#   created_at: timestamp("created_at").defaultNow(),
+# });
+def notify_supabase(song_id, type, language, userID, receiversname, reason, status, err_msg=None):
+    """Notify the system API of the process status."""
+    try:
+        payload_data = {
+                "songID": song_id,
+                "type": type,
+                "language": language,
+                "userID": userID,
+                "receiversname": receiversname,
+                "reason": reason,
+                "stage": status,
+                "errMsg": err_msg,
+            }
+        if status == "start":
+            response = (
+                supabase.table("songs")
+                .insert(payload_data)
+                .execute()
+            )
+        else: 
+            response = (
+                supabase.table("songs")
+                .update({"status": status})
+                .eq("id", song_id)
+                .execute()
+            )
+        response.raise_for_status()
+        print(json.dumps(payload_data, indent="4"))
+        print(response.json())
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to notify status: {e}")
+      
 
 
 # ==================================================================   
