@@ -464,7 +464,7 @@ def notify_supabase(song_id, type, language, userID, receiversname, reason, stat
                 .eq("id", song_id)
                 .execute()
             )
-        response.raise_for_status()
+        # response.raise_for_status()
         print(json.dumps(payload_data, indent="4"))
         print(response.json())
     except requests.exceptions.RequestException as e:
