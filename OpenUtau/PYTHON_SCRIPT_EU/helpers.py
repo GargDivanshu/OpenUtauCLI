@@ -449,7 +449,7 @@ def notify_supabase(song_id, type, language, userID, receiversname, reason, stat
     """Notify the system API of the process status."""
     try:
         payload_data = {
-                "songID": song_id,
+                "id": song_id,
                 "type": type,
                 "language": language,
                 "userID": userID,
