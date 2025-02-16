@@ -455,7 +455,7 @@ def notify_supabase(song_id, type, language, userID, receiversname, reason, stat
                 "userID": userID,
                 "receiversname": receiversname,
                 "reason": reason,
-                "stage": status,
+                "status": status,
                 "errMsg": err_msg,
             }
         if status == "start":
