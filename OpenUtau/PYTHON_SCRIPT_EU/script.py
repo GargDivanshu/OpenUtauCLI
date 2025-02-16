@@ -603,7 +603,7 @@ def lambda_handler(event, context):
                 # OU_FINAL_FILENAME = f"song_{song_id}_vocals"
                 # OU_INFERENCE_LOCAL_EXPORT_PATH = os.path.join(OU_INFERENCE_LOCAL_PROJECT_SAVE_PATH, f"{OU_FINAL_FILENAME}.wav")
                 
-                notify_system_api(song_id, "utau_inference", "start", None, None)
+                # notify_system_api(song_id, "utau_inference", "start", None, None)
                 
                 if song_type == "christmas-carol":
                     lyrics_process(body.get("name"), body.get("reason"))
@@ -621,13 +621,13 @@ def lambda_handler(event, context):
                     process_message(body)
                 
                 print("notifying system api end for file ", OU_FINAL_FILENAME)
-                notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
+                # notify_system_api(song_id, "utau_inference", "end", f"{OU_FINAL_FILENAME}.wav", None, receipt_handle)
 
                 
 
             except Exception as e:
                 logger.error(f"Error processing record for song_id {song_id}: {e}")
-                notify_system_api(song_id, "utau_inference", "err", None, e, None)
+                # notify_system_api(song_id, "utau_inference", "err", None, e, None)
 
     except Exception as e:
         # This happened outside of Records array so cannot use systemAPI as it is 
