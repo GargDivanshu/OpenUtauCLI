@@ -12,13 +12,14 @@ from dotenv import load_dotenv
 import pickle
 from tabulate import tabulate 
 from config import initialize_config
+from config import supabase
+SUPABASE_URL = os.getenv("SUPABASE_URL")
 
 load_dotenv()
 config = initialize_config()
 log_file_path = config.OU_PROCESS_LOGS
 SYSTEM_API_URL = os.getenv("SYSTEM_API_URL")
 region = os.getenv("REGION_PROD")
-from config import supabase
 # region = "romania"
 
 # IS_LAMBDA_ENV 
@@ -255,6 +256,28 @@ def upload_file_to_s3(local_file, bucket, key):
     except Exception as e:
         print(f"Error uploading file to S3: {e}")
         exit(1)
+        
+def upload_file_to_supabase(local_file: str, bucket: str, key: str):
+    """Upload a local file to Supabase Storage."""
+    try:
+        # Open file in binary mode
+        with open(local_file, "rb") as f:
+            response = supabase.storage.from_(bucket).upload(
+                file=f,
+                path=key,  # Supabase file path (like S3 key)
+                file_options={"cache-control": "3600", "upsert": "false"},
+            )
+
+        if "error" in response and response["error"]:
+            print(f"Error uploading file to Supabase: {response['error']['message']}")
+            return None
+
+        print(f"File {local_file} uploaded successfully to {bucket}/{key}")
+        return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{key}"  # Public URL of file
+    
+    except Exception as e:
+        print(f"Error uploading file to Supabase: {e}")
+        return None
 
 
 def download_folder_from_s3(bucket, folder_key, local_output_dir):

@@ -617,6 +617,7 @@ def lambda_handler(event, context):
                     with open(output_file, "w", encoding="utf-8") as file:
                         file.write(utau_lyrics)
                     bpm = 93
+                    OU_FINAL_FILENAME = f"song_{song_id}_vocals"
                     run_openutau(bpm, OU_FINAL_FILENAME, OU_INFERENCE_LOCAL_EXPORT_PATH, body.get("songID"))
                     notify_supabase(song_id, song_type, body.get("language"), body.get("userID"), body.get("name"), body.get("reason"), "song_generated", err_msg=None)
                     time.sleep(2)
