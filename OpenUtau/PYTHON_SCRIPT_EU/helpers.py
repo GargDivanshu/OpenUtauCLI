@@ -458,14 +458,7 @@ def notify_supabase(song_id, type, language, userID, receiversname, reason, stat
                 "status": status,
                 "errMsg": err_msg,
             }
-        if status == "start":
-            response = (
-                supabase.table("songs")
-                .insert(payload_data)
-                .execute()
-            )
-        else: 
-            response = (
+        response = (
                 supabase.table("songs")
                 .update({"status": status})
                 .eq("id", song_id)
